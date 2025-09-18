@@ -1,6 +1,6 @@
 include README.md
-include README_PACKAGE.md
 include LICENSE
+include CONTRIBUTING.md
 include requirements.txt
 recursive-include fastapi_radar/dashboard/dist *
 recursive-exclude * __pycache__

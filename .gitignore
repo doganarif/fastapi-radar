@@ -60,8 +60,7 @@ coverage.xml
 radar.db
 example.db
 fastapi_radar/dashboard/node_modules/
-fastapi_radar/dashboard/dist/
-fastapi_radar/dashboard/package-lock.json
+# Note: dashboard/dist is NOT ignored as it needs to be included in the package
 
 # Environment variables
 .env
@@ -74,3 +73,5 @@ dmypy.json
 
 # Pyre
 .pyre/
+
+!fastapi_radar/dashboard/dist/

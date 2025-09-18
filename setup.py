@@ -10,12 +10,12 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name="fastapi-radar",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
-    description="A debugging dashboard for FastAPI applications",
+    author="Arif Dogan",
+    author_email="me@arif.sh",
+    description="A debugging dashboard for FastAPI applications with real-time request, database query, and exception monitoring",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/fastapi-radar",
+    url="https://github.com/doganarif/fastapi-radar",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",

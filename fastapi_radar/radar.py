@@ -101,6 +101,9 @@ class Radar:
 
     def _setup_dashboard(self) -> None:
         """Mount dashboard static files."""
+        from fastapi.responses import FileResponse
+        from fastapi import Request
+
         dashboard_dir = Path(__file__).parent / "dashboard" / "dist"
 
         if not dashboard_dir.exists():
@@ -116,12 +119,23 @@ class Radar:
             print("  npm run build")
             print("="*60 + "\n")
 
-        # Mount static files
-        self.app.mount(
-            self.dashboard_path,
-            StaticFiles(directory=str(dashboard_dir), html=True),
-            name="radar-dashboard"
-        )
+        # Add a catch-all route for the dashboard SPA
+        # This ensures all sub-routes under /__radar serve the index.html
+        @self.app.get(f"{self.dashboard_path}")
+        @self.app.get(f"{self.dashboard_path}/{{full_path:path}}")
+        async def serve_dashboard(request: Request, full_path: str = ""):
+            # Check if it's a request for a static asset
+            if full_path and any(full_path.endswith(ext) for ext in ['.js', '.css', '.ico', '.png', '.jpg', '.svg', '.woff', '.woff2', '.ttf']):
+                file_path = dashboard_dir / full_path
+                if file_path.exists():
+                    return FileResponse(file_path)
+
+            # For all other routes, serve index.html (SPA behavior)
+            index_path = dashboard_dir / "index.html"
+            if index_path.exists():
+                return FileResponse(index_path)
+            else:
+                return {"error": "Dashboard not found. Please build the dashboard."}
 
     def _create_placeholder_dashboard(self, dashboard_dir: Path) -> None:
         """Create a placeholder dashboard for development."""
