@@ -1,0 +1,8 @@
+include README.md
+include README_PACKAGE.md
+include LICENSE
+include requirements.txt
+recursive-include fastapi_radar/dashboard/dist *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
