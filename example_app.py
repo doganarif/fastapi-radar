@@ -134,7 +134,7 @@ async def list_products(
     query = db.query(Product)
 
     if in_stock_only:
-        query = query.filter(Product.in_stock == True)
+        query = query.filter(Product.in_stock is True)
 
     products = query.offset(skip).limit(limit).all()
     return products

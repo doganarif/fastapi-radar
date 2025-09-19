@@ -105,7 +105,7 @@ def create_api_router(get_session_context) -> APIRouter:
                 upper_bound = status_code + 100
                 query = query.filter(
                     CapturedRequest.status_code >= lower_bound,
-                    CapturedRequest.status_code < upper_bound
+                    CapturedRequest.status_code < upper_bound,
                 )
             else:
                 # Exact status code match
