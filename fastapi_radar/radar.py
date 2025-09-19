@@ -4,7 +4,6 @@ from typing import Optional, List
 from pathlib import Path
 from contextlib import contextmanager
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -161,7 +160,7 @@ class Radar:
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             min-height: 100vh;
@@ -242,13 +241,13 @@ class Radar:
             try {{
                 const response = await fetch('/api/radar/stats?hours=1');
                 const data = await response.json();
-                
+
                 document.querySelectorAll('.stat-value')[0].textContent = data.total_requests;
                 document.querySelectorAll('.stat-value')[1].textContent = data.total_queries;
-                document.querySelectorAll('.stat-value')[2].textContent = 
+                document.querySelectorAll('.stat-value')[2].textContent =
                     data.avg_response_time ? `${{data.avg_response_time.toFixed(1)}}ms` : '--';
                 document.querySelectorAll('.stat-value')[3].textContent = data.total_exceptions;
-                
+
                 document.querySelectorAll('.stat-value').forEach(el => {{
                     el.classList.remove('loading');
                 }});
@@ -256,7 +255,7 @@ class Radar:
                 console.error('Failed to load stats:', error);
             }}
         }}
-        
+
         // Load stats on page load
         loadStats();
         // Refresh stats every 5 seconds
