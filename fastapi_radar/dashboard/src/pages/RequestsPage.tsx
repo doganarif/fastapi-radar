@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,26 +19,31 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Download, RefreshCw } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
+import { RequestItem } from "@/components/RequestItem";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Filter, Download, RefreshCw } from "lucide-react";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
 
 export function RequestsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { openDetail } = useDetailDrawer();
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Get all requests
   const { data: allRequests, refetch } = useQuery({
-    queryKey: ["all-requests", searchTerm, statusFilter, methodFilter],
+    queryKey: ["all-requests", statusFilter, methodFilter, debouncedSearchTerm],
     queryFn: () =>
       apiClient.getRequests({
         limit: 200,
-        search: searchTerm || undefined,
         status_code:
           statusFilter !== "all" ? getStatusCode(statusFilter) : undefined,
         method: methodFilter !== "all" ? methodFilter : undefined,
+        search: debouncedSearchTerm || undefined,
       }),
     refetchInterval: 5000,
   });
@@ -85,36 +89,6 @@ export function RequestsPage() {
     }
   };
 
-  const getStatusBadgeVariant = (status: number | null) => {
-    if (!status) return "outline";
-    if (status >= 200 && status < 300) return "success";
-    if (status >= 300 && status < 400) return "secondary";
-    if (status >= 400 && status < 500) return "warning";
-    if (status >= 500) return "destructive";
-    return "outline";
-  };
-
-  const getMethodBadgeVariant = (method: string) => {
-    switch (method) {
-      case "GET":
-        return "secondary";
-      case "POST":
-        return "default";
-      case "PUT":
-        return "default";
-      case "DELETE":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  const formatDuration = (ms: number | null) => {
-    if (!ms) return "0ms";
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
-    return `${(ms / 1000).toFixed(2)}s`;
-  };
-
   const applyFilters = () => {
     refetch();
   };
@@ -152,16 +126,12 @@ export function RequestsPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search by path, IP..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <SearchInput
+                id="search"
+                placeholder="Search by path..."
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
             </div>
 
             <div className="space-y-2">
@@ -278,57 +248,11 @@ export function RequestsPage() {
             <CardContent>
               <div className="space-y-2">
                 {filteredRequests?.map((request) => (
-                  <div
+                  <RequestItem
                     key={request.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    request={request}
                     onClick={() => openDetail("request", request.request_id)}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <Badge variant={getMethodBadgeVariant(request.method)}>
-                        {request.method}
-                      </Badge>
-                      <div className="flex flex-col">
-                        <span className="font-mono text-sm">
-                          {request.path}
-                        </span>
-                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                          <span>
-                            {new Date(request.created_at).toLocaleTimeString()}
-                          </span>
-                          {request.query_count > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{request.query_count} queries</span>
-                            </>
-                          )}
-                          {request.has_exception && (
-                            <>
-                              <span>•</span>
-                              <span className="text-destructive">
-                                Exception
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {request.status_code && (
-                        <Badge
-                          variant={
-                            getStatusBadgeVariant(request.status_code) as any
-                          }
-                        >
-                          {request.status_code}
-                        </Badge>
-                      )}
-                      {request.duration_ms && (
-                        <span className="text-sm text-muted-foreground">
-                          {formatDuration(request.duration_ms)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  />
                 ))}
                 {(!filteredRequests || filteredRequests.length === 0) && (
                   <div className="text-center py-8 text-muted-foreground">

@@ -10,7 +10,10 @@ export function ExceptionsList() {
 
   const { data: exceptions, isLoading } = useQuery({
     queryKey: ["exceptions"],
-    queryFn: () => apiClient.getExceptions({ limit: 100 }),
+    queryFn: () =>
+      apiClient.getExceptions({
+        limit: 100,
+      }),
     refetchInterval: 5000,
   });
 

@@ -109,6 +109,7 @@ class APIClient {
     offset?: number;
     slow_only?: boolean;
     slow_threshold?: number;
+    search?: string;
   }): Promise<QueryDetail[]> {
     const queryParams = new URLSearchParams();
     if (params?.limit) queryParams.append("limit", params.limit.toString());
@@ -117,6 +118,7 @@ class APIClient {
       queryParams.append("slow_only", params.slow_only.toString());
     if (params?.slow_threshold)
       queryParams.append("slow_threshold", params.slow_threshold.toString());
+    if (params?.search) queryParams.append("search", params.search);
 
     const response = await fetch(`${this.baseUrl}/queries?${queryParams}`);
     return response.json();

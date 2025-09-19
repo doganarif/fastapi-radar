@@ -95,7 +95,7 @@ def create_api_router(get_session_context) -> APIRouter:
         if method:
             query = query.filter(CapturedRequest.method == method)
         if search:
-            query = query.filter(CapturedRequest.path.contains(search))
+            query = query.filter(CapturedRequest.path.ilike(f"%{search}%"))
 
         requests = (
             query.order_by(desc(CapturedRequest.created_at))
@@ -175,12 +175,15 @@ def create_api_router(get_session_context) -> APIRouter:
         offset: int = Query(0, ge=0),
         slow_only: bool = Query(False),
         slow_threshold: int = Query(100),
+        search: Optional[str] = None,
         session: Session = Depends(get_db),
     ):
         query = session.query(CapturedQuery)
 
         if slow_only:
             query = query.filter(CapturedQuery.duration_ms >= slow_threshold)
+        if search:
+            query = query.filter(CapturedQuery.sql.ilike(f"%{search}%"))
 
         queries = (
             query.order_by(desc(CapturedQuery.created_at))

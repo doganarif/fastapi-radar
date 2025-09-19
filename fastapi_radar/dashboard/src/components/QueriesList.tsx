@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { SearchInput } from "@/components/ui/search-input";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Clock, Database, AlertCircle } from "lucide-react";
 import { format } from "@/lib/date";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
@@ -12,15 +14,19 @@ import { useDetailDrawer } from "@/context/DetailDrawerContext";
 export function QueriesList() {
   const [showSlowOnly, setShowSlowOnly] = useState(false);
   const [slowThreshold, setSlowThreshold] = useState(100);
+  const [searchTerm, setSearchTerm] = useState("");
   const { openDetail } = useDetailDrawer();
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   const { data: queries, isLoading } = useQuery({
-    queryKey: ["queries", showSlowOnly, slowThreshold],
+    queryKey: ["queries", showSlowOnly, slowThreshold, debouncedSearchTerm],
     queryFn: () =>
       apiClient.getQueries({
         limit: 100,
         slow_only: showSlowOnly,
         slow_threshold: slowThreshold,
+        search: debouncedSearchTerm || undefined,
       }),
     refetchInterval: 5000,
   });
@@ -45,6 +51,14 @@ export function QueriesList() {
 
   return (
     <div className="space-y-4">
+      {/* Search Input */}
+      <SearchInput
+        placeholder="Search queries..."
+        value={searchTerm}
+        onValueChange={setSearchTerm}
+      />
+
+      {/* Filters */}
       <div className="flex items-center justify-between p-4 border rounded-lg">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">

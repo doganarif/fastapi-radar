@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Bell,
-  Search,
   Menu,
   Moon,
   Sun,
@@ -88,15 +86,6 @@ export function Layout() {
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
-
-              {/* Search Bar */}
-              <div className="relative w-96 hidden lg:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search endpoints, queries, errors..."
-                  className="pl-10 w-full"
-                />
-              </div>
             </div>
 
             <div className="flex items-center space-x-3">
