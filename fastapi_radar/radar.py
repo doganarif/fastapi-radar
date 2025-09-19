@@ -42,6 +42,9 @@ class Radar:
         if dashboard_path not in self.exclude_paths:
             self.exclude_paths.append(dashboard_path)
 
+        # Exclude favicon.ico
+        self.exclude_paths.append("/favicon.ico")
+
         # Setup storage engine (default to SQLite)
         if storage_engine:
             self.storage_engine = storage_engine
@@ -214,7 +217,7 @@ class Radar:
 </head>
 <body>
     <div class="container">
-        <h1>🚀 FastAPI Radar</h1>
+        <h1>FastAPI Radar</h1>
         <p>Real-time debugging dashboard loading...</p>
         <div class="stats">
             <div class="stat">
