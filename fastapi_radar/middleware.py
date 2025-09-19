@@ -12,8 +12,7 @@ from starlette.responses import Response, StreamingResponse
 from .models import CapturedRequest, CapturedException
 from .utils import serialize_headers, get_client_ip, truncate_body
 
-request_context: ContextVar[Optional[str]
-                            ] = ContextVar("request_id", default=None)
+request_context: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
 
 
 class RadarMiddleware(BaseHTTPMiddleware):
@@ -46,11 +45,13 @@ class RadarMiddleware(BaseHTTPMiddleware):
             method=request.method,
             url=str(request.url),
             path=request.url.path,
-            query_params=dict(
-                request.query_params) if request.query_params else None,
+            query_params=dict(request.query_params) if request.query_params else None,
             headers=serialize_headers(request.headers),
-            body=truncate_body(
-                request_body, self.max_body_size) if request_body else None,
+            body=(
+                truncate_body(request_body, self.max_body_size)
+                if request_body
+                else None
+            ),
             client_ip=get_client_ip(request),
         )
 
@@ -61,24 +62,24 @@ class RadarMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             captured_request.status_code = response.status_code
-            captured_request.response_headers = serialize_headers(
-                response.headers)
+            captured_request.response_headers = serialize_headers(response.headers)
 
-            if self.capture_response_body and not isinstance(response, StreamingResponse):
+            if self.capture_response_body and not isinstance(
+                response, StreamingResponse
+            ):
                 response_body = b""
                 async for chunk in response.body_iterator:
                     response_body += chunk
 
                 captured_request.response_body = truncate_body(
-                    response_body.decode("utf-8", errors="ignore"),
-                    self.max_body_size
+                    response_body.decode("utf-8", errors="ignore"), self.max_body_size
                 )
 
                 response = Response(
                     content=response_body,
                     status_code=response.status_code,
                     headers=dict(response.headers),
-                    media_type=response.media_type
+                    media_type=response.media_type,
                 )
 
         except Exception as e:
@@ -129,10 +130,13 @@ class RadarMiddleware(BaseHTTPMiddleware):
             "request_id": request_id,
             "exception_type": type(exception).__name__,
             "exception_value": str(exception),
-            "traceback": traceback.format_exc()
+            "traceback": traceback.format_exc(),
         }
 
     def _get_exception_data(self, request_id: str) -> Optional[CapturedException]:
-        if hasattr(self, "_exception_cache") and self._exception_cache.get("request_id") == request_id:
+        if (
+            hasattr(self, "_exception_cache")
+            and self._exception_cache.get("request_id") == request_id
+        ):
             return CapturedException(**self._exception_cache)
         return None

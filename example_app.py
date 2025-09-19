@@ -11,8 +11,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from fastapi_radar import Radar
 
 # Database setup
-engine = create_engine("sqlite:///./example.db",
-                       connect_args={"check_same_thread": False})
+engine = create_engine(
+    "sqlite:///./example.db", connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -86,7 +87,7 @@ class UserResponse(BaseModel):
 app = FastAPI(
     title="Example App with Radar",
     description="Demonstration of FastAPI Radar debugging dashboard",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Initialize Radar - automatically adds middleware and mounts dashboard
@@ -95,7 +96,7 @@ radar = Radar(
     db_engine=engine,
     dashboard_path="/__radar",
     slow_query_threshold=50,
-    theme="auto"
+    theme="auto",
 )
 radar.create_tables()
 
@@ -109,6 +110,7 @@ def get_db():
     finally:
         db.close()
 
+
 # Routes
 
 
@@ -117,7 +119,7 @@ async def root():
     """Root endpoint."""
     return {
         "message": "Welcome to the Example API",
-        "dashboard": "Visit /__radar to see the debugging dashboard"
+        "dashboard": "Visit /__radar to see the debugging dashboard",
     }
 
 
@@ -126,7 +128,7 @@ async def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     in_stock_only: bool = False,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all products with pagination."""
     query = db.query(Product)
@@ -161,9 +163,7 @@ async def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 
 @app.put("/products/{product_id}", response_model=ProductResponse)
 async def update_product(
-    product_id: int,
-    product: ProductCreate,
-    db: Session = Depends(get_db)
+    product_id: int, product: ProductCreate, db: Session = Depends(get_db)
 ):
     """Update an existing product."""
     db_product = db.query(Product).filter(Product.id == product_id).first()
@@ -196,7 +196,7 @@ async def delete_product(product_id: int, db: Session = Depends(get_db)):
 async def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all users with pagination."""
     users = db.query(User).offset(skip).limit(limit).all()
@@ -218,14 +218,15 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Create a new user."""
     # Check for existing user
-    existing_user = db.query(User).filter(
-        (User.username == user.username) | (User.email == user.email)
-    ).first()
+    existing_user = (
+        db.query(User)
+        .filter((User.username == user.username) | (User.email == user.email))
+        .first()
+    )
 
     if existing_user:
         raise HTTPException(
-            status_code=400,
-            detail="User with this username or email already exists"
+            status_code=400, detail="User with this username or email already exists"
         )
 
     db_user = User(**user.dict())
@@ -251,7 +252,7 @@ async def slow_query_example(db: Session = Depends(get_db)):
 
     return {
         "message": "This endpoint performs slow queries",
-        "product_count": len(products)
+        "product_count": len(products),
     }
 
 
@@ -267,55 +268,78 @@ async def health_check():
     """Health check endpoint (excluded from Radar by default)."""
     return {"status": "healthy"}
 
+
 if __name__ == "__main__":
     import uvicorn
     from pathlib import Path
 
     # Check if dashboard is built
-    dashboard_dist = Path(__file__).parent / \
-        "fastapi_radar" / "dashboard" / "dist"
+    dashboard_dist = Path(__file__).parent / "fastapi_radar" / "dashboard" / "dist"
     if not dashboard_dist.exists():
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("⚠️  Dashboard not built yet!")
-        print("="*60)
+        print("=" * 60)
         print("\nPlease build the dashboard first:")
         print("  cd fastapi_radar/dashboard")
         print("  npm install")
         print("  npm run build")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
     # Add some sample data
     with SessionLocal() as db:
         if db.query(Product).count() == 0:
             sample_products = [
-                Product(name="Laptop", description="High-performance laptop",
-                        price=999.99, in_stock=True),
-                Product(name="Mouse", description="Wireless mouse",
-                        price=29.99, in_stock=True),
-                Product(name="Keyboard", description="Mechanical keyboard",
-                        price=149.99, in_stock=False),
-                Product(name="Monitor", description="4K display",
-                        price=499.99, in_stock=True),
-                Product(name="Headphones", description="Noise-cancelling",
-                        price=199.99, in_stock=True),
+                Product(
+                    name="Laptop",
+                    description="High-performance laptop",
+                    price=999.99,
+                    in_stock=True,
+                ),
+                Product(
+                    name="Mouse",
+                    description="Wireless mouse",
+                    price=29.99,
+                    in_stock=True,
+                ),
+                Product(
+                    name="Keyboard",
+                    description="Mechanical keyboard",
+                    price=149.99,
+                    in_stock=False,
+                ),
+                Product(
+                    name="Monitor",
+                    description="4K display",
+                    price=499.99,
+                    in_stock=True,
+                ),
+                Product(
+                    name="Headphones",
+                    description="Noise-cancelling",
+                    price=199.99,
+                    in_stock=True,
+                ),
             ]
             db.bulk_save_objects(sample_products)
 
             sample_users = [
-                User(username="johndoe", email="john@example.com",
-                     full_name="John Doe"),
-                User(username="janedoe", email="jane@example.com",
-                     full_name="Jane Doe"),
-                User(username="admin", email="admin@example.com",
-                     full_name="Admin User"),
+                User(
+                    username="johndoe", email="john@example.com", full_name="John Doe"
+                ),
+                User(
+                    username="janedoe", email="jane@example.com", full_name="Jane Doe"
+                ),
+                User(
+                    username="admin", email="admin@example.com", full_name="Admin User"
+                ),
             ]
             db.bulk_save_objects(sample_users)
             db.commit()
             print("Sample data added to database")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚀 FastAPI Radar Example App")
-    print("="*60)
+    print("=" * 60)
     print("\nEndpoints:")
     print("  API:       http://localhost:8000")
     print("  Docs:      http://localhost:8000/docs")
@@ -324,6 +348,6 @@ if __name__ == "__main__":
     print("  1. Visit http://localhost:8000/products")
     print("  2. Visit http://localhost:8000/slow-query")
     print("  3. Visit http://localhost:8000/error")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

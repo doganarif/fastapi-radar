@@ -27,17 +27,20 @@ class CapturedRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     queries = relationship(
-        "CapturedQuery", back_populates="request", cascade="all, delete-orphan")
+        "CapturedQuery", back_populates="request", cascade="all, delete-orphan"
+    )
     exceptions = relationship(
-        "CapturedException", back_populates="request", cascade="all, delete-orphan")
+        "CapturedException", back_populates="request", cascade="all, delete-orphan"
+    )
 
 
 class CapturedQuery(Base):
     __tablename__ = "radar_queries"
 
     id = Column(Integer, primary_key=True, index=True)
-    request_id = Column(String(36), ForeignKey(
-        "radar_requests.request_id", ondelete="CASCADE"))
+    request_id = Column(
+        String(36), ForeignKey("radar_requests.request_id", ondelete="CASCADE")
+    )
     sql = Column(Text, nullable=False)
     parameters = Column(JSON)
     duration_ms = Column(Float)
@@ -52,8 +55,9 @@ class CapturedException(Base):
     __tablename__ = "radar_exceptions"
 
     id = Column(Integer, primary_key=True, index=True)
-    request_id = Column(String(36), ForeignKey(
-        "radar_requests.request_id", ondelete="CASCADE"))
+    request_id = Column(
+        String(36), ForeignKey("radar_requests.request_id", ondelete="CASCADE")
+    )
     exception_type = Column(String(100), nullable=False)
     exception_value = Column(Text)
     traceback = Column(Text, nullable=False)

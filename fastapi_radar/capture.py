@@ -15,7 +15,7 @@ class QueryCapture:
         self,
         get_session: Callable,
         capture_bindings: bool = True,
-        slow_query_threshold: int = 100
+        slow_query_threshold: int = 100,
     ):
         self.get_session = get_session
         self.capture_bindings = capture_bindings
@@ -24,17 +24,13 @@ class QueryCapture:
 
     def register(self, engine: Engine) -> None:
         """Register SQLAlchemy event listeners."""
-        event.listen(engine, "before_cursor_execute",
-                     self._before_cursor_execute)
-        event.listen(engine, "after_cursor_execute",
-                     self._after_cursor_execute)
+        event.listen(engine, "before_cursor_execute", self._before_cursor_execute)
+        event.listen(engine, "after_cursor_execute", self._after_cursor_execute)
 
     def unregister(self, engine: Engine) -> None:
         """Unregister SQLAlchemy event listeners."""
-        event.remove(engine, "before_cursor_execute",
-                     self._before_cursor_execute)
-        event.remove(engine, "after_cursor_execute",
-                     self._after_cursor_execute)
+        event.remove(engine, "before_cursor_execute", self._before_cursor_execute)
+        event.remove(engine, "after_cursor_execute", self._after_cursor_execute)
 
     def _before_cursor_execute(
         self,
@@ -43,7 +39,7 @@ class QueryCapture:
         statement: str,
         parameters: Any,
         context: Any,
-        executemany: bool
+        executemany: bool,
     ) -> None:
         request_id = request_context.get()
         if not request_id:
@@ -58,7 +54,7 @@ class QueryCapture:
         statement: str,
         parameters: Any,
         context: Any,
-        executemany: bool
+        executemany: bool,
     ) -> None:
         request_id = request_context.get()
         if not request_id:
@@ -77,13 +73,16 @@ class QueryCapture:
         captured_query = CapturedQuery(
             request_id=request_id,
             sql=format_sql(statement),
-            parameters=self._serialize_parameters(
-                parameters) if self.capture_bindings else None,
+            parameters=(
+                self._serialize_parameters(parameters)
+                if self.capture_bindings
+                else None
+            ),
             duration_ms=duration_ms,
-            rows_affected=cursor.rowcount if hasattr(
-                cursor, "rowcount") else None,
-            connection_name=str(conn.engine.url).split(
-                "@")[0] if hasattr(conn, "engine") else None
+            rows_affected=cursor.rowcount if hasattr(cursor, "rowcount") else None,
+            connection_name=(
+                str(conn.engine.url).split("@")[0] if hasattr(conn, "engine") else None
+            ),
         )
 
         try:

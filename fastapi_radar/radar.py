@@ -27,7 +27,7 @@ class Radar:
         slow_query_threshold: int = 100,
         capture_sql_bindings: bool = True,
         exclude_paths: Optional[List[str]] = None,
-        theme: str = "auto"
+        theme: str = "auto",
     ):
         self.app = app
         self.db_engine = db_engine
@@ -49,15 +49,12 @@ class Radar:
         else:
             radar_db_path = Path.cwd() / "radar.db"
             self.storage_engine = create_engine(
-                f"sqlite:///{radar_db_path}",
-                connect_args={"check_same_thread": False}
+                f"sqlite:///{radar_db_path}", connect_args={"check_same_thread": False}
             )
 
         # Create session maker for storage
         self.SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=self.storage_engine
+            autocommit=False, autoflush=False, bind=self.storage_engine
         )
 
         # Initialize components
@@ -82,7 +79,7 @@ class Radar:
             get_session=self.get_session,
             exclude_paths=self.exclude_paths,
             max_body_size=10000,
-            capture_response_body=True
+            capture_response_body=True,
         )
 
     def _setup_query_capture(self) -> None:
@@ -90,7 +87,7 @@ class Radar:
         self.query_capture = QueryCapture(
             get_session=self.get_session,
             capture_bindings=self.capture_sql_bindings,
-            slow_query_threshold=self.slow_query_threshold
+            slow_query_threshold=self.slow_query_threshold,
         )
         self.query_capture.register(self.db_engine)
 
@@ -110,14 +107,14 @@ class Radar:
             # Create placeholder dashboard for development
             dashboard_dir.mkdir(parents=True, exist_ok=True)
             self._create_placeholder_dashboard(dashboard_dir)
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("⚠️  FastAPI Radar: Dashboard not built")
-            print("="*60)
+            print("=" * 60)
             print("To use the full dashboard, build it with:")
             print("  cd fastapi_radar/dashboard")
             print("  npm install")
             print("  npm run build")
-            print("="*60 + "\n")
+            print("=" * 60 + "\n")
 
         # Add a catch-all route for the dashboard SPA
         # This ensures all sub-routes under /__radar serve the index.html
@@ -125,7 +122,20 @@ class Radar:
         @self.app.get(f"{self.dashboard_path}/{{full_path:path}}")
         async def serve_dashboard(request: Request, full_path: str = ""):
             # Check if it's a request for a static asset
-            if full_path and any(full_path.endswith(ext) for ext in ['.js', '.css', '.ico', '.png', '.jpg', '.svg', '.woff', '.woff2', '.ttf']):
+            if full_path and any(
+                full_path.endswith(ext)
+                for ext in [
+                    ".js",
+                    ".css",
+                    ".ico",
+                    ".png",
+                    ".jpg",
+                    ".svg",
+                    ".woff",
+                    ".woff2",
+                    ".ttf",
+                ]
+            ):
                 file_path = dashboard_dir / full_path
                 if file_path.exists():
                     return FileResponse(file_path)
@@ -140,7 +150,8 @@ class Radar:
     def _create_placeholder_dashboard(self, dashboard_dir: Path) -> None:
         """Create a placeholder dashboard for development."""
         index_html = dashboard_dir / "index.html"
-        index_html.write_text("""
+        index_html.write_text(
+            """
 <!DOCTYPE html>
 <html lang="en" data-theme="{theme}">
 <head>
@@ -253,7 +264,10 @@ class Radar:
     </script>
 </body>
 </html>
-        """.replace("{theme}", self.theme))
+        """.replace(
+                "{theme}", self.theme
+            )
+        )
 
     def create_tables(self) -> None:
         """Create radar storage tables."""
@@ -272,9 +286,11 @@ class Radar:
             hours = older_than_hours or self.retention_hours
             cutoff = datetime.utcnow() - timedelta(hours=hours)
 
-            deleted = session.query(CapturedRequest).filter(
-                CapturedRequest.created_at < cutoff
-            ).delete()
+            deleted = (
+                session.query(CapturedRequest)
+                .filter(CapturedRequest.created_at < cutoff)
+                .delete()
+            )
 
             session.commit()
             return deleted

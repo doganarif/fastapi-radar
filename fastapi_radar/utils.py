@@ -7,8 +7,7 @@ from starlette.datastructures import Headers
 
 def serialize_headers(headers: Headers) -> Dict[str, str]:
     """Serialize headers to a dictionary, excluding sensitive data."""
-    sensitive_headers = {"authorization",
-                         "cookie", "x-api-key", "x-auth-token"}
+    sensitive_headers = {"authorization", "cookie", "x-api-key", "x-auth-token"}
     result = {}
 
     for key, value in headers.items():
