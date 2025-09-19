@@ -117,7 +117,7 @@ export function DetailDrawer({
 
         {/* Tabs for detailed information */}
         <Tabs defaultValue="headers" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="flex flex-wrap w-full gap-1">
             <TabsTrigger value="headers">Headers</TabsTrigger>
             <TabsTrigger value="body">Body</TabsTrigger>
             <TabsTrigger value="response">Response</TabsTrigger>
@@ -152,7 +152,7 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[200px] rounded-md border p-3">
-                <pre className="text-xs">
+                <pre className="text-xs whitespace-pre-wrap break-all">
                   {formatJson(requestDetail.headers) || "No headers"}
                 </pre>
               </ScrollArea>
@@ -177,7 +177,7 @@ export function DetailDrawer({
                   </Button>
                 </div>
                 <ScrollArea className="h-[200px] rounded-md border p-3">
-                  <pre className="text-xs">
+                  <pre className="text-xs whitespace-pre-wrap break-all">
                     {formatJson(requestDetail.response_headers) ||
                       "No response headers"}
                   </pre>
@@ -192,7 +192,7 @@ export function DetailDrawer({
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Query Parameters</h4>
                   <ScrollArea className="h-[100px] rounded-md border p-3">
-                    <pre className="text-xs">
+                    <pre className="text-xs whitespace-pre-wrap break-all">
                       {formatJson(requestDetail.query_params)}
                     </pre>
                   </ScrollArea>
@@ -214,7 +214,7 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[300px] rounded-md border p-3">
-                <pre className="text-xs">
+                <pre className="text-xs whitespace-pre-wrap break-all">
                   {requestDetail.body || "No request body"}
                 </pre>
               </ScrollArea>
@@ -240,7 +240,7 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[400px] rounded-md border p-3">
-                <pre className="text-xs">
+                <pre className="text-xs whitespace-pre-wrap break-all">
                   {requestDetail.response_body || "No response body"}
                 </pre>
               </ScrollArea>
@@ -276,7 +276,9 @@ export function DetailDrawer({
                     <CardContent>
                       <div className="space-y-2">
                         <ScrollArea className="h-[100px] rounded-md border p-2">
-                          <pre className="text-xs">{query.sql}</pre>
+                          <pre className="text-xs whitespace-pre-wrap break-all">
+                            {query.sql}
+                          </pre>
                         </ScrollArea>
                         {query.parameters && query.parameters.length > 0 && (
                           <div>
@@ -319,7 +321,7 @@ export function DetailDrawer({
                           <p className="text-sm">{exception.exception_value}</p>
                         )}
                         <ScrollArea className="h-[200px] rounded-md border border-destructive/20 p-2">
-                          <pre className="text-xs text-destructive">
+                          <pre className="text-xs text-destructive whitespace-pre-wrap break-all">
                             {exception.traceback}
                           </pre>
                         </ScrollArea>

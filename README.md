@@ -6,6 +6,8 @@
 
 **A debugging dashboard for FastAPI applications providing real-time request, database query, and exception monitoring.**
 
+![FastAPI Radar Dashboard Demo](./assets/demo.gif)
+
 ## Installation
 
 ```bash
@@ -54,10 +56,6 @@ Access your dashboard at: **http://localhost:8000/\_\_radar/**
 - 🐛 **Exception Tracking** - Automatic exception capture with stack traces
 - ⚡ **Real-time Updates** - Live dashboard updates as requests happen
 - 🎨 **Beautiful UI** - Modern React dashboard with shadcn/ui components
-
-## Screenshots
-
-<!-- Add screenshots here -->
 
 ## Configuration
 
