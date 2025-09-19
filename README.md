@@ -44,7 +44,7 @@ async def get_users():
     return {"users": []}
 ```
 
-Access your dashboard at: **http://localhost:8000/\_\_radar**
+Access your dashboard at: **http://localhost:8000/\_\_radar/**
 
 ## Features
 
