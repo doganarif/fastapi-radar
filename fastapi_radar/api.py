@@ -98,7 +98,18 @@ def create_api_router(get_session_context) -> APIRouter:
         query = session.query(CapturedRequest)
 
         if status_code:
-            query = query.filter(CapturedRequest.status_code == status_code)
+            # Handle status code ranges (e.g., 200 for 2xx, 400 for 4xx)
+            if status_code in [200, 300, 400, 500]:
+                # Filter by status code range
+                lower_bound = status_code
+                upper_bound = status_code + 100
+                query = query.filter(
+                    CapturedRequest.status_code >= lower_bound,
+                    CapturedRequest.status_code < upper_bound
+                )
+            else:
+                # Exact status code match
+                query = query.filter(CapturedRequest.status_code == status_code)
         if method:
             query = query.filter(CapturedRequest.method == method)
         if search:
@@ -246,7 +257,7 @@ def create_api_router(get_session_context) -> APIRouter:
 
     @router.get("/stats", response_model=DashboardStats)
     async def get_stats(
-        hours: int = Query(1, ge=1, le=24),
+        hours: int = Query(1, ge=1, le=720),  # Allow up to 30 days
         slow_threshold: int = Query(100),
         session: Session = Depends(get_db),
     ):
