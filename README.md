@@ -6,6 +6,10 @@
 
 **A debugging dashboard for FastAPI applications providing real-time request, database query, and exception monitoring.**
 
+✨ **Just one line to add powerful monitoring to your FastAPI app!**
+
+## 🎯 See it in Action
+
 ![FastAPI Radar Dashboard Demo](./assets/demo.gif)
 
 ## Installation
@@ -36,7 +40,7 @@ from sqlalchemy import create_engine
 app = FastAPI()
 engine = create_engine("sqlite:///./app.db")
 
-# Initialize Radar - automatically adds middleware and mounts dashboard
+# That's it! One line to add complete monitoring 🚀
 radar = Radar(app, db_engine=engine)
 radar.create_tables()
 
