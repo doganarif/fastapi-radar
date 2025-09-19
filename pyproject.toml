@@ -33,6 +33,7 @@ dependencies = [
     "pydantic>=1.8.0",
     "starlette>=0.14.2",
     "black>=24.8.0",
+    "httpx>=0.28.1",
 ]
 
 [project.urls]
