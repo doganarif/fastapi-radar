@@ -31,8 +31,6 @@ dependencies = [
     "sqlalchemy>=1.4.0",
     "pydantic>=1.8.0",
     "starlette>=0.14.2",
-    "black>=24.8.0",
-    "httpx>=0.28.1",
 ]
 
 [project.urls]
@@ -49,6 +47,7 @@ dev = [
     "isort>=5.10.0",
     "flake8>=4.0.0",
     "mypy>=0.950",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
