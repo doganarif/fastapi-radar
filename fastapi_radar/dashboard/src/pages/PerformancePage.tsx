@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -18,9 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
 import { useMetrics, formatDuration, formatNumber } from "@/hooks/useMetrics";
+
+// Import new reusable components
+import { MetricCard, CompactMetric } from "@/components/metrics";
+import {
+  ProgressMeter,
+  LinearGauge,
+  CircularProgress,
+} from "@/components/metrics";
+import { StatusIndicator } from "@/components/metrics";
+import { BarChart, DistributionChart } from "@/components/charts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export function PerformancePage() {
   const [timeRange, setTimeRange] = useState("1h");
@@ -36,10 +44,9 @@ export function PerformancePage() {
     refetchInterval: refreshInterval,
   });
 
-  // Use consistent sample size with Dashboard
   const { data: requests } = useQuery({
     queryKey: ["performance-requests", timeRange],
-    queryFn: () => apiClient.getRequests({ limit: 100 }), // Same as Dashboard
+    queryFn: () => apiClient.getRequests({ limit: 100 }),
     refetchInterval: refreshInterval,
   });
 
@@ -63,103 +70,87 @@ export function PerformancePage() {
     stats,
   });
 
+  // Prepare data for charts
   const performanceIndicators = [
     {
       label: "Success Rate",
-      value: metrics.successRate / 100,
+      value: metrics.successRate,
       status:
         metrics.successRate >= 99
-          ? "excellent"
+          ? "success"
           : metrics.successRate >= 95
-          ? "good"
-          : metrics.successRate >= 90
           ? "warning"
-          : "critical",
-      description: `Based on ${metrics.totalRequests} recent requests`,
+          : "error",
+      description: `Based on ${metrics.totalRequests} requests`,
     },
     {
       label: "Avg Response Time",
-      value: metrics.avgResponseTime ? metrics.avgResponseTime / 1000 : 0, // Convert to normalized value
+      value: formatDuration(metrics.avgResponseTime),
+      rawValue: metrics.avgResponseTime,
       status:
         !metrics.avgResponseTime || metrics.avgResponseTime < 100
-          ? "excellent"
+          ? "success"
           : metrics.avgResponseTime < 300
-          ? "good"
-          : metrics.avgResponseTime < 1000
           ? "warning"
-          : "critical",
-      description: formatDuration(metrics.avgResponseTime),
+          : "error",
     },
     {
       label: "Error Rate",
-      value: metrics.errorRate / 100,
+      value: `${metrics.errorRate.toFixed(1)}%`,
+      rawValue: metrics.errorRate,
       status:
         metrics.errorRate <= 1
-          ? "excellent"
+          ? "success"
           : metrics.errorRate <= 2
-          ? "good"
-          : metrics.errorRate <= 5
           ? "warning"
-          : "critical",
-      description: `${metrics.errorRate.toFixed(1)}% of requests failed`,
+          : "error",
     },
     {
       label: "Query Performance",
-      value: metrics.avgQueryTime
-        ? (100 - Math.min((metrics.avgQueryTime / 100) * 100, 100)) / 100
-        : 1,
+      value: formatDuration(metrics.avgQueryTime),
+      rawValue: metrics.avgQueryTime,
       status:
         !metrics.avgQueryTime || metrics.avgQueryTime < 50
-          ? "excellent"
+          ? "success"
           : metrics.avgQueryTime < 100
-          ? "good"
-          : metrics.avgQueryTime < 200
           ? "warning"
-          : "critical",
-      description: formatDuration(metrics.avgQueryTime),
+          : "error",
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "excellent":
-        return "text-green-500";
-      case "good":
-        return "text-blue-500";
-      case "warning":
-        return "text-yellow-500";
-      case "critical":
-        return "text-red-500";
-      default:
-        return "text-gray-500";
-    }
-  };
+  const endpointBarData = metrics.endpointMetrics
+    .slice(0, 10)
+    .map((endpoint) => ({
+      name: endpoint.name,
+      responseTime: endpoint.avgResponseTime,
+      calls: endpoint.calls,
+    }));
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "excellent":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "good":
-        return <TrendingUp className="h-4 w-4 text-blue-500" />;
-      case "warning":
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case "critical":
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
+  const errorDistribution = [
+    {
+      category: "4xx Errors",
+      count:
+        requests?.filter(
+          (r) => r.status_code && r.status_code >= 400 && r.status_code < 500
+        ).length || 0,
+    },
+    {
+      category: "5xx Errors",
+      count:
+        requests?.filter((r) => r.status_code && r.status_code >= 500).length ||
+        0,
+    },
+    { category: "Exceptions", count: metrics.totalExceptions },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Performance Monitoring
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Performance</h1>
           <p className="text-muted-foreground">
-            Track application performance metrics and identify bottlenecks
+            Monitor and analyze application performance metrics
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -195,33 +186,56 @@ export function PerformancePage() {
         {performanceIndicators.map((indicator) => (
           <Card key={indicator.label}>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
-                  {indicator.label}
-                </CardTitle>
-                {getStatusIcon(indicator.status)}
-              </div>
-              <CardDescription className="text-xs">
-                {indicator.description}
-              </CardDescription>
+              <CardTitle className="text-sm font-medium">
+                {indicator.label}
+              </CardTitle>
+              {indicator.description && (
+                <CardDescription className="text-xs">
+                  {indicator.description}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
-                <span
-                  className={`text-2xl font-bold ${getStatusColor(
-                    indicator.status
-                  )}`}
-                >
-                  {indicator.label.includes("Rate")
-                    ? `${(indicator.value * 100).toFixed(1)}%`
-                    : indicator.label === "Avg Response Time"
-                    ? formatDuration(metrics.avgResponseTime)
-                    : indicator.label === "Query Performance"
-                    ? `${(indicator.value * 100).toFixed(0)}%`
-                    : indicator.value.toFixed(2)}
-                </span>
+              <div className="space-y-3">
+                <div className="text-2xl font-bold tabular-nums">
+                  {indicator.value}
+                </div>
+                <StatusIndicator
+                  status={indicator.status as any}
+                  label={
+                    indicator.status === "success"
+                      ? "Excellent"
+                      : indicator.status === "warning"
+                      ? "Acceptable"
+                      : "Needs Attention"
+                  }
+                  compact
+                />
+                {indicator.rawValue !== undefined && (
+                  <ProgressMeter
+                    label=""
+                    value={
+                      indicator.label.includes("Rate")
+                        ? indicator.rawValue
+                        : indicator.label === "Avg Response Time"
+                        ? Math.min((indicator.rawValue / 1000) * 100, 100)
+                        : indicator.label === "Query Performance"
+                        ? Math.min((indicator.rawValue / 200) * 100, 100)
+                        : 0
+                    }
+                    max={100}
+                    showPercentage={false}
+                    compact
+                    status={
+                      indicator.status === "success"
+                        ? "success"
+                        : indicator.status === "warning"
+                        ? "warning"
+                        : "danger"
+                    }
+                  />
+                )}
               </div>
-              <Progress value={indicator.value * 100} className="mt-2 h-2" />
             </CardContent>
           </Card>
         ))}
@@ -237,114 +251,126 @@ export function PerformancePage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Performance Summary Cards */}
+          {/* Performance Summary */}
           <div className="grid gap-4 md:grid-cols-3">
+            {/* Response Time Card */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-base">Response Time</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">P50 (Median)</span>
-                  <span className="font-medium">
-                    {formatDuration(metrics.responseTimePercentiles.p50)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">P95</span>
-                  <span className="font-medium">
-                    {formatDuration(metrics.responseTimePercentiles.p95)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">P99</span>
-                  <span className="font-medium">
-                    {formatDuration(metrics.responseTimePercentiles.p99)}
-                  </span>
-                </div>
+              <CardContent className="space-y-3">
+                <CompactMetric
+                  label="P50 (Median)"
+                  value={formatDuration(metrics.responseTimePercentiles.p50)}
+                />
+                <CompactMetric
+                  label="P95"
+                  value={formatDuration(metrics.responseTimePercentiles.p95)}
+                />
+                <CompactMetric
+                  label="P99"
+                  value={formatDuration(metrics.responseTimePercentiles.p99)}
+                />
+                <LinearGauge
+                  value={metrics.avgResponseTime || 0}
+                  max={1000}
+                  label="Average"
+                  thresholds={[
+                    { value: 100, label: "100ms" },
+                    { value: 300, label: "300ms" },
+                    { value: 1000, label: "1s" },
+                  ]}
+                />
               </CardContent>
             </Card>
 
+            {/* Throughput Card */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-base">Throughput</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Requests/sec</span>
-                  <span className="font-medium">
-                    {metrics.requestsPerSecond.toFixed(1)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Requests</span>
-                  <span className="font-medium">
-                    {formatNumber(stats?.total_requests)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Queries</span>
-                  <span className="font-medium">
-                    {formatNumber(stats?.total_queries)}
-                  </span>
-                </div>
+              <CardContent className="space-y-3">
+                <CompactMetric
+                  label="Requests/sec"
+                  value={metrics.requestsPerSecond.toFixed(1)}
+                />
+                <CompactMetric
+                  label="Total Requests"
+                  value={formatNumber(stats?.total_requests)}
+                />
+                <CompactMetric
+                  label="Total Queries"
+                  value={formatNumber(stats?.total_queries)}
+                />
+                <CompactMetric
+                  label="Queries/Request"
+                  value={
+                    stats?.total_queries && stats?.total_requests
+                      ? (stats.total_queries / stats.total_requests).toFixed(1)
+                      : "0"
+                  }
+                />
               </CardContent>
             </Card>
 
+            {/* Error Rates Card */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Error Rates</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Error Analysis</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Failed Requests</span>
-                  <span className="font-medium">{metrics.failedRequests}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Error Rate</span>
-                  <span className="font-medium">
-                    {metrics.errorRate.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Exceptions</span>
-                  <span className="font-medium">{metrics.totalExceptions}</span>
-                </div>
+              <CardContent className="space-y-3">
+                <CircularProgress
+                  value={100 - metrics.errorRate}
+                  size="sm"
+                  label="Health Score"
+                />
+                <CompactMetric
+                  label="Failed Requests"
+                  value={metrics.failedRequests}
+                />
+                <CompactMetric
+                  label="Error Rate"
+                  value={`${metrics.errorRate.toFixed(1)}%`}
+                />
+                <CompactMetric
+                  label="Exceptions"
+                  value={metrics.totalExceptions}
+                />
               </CardContent>
             </Card>
           </div>
 
+          {/* Metrics Summary Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Metrics Summary</CardTitle>
+              <CardTitle>Performance Summary</CardTitle>
               <CardDescription>
-                Real-time performance metrics based on recent activity
+                Real-time metrics based on {metrics.totalRequests} recent
+                requests
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Sample Size</p>
-                  <p className="font-medium">
-                    {metrics.totalRequests} requests
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Success Rate</p>
-                  <p className="font-medium text-green-500">
-                    {metrics.successRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Avg Response</p>
-                  <p className="font-medium">
-                    {formatDuration(metrics.avgResponseTime)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Slow Requests</p>
-                  <p className="font-medium">{metrics.slowRequests}</p>
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <MetricCard
+                  label="Success Rate"
+                  value={`${metrics.successRate.toFixed(1)}%`}
+                  minimal
+                />
+                <MetricCard
+                  label="Avg Response"
+                  value={formatDuration(metrics.avgResponseTime)}
+                  minimal
+                />
+                <MetricCard
+                  label="Slow Requests"
+                  value={metrics.slowRequests}
+                  minimal
+                />
+                <MetricCard
+                  label="Active Endpoints"
+                  value={metrics.endpointMetrics.length}
+                  minimal
+                />
               </div>
             </CardContent>
           </Card>
@@ -353,40 +379,53 @@ export function PerformancePage() {
         <TabsContent value="endpoints" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Endpoint Performance Metrics</CardTitle>
+              <CardTitle>Endpoint Performance</CardTitle>
               <CardDescription>
-                Detailed performance breakdown by API endpoint
+                Performance breakdown by API endpoint
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {endpointBarData.length > 0 && (
+                <BarChart
+                  title="Response Times by Endpoint"
+                  data={endpointBarData}
+                  bars={[
+                    { dataKey: "responseTime", name: "Avg Response Time" },
+                  ]}
+                  height={300}
+                  formatter="duration"
+                  minimal
+                  horizontal
+                />
+              )}
+
               <div className="space-y-4">
+                <h4 className="text-sm font-medium">Detailed Metrics</h4>
                 {metrics.endpointMetrics.map((endpoint) => (
-                  <div key={endpoint.name} className="space-y-2">
+                  <div
+                    key={endpoint.name}
+                    className="space-y-2 p-3 border rounded-lg"
+                  >
                     <div className="flex items-center justify-between">
+                      <code className="text-sm font-mono">{endpoint.name}</code>
                       <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono">
-                          {endpoint.name}
-                        </code>
                         <Badge variant="outline">{endpoint.calls} calls</Badge>
                         {endpoint.errors > 0 && (
                           <Badge variant="destructive">
                             {endpoint.errors} errors
                           </Badge>
                         )}
-                        <Badge variant="secondary">
-                          {endpoint.successRate}% success
-                        </Badge>
                       </div>
-                      <span className="text-sm font-medium">
-                        {endpoint.avgResponseTime}ms avg
-                      </span>
                     </div>
-                    <Progress
+                    <ProgressMeter
+                      label={`${endpoint.avgResponseTime}ms average`}
                       value={Math.min(
                         (endpoint.avgResponseTime / 500) * 100,
                         100
                       )}
-                      className="h-2"
+                      showPercentage={false}
+                      sublabel={`Success rate: ${endpoint.successRate}%`}
+                      compact
                     />
                   </div>
                 ))}
@@ -406,29 +445,41 @@ export function PerformancePage() {
               <CardHeader>
                 <CardTitle>Query Statistics</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Queries</span>
-                  <span className="font-medium">{metrics.totalQueries}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Slow Queries</span>
-                  <span className="font-medium text-yellow-500">
-                    {metrics.slowQueries}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Avg Query Time</span>
-                  <span className="font-medium">
-                    {formatDuration(metrics.avgQueryTime)}
-                  </span>
-                </div>
+              <CardContent className="space-y-3">
+                <CompactMetric
+                  label="Total Queries"
+                  value={metrics.totalQueries}
+                />
+                <CompactMetric
+                  label="Slow Queries"
+                  value={metrics.slowQueries}
+                />
+                <CompactMetric
+                  label="Avg Query Time"
+                  value={formatDuration(metrics.avgQueryTime)}
+                />
+                <ProgressMeter
+                  label="Query Performance Score"
+                  value={
+                    metrics.avgQueryTime
+                      ? 100 - Math.min((metrics.avgQueryTime / 200) * 100, 100)
+                      : 100
+                  }
+                  status={
+                    !metrics.avgQueryTime || metrics.avgQueryTime < 50
+                      ? "success"
+                      : metrics.avgQueryTime < 100
+                      ? "warning"
+                      : "danger"
+                  }
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Slow Queries</CardTitle>
+                <CardDescription>Queries exceeding 100ms</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -438,13 +489,18 @@ export function PerformancePage() {
                     .map((query) => (
                       <div
                         key={query.id}
-                        className="text-xs cursor-pointer hover:bg-muted/50 p-2 rounded"
+                        className="text-xs cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
                         onClick={() => openDetail("request", query.request_id)}
                       >
                         <code className="block truncate">{query.sql}</code>
-                        <span className="text-muted-foreground">
-                          {formatDuration(query.duration_ms)}
-                        </span>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-muted-foreground">
+                            {new Date(query.created_at).toLocaleTimeString()}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {formatDuration(query.duration_ms)}
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   {(!queries ||
@@ -468,48 +524,39 @@ export function PerformancePage() {
                 Breakdown of errors and exceptions
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Errors</p>
-                  <p className="text-2xl font-bold">{metrics.failedRequests}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Error Rate</p>
-                  <p className="text-2xl font-bold text-red-500">
-                    {metrics.errorRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Exceptions</p>
-                  <p className="text-2xl font-bold">
-                    {metrics.totalExceptions}
-                  </p>
-                </div>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <MetricCard
+                  label="Total Errors"
+                  value={metrics.failedRequests}
+                  minimal
+                />
+                <MetricCard
+                  label="Error Rate"
+                  value={`${metrics.errorRate.toFixed(1)}%`}
+                  minimal
+                />
+                <MetricCard
+                  label="Exceptions"
+                  value={metrics.totalExceptions}
+                  minimal
+                />
               </div>
+
+              <DistributionChart data={errorDistribution} />
 
               <div className="space-y-3">
                 <h4 className="text-sm font-medium">Recent Exceptions</h4>
                 {exceptions?.slice(0, 10).map((exception) => (
-                  <div
+                  <StatusIndicator
                     key={exception.id}
-                    className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50"
+                    status="error"
+                    label={exception.exception_type}
+                    description={exception.exception_value || undefined}
+                    value={new Date(exception.created_at).toLocaleTimeString()}
+                    className="cursor-pointer hover:bg-muted/50 p-2 -mx-2 rounded transition-colors"
                     onClick={() => openDetail("request", exception.request_id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <Badge variant="destructive">
-                        {exception.exception_type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(exception.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    {exception.exception_value && (
-                      <p className="text-sm mt-1">
-                        {exception.exception_value}
-                      </p>
-                    )}
-                  </div>
+                  />
                 ))}
                 {(!exceptions || exceptions.length === 0) && (
                   <p className="text-center text-muted-foreground py-4">

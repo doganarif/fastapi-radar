@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -20,13 +11,11 @@ import {
 } from "@/components/ui/select";
 import {
   Activity,
-  TrendingUp,
-  TrendingDown,
   Database,
   AlertTriangle,
   Clock,
-  ArrowUpRight,
   RefreshCw,
+  ArrowUpRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
@@ -36,6 +25,25 @@ import {
   getStatusBadgeVariant,
 } from "@/hooks/useMetrics";
 import { Link } from "react-router-dom";
+
+// Import new reusable components
+import { MetricCard, CompactMetric } from "@/components/metrics";
+import { StatusIndicator, StatusDot } from "@/components/metrics";
+import { ProgressMeter, CircularProgress } from "@/components/metrics";
+import {
+  LineChart,
+  AreaChart,
+  SimpleBarChart,
+  DistributionChart,
+} from "@/components/charts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export function DashboardPage() {
   const [timeRange, setTimeRange] = useState<number>(1); // hours
@@ -50,7 +58,7 @@ export function DashboardPage() {
 
   const { data: recentRequests, refetch: refetchRequests } = useQuery({
     queryKey: ["recent-requests"],
-    queryFn: () => apiClient.getRequests({ limit: 100 }), // Consistent sample size
+    queryFn: () => apiClient.getRequests({ limit: 100 }),
     refetchInterval: autoRefresh ? 5000 : false,
   });
 
@@ -70,7 +78,7 @@ export function DashboardPage() {
   // Use centralized metrics calculations
   const metrics = useMetrics({
     requests: recentRequests,
-    queries: null, // Not needed for dashboard overview
+    queries: null,
     exceptions: recentExceptions,
     stats,
   });
@@ -84,17 +92,43 @@ export function DashboardPage() {
     ]);
   };
 
+  // Prepare data for charts
+  const timeSeriesData =
+    recentRequests
+      ?.slice(0, 20)
+      .reverse()
+      .map((req) => ({
+        name: format(new Date(req.created_at), "HH:mm"),
+        response: req.duration_ms || 0,
+        queries: req.query_count || 0,
+      })) || [];
+
+  const statusDistribution = [
+    {
+      category: "Success",
+      count: metrics.successfulRequests,
+      percentage: metrics.successRate,
+    },
+    {
+      category: "Errors",
+      count: metrics.failedRequests,
+      percentage: metrics.errorRate,
+    },
+  ];
+
+  const endpointData = metrics.endpointMetrics.slice(0, 5).map((endpoint) => ({
+    name: endpoint.name,
+    value: endpoint.avgResponseTime,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Dashboard Overview
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Real-time monitoring and performance metrics for your FastAPI
-            application
+            Real-time monitoring for your FastAPI application
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -117,192 +151,193 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Stats Cards */}
+      {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Requests"
+          value={stats?.total_requests || 0}
+          change={undefined}
+          changeLabel={`${metrics.requestsPerMinute.toFixed(1)} req/min`}
+          icon={<Activity className="h-8 w-8" />}
+        />
+
+        <MetricCard
+          label="Avg Response Time"
+          value={formatDuration(metrics.avgResponseTime)}
+          trend={metrics.avgResponseTime < 100 ? "down" : "up"}
+          changeLabel={
+            metrics.avgResponseTime < 100 ? "Fast" : "Could be faster"
+          }
+          icon={<Clock className="h-8 w-8" />}
+        />
+
+        <MetricCard
+          label="Database Queries"
+          value={stats?.total_queries || 0}
+          changeLabel={
+            stats?.slow_queries ? `${stats.slow_queries} slow` : "All fast"
+          }
+          trend={stats?.slow_queries ? "up" : "neutral"}
+          icon={<Database className="h-8 w-8" />}
+        />
+
+        <MetricCard
+          label="Exceptions"
+          value={stats?.total_exceptions || 0}
+          trend={stats?.total_exceptions === 0 ? "neutral" : "up"}
+          changeLabel={
+            stats?.total_exceptions === 0 ? "All good" : "Needs attention"
+          }
+          icon={<AlertTriangle className="h-8 w-8" />}
+        />
+      </div>
+
+      {/* Performance Overview */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Success Rate */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Requests
-            </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">System Health</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_requests || 0}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <span>{metrics.requestsPerMinute.toFixed(1) || 0} req/min</span>
+          <CardContent className="space-y-4">
+            <CircularProgress
+              value={metrics.successRate}
+              max={100}
+              size="md"
+              label="Success Rate"
+            />
+            <div className="space-y-2">
+              <CompactMetric
+                label="Total Requests"
+                value={metrics.totalRequests}
+              />
+              <CompactMetric
+                label="Failed Requests"
+                value={metrics.failedRequests}
+              />
+              <CompactMetric
+                label="Error Rate"
+                value={`${metrics.errorRate.toFixed(1)}%`}
+              />
             </div>
           </CardContent>
         </Card>
 
+        {/* Response Time Distribution */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Avg Response Time
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Response Times</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatDuration(metrics.avgResponseTime)}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {metrics.avgResponseTime < 100 ? (
-                <>
-                  <TrendingDown className="mr-1 h-3 w-3 text-green-500" />
-                  <span className="text-green-500">Fast</span>
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="mr-1 h-3 w-3 text-yellow-500" />
-                  <span className="text-yellow-500">Could be faster</span>
-                </>
-              )}
+          <CardContent className="space-y-2">
+            <CompactMetric
+              label="P50 (Median)"
+              value={formatDuration(metrics.responseTimePercentiles.p50)}
+            />
+            <CompactMetric
+              label="P95"
+              value={formatDuration(metrics.responseTimePercentiles.p95)}
+            />
+            <CompactMetric
+              label="P99"
+              value={formatDuration(metrics.responseTimePercentiles.p99)}
+            />
+            <div className="pt-2">
+              <ProgressMeter
+                label="Query Performance"
+                value={
+                  stats?.avg_query_time
+                    ? 100 - Math.min((stats.avg_query_time / 200) * 100, 100)
+                    : 100
+                }
+                compact
+                status={
+                  !stats?.avg_query_time || stats.avg_query_time < 50
+                    ? "success"
+                    : stats.avg_query_time < 100
+                    ? "warning"
+                    : "danger"
+                }
+              />
             </div>
           </CardContent>
         </Card>
 
+        {/* Status Distribution */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Database Queries
-            </CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Request Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_queries || 0}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {stats?.slow_queries ? (
-                <>
-                  <span className="text-yellow-500">{stats.slow_queries}</span>
-                  <span className="ml-1">slow queries detected</span>
-                </>
-              ) : (
-                <span className="text-green-500">All queries fast</span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Exceptions</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_exceptions || 0}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {stats?.total_exceptions === 0 ? (
-                <span className="text-green-500">All systems operational</span>
-              ) : (
-                <>
-                  <ArrowUpRight className="mr-1 h-3 w-3 text-red-500" />
-                  <span className="text-red-500">Needs attention</span>
-                </>
-              )}
+            <DistributionChart data={statusDistribution} />
+            <div className="mt-4 space-y-2">
+              <StatusIndicator
+                status={
+                  metrics.successRate >= 95
+                    ? "success"
+                    : metrics.successRate >= 90
+                    ? "warning"
+                    : "error"
+                }
+                label="System Status"
+                description={`${metrics.requestsPerSecond.toFixed(
+                  1
+                )} requests/sec`}
+                compact
+              />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Performance Summary */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Success Rate</CardTitle>
-              <CardDescription>
-                Based on last {metrics.totalRequests} requests
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">
-                    {metrics.successRate.toFixed(1)}%
-                  </span>
-                  <Badge
-                    variant={
-                      metrics.successRate >= 95
-                        ? "default"
-                        : metrics.successRate >= 90
-                        ? "secondary"
-                        : "destructive"
-                    }
-                  >
-                    {metrics.successRate >= 95
-                      ? "Excellent"
-                      : metrics.successRate >= 90
-                      ? "Good"
-                      : "Poor"}
-                  </Badge>
-                </div>
-                <Progress value={metrics.successRate} className="h-2" />
-                {metrics.failedRequests > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {metrics.failedRequests} errors out of{" "}
-                    {metrics.totalRequests} requests
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Query Performance</CardTitle>
-              <CardDescription>Average database query time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">
-                    {stats.avg_query_time
-                      ? `${stats.avg_query_time.toFixed(0)}ms`
-                      : "0ms"}
-                  </span>
-                  <Badge
-                    variant={
-                      !stats.avg_query_time || stats.avg_query_time < 50
-                        ? "default"
-                        : stats.avg_query_time < 100
-                        ? "secondary"
-                        : "destructive"
-                    }
-                  >
-                    {!stats.avg_query_time || stats.avg_query_time < 50
-                      ? "Fast"
-                      : stats.avg_query_time < 100
-                      ? "Normal"
-                      : "Slow"}
-                  </Badge>
-                </div>
-                <Progress
-                  value={
-                    stats.avg_query_time
-                      ? Math.min((stats.avg_query_time / 200) * 100, 100)
-                      : 0
-                  }
-                  className="h-2"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Recent Activity */}
+      {/* Time Series Charts */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Recent Requests */}
+        <AreaChart
+          title="Response Time Trend"
+          description="Average response times over time"
+          data={timeSeriesData}
+          areas={[{ dataKey: "response", name: "Response Time (ms)" }]}
+          height={200}
+          formatter="duration"
+        />
+
+        <LineChart
+          title="Query Activity"
+          description="Database query count per request"
+          data={timeSeriesData}
+          lines={[{ dataKey: "queries", name: "Queries" }]}
+          height={200}
+          showGrid={true}
+        />
+      </div>
+
+      {/* Endpoint Performance */}
+      {endpointData.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Recent Requests</CardTitle>
+              <CardTitle className="text-base">Top Endpoints</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/performance">
+                  View all
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+            <CardDescription>Average response time by endpoint</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SimpleBarChart data={endpointData} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Activity Feed */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Recent Requests */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Recent Requests</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/requests">
                   View all
@@ -310,26 +345,26 @@ export function DashboardPage() {
                 </Link>
               </Button>
             </div>
-            <CardDescription>Latest HTTP requests to your API</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentRequests?.slice(0, 5).map((request) => (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                  className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-2 -mx-2 rounded transition-colors"
                   onClick={() => openDetail("request", request.request_id)}
                 >
-                  <div className="flex items-center space-x-4">
-                    <Badge
-                      variant={
-                        getStatusBadgeVariant(request.status_code) as any
+                  <div className="flex items-center gap-3">
+                    <StatusDot
+                      status={
+                        request.status_code && request.status_code < 400
+                          ? "online"
+                          : "offline"
                       }
-                    >
-                      {request.status_code || "pending"}
-                    </Badge>
-                    <div>
-                      <p className="text-sm font-medium">
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
                         {request.method} {request.path}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -338,14 +373,16 @@ export function DashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">
+                    <Badge
+                      variant={
+                        getStatusBadgeVariant(request.status_code) as any
+                      }
+                    >
+                      {request.status_code}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
                       {formatDuration(request.duration_ms)}
                     </p>
-                    {request.query_count > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {request.query_count} queries
-                      </p>
-                    )}
                   </div>
                 </div>
               ))}
@@ -360,9 +397,9 @@ export function DashboardPage() {
 
         {/* Slow Queries */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle>Slow Queries</CardTitle>
+              <CardTitle className="text-base">Slow Queries</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/database">
                   View all
@@ -370,29 +407,26 @@ export function DashboardPage() {
                 </Link>
               </Button>
             </div>
-            <CardDescription>
-              Database queries taking longer than expected
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {slowQueries?.slice(0, 5).map((query) => (
                 <div
                   key={query.id}
-                  className="space-y-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                  className="space-y-1 cursor-pointer hover:bg-muted/50 p-2 -mx-2 rounded transition-colors"
                   onClick={() => openDetail("request", query.request_id)}
                 >
+                  <code className="text-xs bg-muted px-2 py-1 rounded block truncate">
+                    {query.sql.substring(0, 50)}...
+                  </code>
                   <div className="flex items-center justify-between">
-                    <code className="text-xs bg-muted px-2 py-1 rounded truncate max-w-[300px]">
-                      {query.sql.substring(0, 50)}...
-                    </code>
-                    <Badge variant="destructive">
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(query.created_at), "HH:mm:ss")}
+                    </span>
+                    <Badge variant="outline" className="text-xs">
                       {formatDuration(query.duration_ms)}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(query.created_at), "HH:mm:ss")}
-                  </p>
                 </div>
               ))}
               {(!slowQueries || slowQueries.length === 0) && (
@@ -408,9 +442,9 @@ export function DashboardPage() {
       {/* Recent Exceptions */}
       {recentExceptions && recentExceptions.length > 0 && (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle>Recent Exceptions</CardTitle>
+              <CardTitle className="text-base">Recent Exceptions</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/exceptions">
                   View all
@@ -418,33 +452,21 @@ export function DashboardPage() {
                 </Link>
               </Button>
             </div>
-            <CardDescription>
-              Errors and exceptions caught in your application
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-2">
               {recentExceptions.slice(0, 3).map((exception) => (
-                <div
+                <StatusIndicator
                   key={exception.id}
-                  className="space-y-2 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  status="error"
+                  label={exception.exception_type}
+                  description={
+                    exception.exception_value || "Click to view full traceback"
+                  }
+                  value={format(new Date(exception.created_at), "HH:mm")}
+                  className="cursor-pointer hover:bg-muted/50 p-2 -mx-2 rounded transition-colors"
                   onClick={() => openDetail("request", exception.request_id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge variant="destructive">
-                      {exception.exception_type}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(exception.created_at), "HH:mm:ss")}
-                    </span>
-                  </div>
-                  {exception.exception_value && (
-                    <p className="text-sm">{exception.exception_value}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Click to view full traceback and request details
-                  </p>
-                </div>
+                />
               ))}
             </div>
           </CardContent>

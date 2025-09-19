@@ -88,7 +88,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
             raise
 
         finally:
-            duration = (time.time() - start_time) * 1000
+            duration = round((time.time() - start_time) * 1000, 2)
             captured_request.duration_ms = duration
 
             with self.get_session() as session:

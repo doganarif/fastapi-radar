@@ -78,7 +78,7 @@ export interface DashboardStats {
 }
 
 class APIClient {
-  private baseUrl = "/api/radar";
+  private baseUrl = "/__radar/api";
 
   async getRequests(params?: {
     limit?: number;

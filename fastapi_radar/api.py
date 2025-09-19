@@ -10,6 +10,13 @@ from pydantic import BaseModel
 from .models import CapturedRequest, CapturedQuery, CapturedException
 
 
+def round_float(value: Optional[float], decimals: int = 2) -> Optional[float]:
+    """Round a float value to specified decimal places."""
+    if value is None:
+        return None
+    return round(value, decimals)
+
+
 class RequestSummary(BaseModel):
     id: int
     request_id: str
@@ -72,7 +79,7 @@ class DashboardStats(BaseModel):
 
 
 def create_api_router(get_session_context) -> APIRouter:
-    router = APIRouter(prefix="/api/radar", tags=["radar"])
+    router = APIRouter(prefix="/__radar/api", tags=["radar"])
 
     def get_db():
         """Dependency function for FastAPI to get database session."""
@@ -111,7 +118,7 @@ def create_api_router(get_session_context) -> APIRouter:
                 method=req.method,
                 path=req.path,
                 status_code=req.status_code,
-                duration_ms=req.duration_ms,
+                duration_ms=round_float(req.duration_ms),
                 query_count=len(req.queries),
                 has_exception=len(req.exceptions) > 0,
                 created_at=req.created_at,
@@ -142,7 +149,7 @@ def create_api_router(get_session_context) -> APIRouter:
             status_code=request.status_code,
             response_body=request.response_body,
             response_headers=request.response_headers,
-            duration_ms=request.duration_ms,
+            duration_ms=round_float(request.duration_ms),
             client_ip=request.client_ip,
             created_at=request.created_at,
             queries=[
@@ -150,7 +157,7 @@ def create_api_router(get_session_context) -> APIRouter:
                     "id": q.id,
                     "sql": q.sql,
                     "parameters": q.parameters,
-                    "duration_ms": q.duration_ms,
+                    "duration_ms": round_float(q.duration_ms),
                     "rows_affected": q.rows_affected,
                     "connection_name": q.connection_name,
                     "created_at": q.created_at.isoformat(),
@@ -198,7 +205,7 @@ def create_api_router(get_session_context) -> APIRouter:
                 request_id=q.request_id,
                 sql=q.sql,
                 parameters=q.parameters,
-                duration_ms=q.duration_ms,
+                duration_ms=round_float(q.duration_ms),
                 rows_affected=q.rows_affected,
                 connection_name=q.connection_name,
                 created_at=q.created_at,
@@ -287,12 +294,12 @@ def create_api_router(get_session_context) -> APIRouter:
 
         return DashboardStats(
             total_requests=total_requests,
-            avg_response_time=avg_response_time,
+            avg_response_time=round_float(avg_response_time),
             total_queries=total_queries,
-            avg_query_time=avg_query_time,
+            avg_query_time=round_float(avg_query_time),
             total_exceptions=len(exceptions),
             slow_queries=slow_queries,
-            requests_per_minute=requests_per_minute,
+            requests_per_minute=round_float(requests_per_minute),
         )
 
     @router.delete("/clear")

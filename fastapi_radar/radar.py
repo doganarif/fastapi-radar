@@ -38,9 +38,9 @@ class Radar:
         self.exclude_paths = exclude_paths or []
         self.theme = theme
 
-        # Add dashboard path to excluded paths
-        self.exclude_paths.append(dashboard_path)
-        self.exclude_paths.append("/api/radar")
+        # Add all radar paths to excluded paths - exclude everything under /__radar
+        if dashboard_path not in self.exclude_paths:
+            self.exclude_paths.append(dashboard_path)
 
         # Setup storage engine (default to SQLite)
         if storage_engine:
@@ -239,7 +239,7 @@ class Radar:
         // Fetch stats from API
         async function loadStats() {{
             try {{
-                const response = await fetch('/api/radar/stats?hours=1');
+                const response = await fetch('/__radar/api/stats?hours=1');
                 const data = await response.json();
 
                 document.querySelectorAll('.stat-value')[0].textContent = data.total_requests;

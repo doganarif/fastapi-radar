@@ -64,7 +64,7 @@ class QueryCapture:
         if start_time is None:
             return
 
-        duration_ms = (time.time() - start_time) * 1000
+        duration_ms = round((time.time() - start_time) * 1000, 2)
 
         # Skip radar's own queries
         if "radar_" in statement:
