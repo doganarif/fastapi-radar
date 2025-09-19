@@ -120,7 +120,6 @@ class Radar:
 
         # Add a catch-all route for the dashboard SPA
         # This ensures all sub-routes under /__radar serve the index.html
-        @self.app.get(f"{self.dashboard_path}")
         @self.app.get(f"{self.dashboard_path}/{{full_path:path}}")
         async def serve_dashboard(request: Request, full_path: str = ""):
             # Check if it's a request for a static asset
