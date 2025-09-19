@@ -1,13 +1,13 @@
-# FastAPI Radar 🛰️
+# FastAPI Radar
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **A debugging dashboard for FastAPI applications providing real-time request, database query, and exception monitoring.**
 
-✨ **Just one line to add powerful monitoring to your FastAPI app!**
+**Just one line to add powerful monitoring to your FastAPI app!**
 
-## 🎯 See it in Action
+## See it in Action
 
 ![FastAPI Radar Dashboard Demo](./assets/demo.gif)
 
@@ -39,7 +39,7 @@ from sqlalchemy import create_engine
 app = FastAPI()
 engine = create_engine("sqlite:///./app.db")
 
-# That's it! One line to add complete monitoring 🚀
+# That's it! One line to add complete monitoring
 radar = Radar(app, db_engine=engine)
 radar.create_tables()
 
@@ -53,12 +53,11 @@ Access your dashboard at: **http://localhost:8000/\_\_radar/**
 
 ## Features
 
-- 🚀 **Zero Configuration** - Works with any FastAPI + SQLAlchemy app
-- 📊 **Request Monitoring** - Complete HTTP request/response capture with timing
-- 🗃️ **Database Monitoring** - SQL query logging with execution times
-- 🐛 **Exception Tracking** - Automatic exception capture with stack traces
-- ⚡ **Real-time Updates** - Live dashboard updates as requests happen
-- 🎨 **Beautiful UI** - Modern React dashboard with shadcn/ui components
+- **Zero Configuration** - Works with any FastAPI + SQLAlchemy app
+- **Request Monitoring** - Complete HTTP request/response capture with timing
+- **Database Monitoring** - SQL query logging with execution times
+- **Exception Tracking** - Automatic exception capture with stack traces
+- **Real-time Updates** - Live dashboard updates as requests happen
 
 ## Configuration
 
