@@ -253,7 +253,7 @@ export function SettingsPage() {
             <Separator />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Version</span>
-              <span className="font-medium">0.1.2</span>
+              <span className="font-medium">0.1.4</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Dashboard</span>
