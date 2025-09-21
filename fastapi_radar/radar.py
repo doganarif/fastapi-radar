@@ -15,10 +15,12 @@ from .api import create_api_router
 
 
 class Radar:
+    query_capture: Optional[QueryCapture]
+
     def __init__(
         self,
         app: FastAPI,
-        db_engine: Engine,
+        db_engine: Optional[Engine] = None,
         storage_engine: Optional[Engine] = None,
         dashboard_path: str = "/__radar",
         max_requests: int = 1000,
@@ -37,6 +39,7 @@ class Radar:
         self.capture_sql_bindings = capture_sql_bindings
         self.exclude_paths = exclude_paths or []
         self.theme = theme
+        self.query_capture = None  # Initialize to None
 
         # Add all radar paths to excluded paths - exclude everything under /__radar
         if dashboard_path not in self.exclude_paths:
@@ -61,7 +64,11 @@ class Radar:
 
         # Initialize components
         self._setup_middleware()
-        self._setup_query_capture()
+
+        # Only setup query capture if db_engine is provided
+        if self.db_engine:
+            self._setup_query_capture()
+
         self._setup_api()
         self._setup_dashboard()
 
@@ -86,6 +93,10 @@ class Radar:
 
     def _setup_query_capture(self) -> None:
         """Setup SQLAlchemy query capture."""
+        assert (
+            self.db_engine is not None
+        ), "db_engine must be set before calling _setup_query_capture"
+
         self.query_capture = QueryCapture(
             get_session=self.get_session,
             capture_bindings=self.capture_sql_bindings,

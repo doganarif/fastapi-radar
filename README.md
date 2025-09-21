@@ -31,6 +31,8 @@ pipenv install fastapi-radar
 
 ## Quick Start
 
+### With SQL Database (Full Monitoring)
+
 ```python
 from fastapi import FastAPI
 from fastapi_radar import Radar
@@ -39,7 +41,7 @@ from sqlalchemy import create_engine
 app = FastAPI()
 engine = create_engine("sqlite:///./app.db")
 
-# That's it! One line to add complete monitoring
+# Full monitoring with SQL query tracking
 radar = Radar(app, db_engine=engine)
 radar.create_tables()
 
@@ -49,29 +51,61 @@ async def get_users():
     return {"users": []}
 ```
 
+### Without SQL Database (HTTP & Exception Monitoring)
+
+```python
+from fastapi import FastAPI
+from fastapi_radar import Radar
+
+app = FastAPI()
+
+# Monitor HTTP requests and exceptions only
+# Perfect for NoSQL databases, external APIs, or database-less apps
+radar = Radar(app)  # No db_engine parameter needed!
+radar.create_tables()
+
+@app.get("/api/data")
+async def get_data():
+    # Your MongoDB, Redis, or external API calls here
+    return {"data": []}
+```
+
 Access your dashboard at: **http://localhost:8000/\_\_radar/**
 
 ## Features
 
-- **Zero Configuration** - Works with any FastAPI + SQLAlchemy app
+- **Zero Configuration** - Works with any FastAPI app (SQL database optional)
 - **Request Monitoring** - Complete HTTP request/response capture with timing
-- **Database Monitoring** - SQL query logging with execution times
+- **Database Monitoring** - SQL query logging with execution times (when using SQLAlchemy)
 - **Exception Tracking** - Automatic exception capture with stack traces
 - **Real-time Updates** - Live dashboard updates as requests happen
+- **Flexible Integration** - Use with SQL, NoSQL, or no database at all
 
 ## Configuration
 
 ```python
 radar = Radar(
     app,
-    db_engine=engine,
-    dashboard_path="/__radar",  # Custom dashboard path
-    enable_in_production=False,  # Disable in production
-    capture_body=True,           # Capture request/response bodies
-    capture_headers=True,        # Capture headers
-    max_body_size=10000,        # Max body size to capture
+    db_engine=engine,            # Optional: SQLAlchemy engine for SQL query monitoring
+    dashboard_path="/__radar",   # Custom dashboard path (default: "/__radar")
+    max_requests=1000,           # Max requests to store (default: 1000)
+    retention_hours=24,          # Data retention period (default: 24)
+    slow_query_threshold=100,    # Mark queries slower than this as slow (ms)
+    capture_sql_bindings=True,   # Capture SQL query parameters
+    exclude_paths=["/health"],   # Paths to exclude from monitoring
+    theme="auto",                # Dashboard theme: "light", "dark", or "auto"
 )
 ```
+
+## What Gets Captured?
+
+- ✅ HTTP requests and responses
+- ✅ Response times and performance metrics
+- ✅ SQL queries with execution times
+- ✅ Query parameters and bindings
+- ✅ Slow query detection
+- ✅ Exceptions with stack traces
+- ✅ Request/response bodies and headers
 
 ## Contributing
 
@@ -104,10 +138,14 @@ npm run dev  # For development with hot reload
 npm run build  # To rebuild the production bundle
 ```
 
-4. Run the example app:
+4. Run the example apps:
 
 ```bash
+# Example with SQL database
 python example_app.py
+
+# Example without SQL database (NoSQL/in-memory)
+python example_nosql_app.py
 ```
 
 ## License
