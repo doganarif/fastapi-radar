@@ -1,0 +1,8 @@
+*.py linguist-detectable
+
+*.ts -linguist-detectable
+*.tsx -linguist-detectable
+*.js -linguist-detectable
+*.jsx -linguist-detectable
+
+fastapi_radar/dashboard/** -linguist-detectable
