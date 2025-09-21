@@ -15,6 +15,8 @@ from .api import create_api_router
 
 
 class Radar:
+    query_capture: Optional[QueryCapture]
+
     def __init__(
         self,
         app: FastAPI,
@@ -91,6 +93,10 @@ class Radar:
 
     def _setup_query_capture(self) -> None:
         """Setup SQLAlchemy query capture."""
+        assert (
+            self.db_engine is not None
+        ), "db_engine must be set before calling _setup_query_capture"
+
         self.query_capture = QueryCapture(
             get_session=self.get_session,
             capture_bindings=self.capture_sql_bindings,
