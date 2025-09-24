@@ -52,7 +52,7 @@ class QueryDetail(BaseModel):
     id: int
     request_id: str
     sql: str
-    parameters: Optional[List[Any]]
+    parameters: Optional[Dict[str, Any]]
     duration_ms: Optional[float]
     rows_affected: Optional[int]
     connection_name: Optional[str]
