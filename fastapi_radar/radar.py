@@ -29,8 +29,8 @@ class Radar:
         slow_query_threshold: int = 100,
         capture_sql_bindings: bool = True,
         exclude_paths: Optional[List[str]] = None,
-        include_in_schema: bool = True,
         theme: str = "auto",
+        include_in_schema: bool = True,
     ):
         self.app = app
         self.db_engine = db_engine
