@@ -73,23 +73,23 @@ import { useT } from "@/i18n";
 
 function DatabasePage() {
   const t = useT();
-  
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {t('pages.database.title')}
+          {t("pages.database.title")}
         </h1>
         <p className="text-muted-foreground">
-          {t('pages.database.description')}
+          {t("pages.database.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('database.queries')}</CardTitle>
+          <CardTitle>{t("database.queries")}</CardTitle>
           <CardDescription>
-            {t('database.queries')}
+            {t("pages.database.cardDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -105,24 +105,22 @@ import { ExceptionsList } from "@/components/ExceptionsList";
 
 function ExceptionsPage() {
   const t = useT();
-  
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {t('pages.exceptions.title')}
+          {t("pages.exceptions.title")}
         </h1>
         <p className="text-muted-foreground">
-          {t('pages.exceptions.description')}
+          {t("pages.exceptions.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('exceptions.recentExceptions')}</CardTitle>
-          <CardDescription>
-            {t('pages.exceptions.description')}
-          </CardDescription>
+          <CardTitle>{t("exceptions.recentExceptions")}</CardTitle>
+          <CardDescription>{t("pages.exceptions.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ExceptionsList />

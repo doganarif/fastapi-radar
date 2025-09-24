@@ -75,7 +75,8 @@ export function PerformancePage() {
   // Prepare data for charts
   const performanceIndicators = [
     {
-      label: t('metrics.successRate'),
+      type: "successRate",
+      label: t("metrics.successRate"),
       value: metrics.successRate,
       status:
         metrics.successRate >= 99
@@ -83,10 +84,13 @@ export function PerformancePage() {
           : metrics.successRate >= 95
           ? "warning"
           : "error",
-      description: `${t('common.all')} ${metrics.totalRequests} ${t('metrics.totalRequests').toLowerCase()}`,
+      description: `${t("common.all")} ${metrics.totalRequests} ${t(
+        "metrics.totalRequests"
+      ).toLowerCase()}`,
     },
     {
-      label: t('metrics.avgResponseTime'),
+      type: "avgResponseTime",
+      label: t("metrics.avgResponseTime"),
       value: formatDuration(metrics.avgResponseTime),
       rawValue: metrics.avgResponseTime,
       status:
@@ -97,7 +101,8 @@ export function PerformancePage() {
           : "error",
     },
     {
-      label: t('metrics.errorRate'),
+      type: "errorRate",
+      label: t("metrics.errorRate"),
       value: `${metrics.errorRate.toFixed(1)}%`,
       rawValue: metrics.errorRate,
       status:
@@ -108,7 +113,8 @@ export function PerformancePage() {
           : "error",
     },
     {
-      label: t('performance.overview'),
+      type: "queryPerformance",
+      label: t("performance.queryPerformance"),
       value: formatDuration(metrics.avgQueryTime),
       rawValue: metrics.avgQueryTime,
       status:
@@ -130,19 +136,19 @@ export function PerformancePage() {
 
   const errorDistribution = [
     {
-      category: t('requests.statusFilters.clientErrors'),
+      category: t("requests.statusFilters.clientErrors"),
       count:
         requests?.filter(
           (r) => r.status_code && r.status_code >= 400 && r.status_code < 500
         ).length || 0,
     },
     {
-      category: t('requests.statusFilters.serverErrors'),
+      category: t("requests.statusFilters.serverErrors"),
       count:
         requests?.filter((r) => r.status_code && r.status_code >= 500).length ||
         0,
     },
-    { category: t('metrics.exceptions'), count: metrics.totalExceptions },
+    { category: t("metrics.exceptions"), count: metrics.totalExceptions },
   ];
 
   return (
@@ -150,9 +156,11 @@ export function PerformancePage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('pages.performance.title')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("pages.performance.title")}
+          </h1>
           <p className="text-muted-foreground">
-            {t('pages.performance.description')}
+            {t("pages.performance.description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -161,9 +169,9 @@ export function PerformancePage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1h">{t('timeRange.lastHour')}</SelectItem>
-              <SelectItem value="24h">{t('timeRange.last24Hours')}</SelectItem>
-              <SelectItem value="7d">{t('timeRange.last7Days')}</SelectItem>
+              <SelectItem value="1h">{t("timeRange.lastHour")}</SelectItem>
+              <SelectItem value="24h">{t("timeRange.last24Hours")}</SelectItem>
+              <SelectItem value="7d">{t("timeRange.last7Days")}</SelectItem>
             </SelectContent>
           </Select>
           <Select
@@ -174,10 +182,12 @@ export function PerformancePage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="5000">{t('common.refresh')}: 5s</SelectItem>
-              <SelectItem value="10000">{t('common.refresh')}: 10s</SelectItem>
-              <SelectItem value="30000">{t('common.refresh')}: 30s</SelectItem>
-              <SelectItem value="0">{t('common.refresh')}: {t('common.no')}</SelectItem>
+              <SelectItem value="5000">{t("common.refresh")}: 5s</SelectItem>
+              <SelectItem value="10000">{t("common.refresh")}: 10s</SelectItem>
+              <SelectItem value="30000">{t("common.refresh")}: 30s</SelectItem>
+              <SelectItem value="0">
+                {t("common.refresh")}: {t("common.no")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -206,10 +216,10 @@ export function PerformancePage() {
                   status={indicator.status as any}
                   label={
                     indicator.status === "success"
-                      ? t('performance.excellent')
+                      ? t("performance.excellent")
                       : indicator.status === "warning"
-                      ? t('performance.acceptable')
-                      : t('performance.needsAttention')
+                      ? t("performance.acceptable")
+                      : t("performance.needsAttention")
                   }
                   compact
                 />
@@ -217,11 +227,12 @@ export function PerformancePage() {
                   <ProgressMeter
                     label=""
                     value={
-                      indicator.label.includes("Rate")
+                      indicator.type === "successRate" ||
+                      indicator.type === "errorRate"
                         ? indicator.rawValue
-                        : indicator.label === "Avg Response Time"
+                        : indicator.type === "avgResponseTime"
                         ? Math.min((indicator.rawValue / 1000) * 100, 100)
-                        : indicator.label === "Query Performance"
+                        : indicator.type === "queryPerformance"
                         ? Math.min((indicator.rawValue / 200) * 100, 100)
                         : 0
                     }
@@ -246,10 +257,16 @@ export function PerformancePage() {
       {/* Performance Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">{t('performance.overview')}</TabsTrigger>
-          <TabsTrigger value="endpoints">{t('performance.endpointPerformance')}</TabsTrigger>
-          <TabsTrigger value="queries">{t('nav.database')}</TabsTrigger>
-          <TabsTrigger value="errors">{t('performance.errorAnalysis')}</TabsTrigger>
+          <TabsTrigger value="overview">
+            {t("performance.overview")}
+          </TabsTrigger>
+          <TabsTrigger value="endpoints">
+            {t("performance.endpointPerformance")}
+          </TabsTrigger>
+          <TabsTrigger value="queries">{t("nav.database")}</TabsTrigger>
+          <TabsTrigger value="errors">
+            {t("performance.errorAnalysis")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -258,25 +275,27 @@ export function PerformancePage() {
             {/* Response Time Card */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{t('metrics.responseTime')}</CardTitle>
+                <CardTitle className="text-base">
+                  {t("metrics.responseTime")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <CompactMetric
-                  label="P50 (Median)"
+                  label={t("performance.p50Median")}
                   value={formatDuration(metrics.responseTimePercentiles.p50)}
                 />
                 <CompactMetric
-                  label="P95"
+                  label={t("performance.p95")}
                   value={formatDuration(metrics.responseTimePercentiles.p95)}
                 />
                 <CompactMetric
-                  label="P99"
+                  label={t("performance.p99")}
                   value={formatDuration(metrics.responseTimePercentiles.p99)}
                 />
                 <LinearGauge
                   value={metrics.avgResponseTime || 0}
                   max={1000}
-                  label={t('performance.average')}
+                  label={t("performance.average")}
                   thresholds={[
                     { value: 100, label: "100ms" },
                     { value: 300, label: "300ms" },
@@ -289,23 +308,25 @@ export function PerformancePage() {
             {/* Throughput Card */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{t('performance.throughput')}</CardTitle>
+                <CardTitle className="text-base">
+                  {t("performance.throughput")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <CompactMetric
-                  label={t('performance.requestsPerSec')}
+                  label={t("performance.requestsPerSec")}
                   value={metrics.requestsPerSecond.toFixed(1)}
                 />
                 <CompactMetric
-                  label={t('metrics.totalRequests')}
+                  label={t("metrics.totalRequests")}
                   value={formatNumber(stats?.total_requests)}
                 />
                 <CompactMetric
-                  label="Total Queries"
+                  label={t("performance.totalQueries")}
                   value={formatNumber(stats?.total_queries)}
                 />
                 <CompactMetric
-                  label="Queries/Request"
+                  label={t("performance.queriesPerRequest")}
                   value={
                     stats?.total_queries && stats?.total_requests
                       ? (stats.total_queries / stats.total_requests).toFixed(1)
@@ -318,24 +339,26 @@ export function PerformancePage() {
             {/* Error Rates Card */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{t('performance.errorAnalysis')}</CardTitle>
+                <CardTitle className="text-base">
+                  {t("performance.errorAnalysis")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <CircularProgress
                   value={100 - metrics.errorRate}
                   size="sm"
-                  label={t('performance.healthScore')}
+                  label={t("performance.healthScore")}
                 />
                 <CompactMetric
-                  label={t('requests.tabs.failed')}
+                  label={t("requests.tabs.failed")}
                   value={metrics.failedRequests}
                 />
                 <CompactMetric
-                  label={t('metrics.errorRate')}
+                  label={t("metrics.errorRate")}
                   value={`${metrics.errorRate.toFixed(1)}%`}
                 />
                 <CompactMetric
-                  label={t('metrics.exceptions')}
+                  label={t("metrics.exceptions")}
                   value={metrics.totalExceptions}
                 />
               </CardContent>
@@ -345,30 +368,31 @@ export function PerformancePage() {
           {/* Metrics Summary Card */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('performance.performanceSummary')}</CardTitle>
+              <CardTitle>{t("performance.performanceSummary")}</CardTitle>
               <CardDescription>
-                {t('performance.realTimeMetrics')} {metrics.totalRequests} {t('performance.recentRequests')}
+                {t("performance.realTimeMetrics")} {metrics.totalRequests}{" "}
+                {t("performance.recentRequests")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <MetricCard
-                  label={t('metrics.successRate')}
+                  label={t("metrics.successRate")}
                   value={`${metrics.successRate.toFixed(1)}%`}
                   minimal
                 />
                 <MetricCard
-                  label={t('performance.avgResponse')}
+                  label={t("performance.avgResponse")}
                   value={formatDuration(metrics.avgResponseTime)}
                   minimal
                 />
                 <MetricCard
-                  label={t('performance.slowRequests')}
+                  label={t("performance.slowRequests")}
                   value={metrics.slowRequests}
                   minimal
                 />
                 <MetricCard
-                  label={t('performance.activeEndpoints')}
+                  label={t("performance.activeEndpoints")}
                   value={metrics.endpointMetrics.length}
                   minimal
                 />
@@ -380,18 +404,21 @@ export function PerformancePage() {
         <TabsContent value="endpoints" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t('performance.endpointPerformance')}</CardTitle>
+              <CardTitle>{t("performance.endpointPerformance")}</CardTitle>
               <CardDescription>
-                {t('performance.performanceBreakdown')}
+                {t("performance.performanceBreakdown")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {endpointBarData.length > 0 && (
                 <BarChart
-                  title={t('performance.responseTimesByEndpoint')}
+                  title={t("performance.responseTimesByEndpoint")}
                   data={endpointBarData}
                   bars={[
-                    { dataKey: "responseTime", name: t('metrics.avgResponseTime') },
+                    {
+                      dataKey: "responseTime",
+                      name: t("metrics.avgResponseTime"),
+                    },
                   ]}
                   height={300}
                   formatter="duration"
@@ -401,7 +428,9 @@ export function PerformancePage() {
               )}
 
               <div className="space-y-4">
-                <h4 className="text-sm font-medium">Detailed Metrics</h4>
+                <h4 className="text-sm font-medium">
+                  {t("performance.detailedMetrics")}
+                </h4>
                 {metrics.endpointMetrics.map((endpoint) => (
                   <div
                     key={endpoint.name}
@@ -410,10 +439,12 @@ export function PerformancePage() {
                     <div className="flex items-center justify-between">
                       <code className="text-sm font-mono">{endpoint.name}</code>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{endpoint.calls} calls</Badge>
+                        <Badge variant="outline">
+                          {endpoint.calls} {t("performance.calls")}
+                        </Badge>
                         {endpoint.errors > 0 && (
                           <Badge variant="destructive">
-                            {endpoint.errors} errors
+                            {endpoint.errors} {t("performance.errors")}
                           </Badge>
                         )}
                       </div>
@@ -425,14 +456,16 @@ export function PerformancePage() {
                         100
                       )}
                       showPercentage={false}
-                      sublabel={`Success rate: ${endpoint.successRate}%`}
+                      sublabel={`${t("performance.successRate")}: ${
+                        endpoint.successRate
+                      }%`}
                       compact
                     />
                   </div>
                 ))}
                 {metrics.endpointMetrics.length === 0 && (
                   <p className="text-center text-muted-foreground py-4">
-                    No endpoint data available
+                    {t("performance.noEndpointData")}
                   </p>
                 )}
               </div>
@@ -444,19 +477,19 @@ export function PerformancePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Query Statistics</CardTitle>
+                <CardTitle>{t("performance.queryStatistics")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <CompactMetric
-                  label="Total Queries"
+                  label={t("performance.totalQueries")}
                   value={metrics.totalQueries}
                 />
                 <CompactMetric
-                  label="Slow Queries"
+                  label={t("performance.slowQueries")}
                   value={metrics.slowQueries}
                 />
                 <CompactMetric
-                  label="Avg Query Time"
+                  label={t("performance.avgQueryTime")}
                   value={formatDuration(metrics.avgQueryTime)}
                 />
                 <ProgressMeter
@@ -479,8 +512,10 @@ export function PerformancePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Slow Queries</CardTitle>
-                <CardDescription>Queries exceeding 100ms</CardDescription>
+                <CardTitle>{t("performance.slowQueriesTitle")}</CardTitle>
+                <CardDescription>
+                  {t("database.slowThreshold")}: 100ms
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -520,25 +555,25 @@ export function PerformancePage() {
         <TabsContent value="errors" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Error Analysis</CardTitle>
+              <CardTitle>{t("performance.errorAnalysisTitle")}</CardTitle>
               <CardDescription>
-                Breakdown of errors and exceptions
+                {t("performance.errorAnalysis")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-3 gap-4">
                 <MetricCard
-                  label="Total Errors"
+                  label={t("requests.tabs.failed")}
                   value={metrics.failedRequests}
                   minimal
                 />
                 <MetricCard
-                  label="Error Rate"
+                  label={t("metrics.errorRate")}
                   value={`${metrics.errorRate.toFixed(1)}%`}
                   minimal
                 />
                 <MetricCard
-                  label="Exceptions"
+                  label={t("metrics.exceptions")}
                   value={metrics.totalExceptions}
                   minimal
                 />
@@ -561,7 +596,7 @@ export function PerformancePage() {
                 ))}
                 {(!exceptions || exceptions.length === 0) && (
                   <p className="text-center text-muted-foreground py-4">
-                    No exceptions captured
+                    {t("performance.noExceptionsCaptured")}
                   </p>
                 )}
               </div>

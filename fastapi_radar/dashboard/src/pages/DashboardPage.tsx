@@ -128,9 +128,11 @@ export function DashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('pages.dashboard.title')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("pages.dashboard.title")}
+          </h1>
           <p className="text-muted-foreground">
-            {t('pages.dashboard.description')}
+            {t("pages.dashboard.description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -142,9 +144,9 @@ export function DashboardPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">{t('timeRange.lastHour')}</SelectItem>
-              <SelectItem value="24">{t('timeRange.last24Hours')}</SelectItem>
-              <SelectItem value="168">{t('timeRange.last7Days')}</SelectItem>
+              <SelectItem value="1">{t("timeRange.lastHour")}</SelectItem>
+              <SelectItem value="24">{t("timeRange.last24Hours")}</SelectItem>
+              <SelectItem value="168">{t("timeRange.last7Days")}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={handleRefreshAll}>
@@ -156,39 +158,47 @@ export function DashboardPage() {
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label={t('metrics.totalRequests')}
+          label={t("metrics.totalRequests")}
           value={stats?.total_requests || 0}
           change={undefined}
-          changeLabel={`${metrics.requestsPerMinute.toFixed(1)} ${t('metrics.requestsPerMinute').toLowerCase()}`}
+          changeLabel={`${metrics.requestsPerMinute.toFixed(1)} ${t(
+            "metrics.requestsPerMinute"
+          ).toLowerCase()}`}
           icon={<Activity className="h-8 w-8" />}
         />
 
         <MetricCard
-          label={t('metrics.avgResponseTime')}
+          label={t("metrics.avgResponseTime")}
           value={formatDuration(metrics.avgResponseTime)}
           trend={metrics.avgResponseTime < 100 ? "down" : "up"}
           changeLabel={
-            metrics.avgResponseTime < 100 ? t('common.loading') : t('common.error')
+            metrics.avgResponseTime < 100
+              ? t("performance.excellent")
+              : t("performance.needsAttention")
           }
           icon={<Clock className="h-8 w-8" />}
         />
 
         <MetricCard
-          label={t('metrics.databaseQueries')}
+          label={t("metrics.databaseQueries")}
           value={stats?.total_queries || 0}
           changeLabel={
-            stats?.slow_queries ? `${stats.slow_queries} ${t('metrics.slowQueries').toLowerCase()}` : t('common.all')
+            stats?.slow_queries
+              ? `${stats.slow_queries} ${t(
+                  "metrics.slowQueries"
+                ).toLowerCase()}`
+              : t("database.noSlowQueriesShort")
           }
           trend={stats?.slow_queries ? "up" : "neutral"}
           icon={<Database className="h-8 w-8" />}
         />
 
         <MetricCard
-          label={t('metrics.exceptions')}
+          label={t("metrics.exceptions")}
           value={stats?.total_exceptions || 0}
           trend={stats?.total_exceptions === 0 ? "neutral" : "up"}
           changeLabel={
-            stats?.total_exceptions === 0 ? t('common.all') : t('common.error')
+            stats?.total_exceptions === 0 ? t("common.all") : t("common.error")
           }
           icon={<AlertTriangle className="h-8 w-8" />}
         />
@@ -199,26 +209,28 @@ export function DashboardPage() {
         {/* Success Rate */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('performance.overview')}</CardTitle>
+            <CardTitle className="text-base">
+              {t("performance.overview")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <CircularProgress
               value={metrics.successRate}
               max={100}
               size="md"
-              label={t('metrics.successRate')}
+              label={t("metrics.successRate")}
             />
             <div className="space-y-2">
               <CompactMetric
-                label={t('metrics.totalRequests')}
+                label={t("metrics.totalRequests")}
                 value={metrics.totalRequests}
               />
               <CompactMetric
-                label={t('requests.tabs.errors')}
+                label={t("requests.tabs.errors")}
                 value={metrics.failedRequests}
               />
               <CompactMetric
-                label={t('metrics.errorRate')}
+                label={t("metrics.errorRate")}
                 value={`${metrics.errorRate.toFixed(1)}%`}
               />
             </div>
@@ -228,7 +240,9 @@ export function DashboardPage() {
         {/* Response Time Distribution */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('metrics.responseTime')}</CardTitle>
+            <CardTitle className="text-base">
+              {t("metrics.responseTime")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <CompactMetric
@@ -245,7 +259,7 @@ export function DashboardPage() {
             />
             <div className="pt-2">
               <ProgressMeter
-                label={t('performance.queryPerformance')}
+                label={t("performance.queryPerformance")}
                 value={
                   stats?.avg_query_time
                     ? 100 - Math.min((stats.avg_query_time / 200) * 100, 100)
@@ -267,7 +281,9 @@ export function DashboardPage() {
         {/* Status Distribution */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('performance.requestDistribution')}</CardTitle>
+            <CardTitle className="text-base">
+              {t("performance.requestDistribution")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <DistributionChart data={statusDistribution} />
@@ -280,10 +296,10 @@ export function DashboardPage() {
                     ? "warning"
                     : "error"
                 }
-                label={t('performance.systemStatus')}
-                description={`${metrics.requestsPerSecond.toFixed(
-                  1
-                )} ${t('performance.requestsPerSec')}`}
+                label={t("performance.systemStatus")}
+                description={`${metrics.requestsPerSecond.toFixed(1)} ${t(
+                  "performance.requestsPerSec"
+                )}`}
                 compact
               />
             </div>
@@ -294,19 +310,21 @@ export function DashboardPage() {
       {/* Time Series Charts */}
       <div className="grid gap-4 md:grid-cols-2">
         <AreaChart
-          title={t('performance.responseTimeChart')}
-          description={t('performance.responseTimeDescription')}
+          title={t("performance.responseTimeChart")}
+          description={t("performance.responseTimeDescription")}
           data={timeSeriesData}
-          areas={[{ dataKey: "response", name: t('metrics.responseTime') + " (ms)" }]}
+          areas={[
+            { dataKey: "response", name: t("metrics.responseTime") + " (ms)" },
+          ]}
           height={200}
           formatter="duration"
         />
 
         <LineChart
-          title={t('performance.queryActivity')}
-          description={t('performance.queryActivityDescription')}
+          title={t("performance.queryActivity")}
+          description={t("performance.queryActivityDescription")}
           data={timeSeriesData}
-          lines={[{ dataKey: "queries", name: t('database.queries') }]}
+          lines={[{ dataKey: "queries", name: t("database.queries") }]}
           height={200}
           showGrid={true}
         />
@@ -317,15 +335,19 @@ export function DashboardPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t('performance.topEndpoints')}</CardTitle>
+              <CardTitle className="text-base">
+                {t("performance.topEndpoints")}
+              </CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/performance">
-                  {t('common.view')} {t('common.all')}
+                  {t("common.viewAll")}
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Link>
               </Button>
             </div>
-            <CardDescription>{t('performance.avgResponseByEndpoint')}</CardDescription>
+            <CardDescription>
+              {t("performance.avgResponseByEndpoint")}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <SimpleBarChart data={endpointData} />
@@ -339,10 +361,12 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t('performance.recentRequests')}</CardTitle>
+              <CardTitle className="text-base">
+                {t("performance.recentRequests")}
+              </CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/requests">
-                  {t('common.view')} {t('common.all')}
+                  {t("common.viewAll")}
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Link>
               </Button>
@@ -390,7 +414,7 @@ export function DashboardPage() {
               ))}
               {(!recentRequests || recentRequests.length === 0) && (
                 <p className="text-center text-muted-foreground py-4">
-                  {t('requests.empty.all')}
+                  {t("requests.empty.all")}
                 </p>
               )}
             </div>
@@ -401,10 +425,12 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t('database.slowQueries')}</CardTitle>
+              <CardTitle className="text-base">
+                {t("database.slowQueries")}
+              </CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/database">
-                  {t('common.view')} {t('common.all')}
+                  {t("common.viewAll")}
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Link>
               </Button>
@@ -433,7 +459,7 @@ export function DashboardPage() {
               ))}
               {(!slowQueries || slowQueries.length === 0) && (
                 <p className="text-center text-muted-foreground py-4">
-                  {t('database.noSlowQueries')}
+                  {t("database.noSlowQueries")}
                 </p>
               )}
             </div>
@@ -446,10 +472,12 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t('exceptions.recentExceptions')}</CardTitle>
+              <CardTitle className="text-base">
+                {t("exceptions.recentExceptions")}
+              </CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/exceptions">
-                  {t('common.view')} {t('common.all')}
+                  {t("common.viewAll")}
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Link>
               </Button>
@@ -463,7 +491,7 @@ export function DashboardPage() {
                   status="error"
                   label={exception.exception_type}
                   description={
-                    exception.exception_value || t('exceptions.clickToView')
+                    exception.exception_value || t("exceptions.clickToView")
                   }
                   value={format(new Date(exception.created_at), "HH:mm")}
                   className="cursor-pointer hover:bg-muted/50 p-2 -mx-2 rounded transition-colors"

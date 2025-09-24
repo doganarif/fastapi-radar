@@ -1,8 +1,20 @@
 // 国际化Context和Hook实现
 // 使用最简单的React Context模式，避免过度复杂化
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, DEFAULT_LANGUAGE, getTranslation, getNestedTranslation, Translations } from './translations';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import {
+  Language,
+  DEFAULT_LANGUAGE,
+  getTranslation,
+  getNestedTranslation,
+  Translations,
+} from "./translations";
 
 // Context接口定义
 interface LanguageContextType {
@@ -13,7 +25,9 @@ interface LanguageContextType {
 }
 
 // 创建Context
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined
+);
 
 // Provider组件属性
 interface LanguageProviderProps {
@@ -22,18 +36,18 @@ interface LanguageProviderProps {
 }
 
 // 本地存储键名
-const LANGUAGE_STORAGE_KEY = 'fastapi-radar-language';
+const LANGUAGE_STORAGE_KEY = "fastapi-radar-language";
 
 // 从本地存储获取语言设置
 function getStoredLanguage(): Language {
   try {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored === 'en' || stored === 'zh') {
+    if (stored === "en" || stored === "zh") {
       return stored;
     }
   } catch (error) {
     // 忽略localStorage错误，使用默认语言
-    console.warn('Failed to read language from localStorage:', error);
+    console.warn("Failed to read language from localStorage:", error);
   }
   return DEFAULT_LANGUAGE;
 }
@@ -44,7 +58,7 @@ function setStoredLanguage(language: Language): void {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   } catch (error) {
     // 忽略localStorage错误
-    console.warn('Failed to save language to localStorage:', error);
+    console.warn("Failed to save language to localStorage:", error);
   }
 }
 
@@ -52,8 +66,8 @@ function setStoredLanguage(language: Language): void {
 function detectBrowserLanguage(): Language {
   try {
     const browserLang = navigator.language.toLowerCase();
-    if (browserLang.startsWith('zh')) {
-      return 'zh';
+    if (browserLang.startsWith("zh")) {
+      return "zh";
     }
   } catch (error) {
     // 忽略检测错误
@@ -62,14 +76,14 @@ function detectBrowserLanguage(): Language {
 }
 
 // Provider组件实现
-export function LanguageProvider({ 
-  children, 
-  defaultLanguage 
+export function LanguageProvider({
+  children,
+  defaultLanguage,
 }: LanguageProviderProps) {
   // 初始化语言：优先级 -> 存储的语言 > 传入的默认语言 > 浏览器语言 > 系统默认
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = getStoredLanguage();
-    if (stored !== DEFAULT_LANGUAGE) {
+    if (stored) {
       return stored;
     }
     return defaultLanguage || detectBrowserLanguage();
@@ -112,11 +126,11 @@ export function LanguageProvider({
 // Hook：使用翻译功能
 export function useTranslation() {
   const context = useContext(LanguageContext);
-  
+
   if (context === undefined) {
-    throw new Error('useTranslation must be used within a LanguageProvider');
+    throw new Error("useTranslation must be used within a LanguageProvider");
   }
-  
+
   return context;
 }
 
