@@ -10,7 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Moon, Sun, Database, AlertTriangle, Trash2, Globe } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Database,
+  AlertTriangle,
+  Trash2,
+  Globe,
+} from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useTranslation, useLanguage, Language } from "@/i18n";
 
@@ -47,9 +54,11 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('pages.settings.title')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("pages.settings.title")}
+        </h1>
         <p className="text-muted-foreground">
-          {t('pages.settings.description')}
+          {t("pages.settings.description")}
         </p>
       </div>
 
@@ -57,16 +66,16 @@ export function SettingsPage() {
         {/* Appearance */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('settings.appearance.title')}</CardTitle>
+            <CardTitle>{t("settings.appearance.title")}</CardTitle>
             <CardDescription>
-              {t('settings.appearance.description')}
+              {t("settings.appearance.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('settings.appearance.theme')}</Label>
+              <Label>{t("settings.appearance.theme")}</Label>
               <p className="text-sm text-muted-foreground mb-3">
-                {t('settings.appearance.themeDescription')}
+                {t("settings.appearance.themeDescription")}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -75,7 +84,7 @@ export function SettingsPage() {
                   onClick={() => setTheme("light")}
                 >
                   <Sun className="mr-2 h-4 w-4" />
-                  {t('settings.appearance.light')}
+                  {t("settings.appearance.light")}
                 </Button>
                 <Button
                   variant={theme === "dark" ? "default" : "outline"}
@@ -83,7 +92,7 @@ export function SettingsPage() {
                   onClick={() => setTheme("dark")}
                 >
                   <Moon className="mr-2 h-4 w-4" />
-                  {t('settings.appearance.dark')}
+                  {t("settings.appearance.dark")}
                 </Button>
               </div>
             </div>
@@ -93,14 +102,14 @@ export function SettingsPage() {
         {/* Language Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('settings.language.title')}</CardTitle>
+            <CardTitle>{t("settings.language.title")}</CardTitle>
             <CardDescription>
-              {t('settings.language.description')}
+              {t("settings.language.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('settings.language.current')}</Label>
+              <Label>{t("settings.language.current")}</Label>
               <div className="flex items-center gap-2">
                 <Button
                   variant={language === "en" ? "default" : "outline"}
@@ -108,7 +117,7 @@ export function SettingsPage() {
                   onClick={() => setLanguage("en" as Language)}
                 >
                   <Globe className="mr-2 h-4 w-4" />
-                  {t('settings.language.english')}
+                  {t("settings.language.english")}
                 </Button>
                 <Button
                   variant={language === "zh" ? "default" : "outline"}
@@ -116,7 +125,7 @@ export function SettingsPage() {
                   onClick={() => setLanguage("zh" as Language)}
                 >
                   <Globe className="mr-2 h-4 w-4" />
-                  {t('settings.language.chinese')}
+                  {t("settings.language.chinese")}
                 </Button>
               </div>
             </div>
@@ -126,21 +135,21 @@ export function SettingsPage() {
         {/* Database Status */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('settings.database.title')}</CardTitle>
+            <CardTitle>{t("settings.database.title")}</CardTitle>
             <CardDescription>
-              {t('settings.database.description')}
+              {t("settings.database.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {statsLoading ? (
               <div className="text-center py-4 text-sm text-muted-foreground">
-                {t('settings.database.loading')}
+                {t("settings.database.loading")}
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.totalRequests')}
+                    {t("settings.database.totalRequests")}
                   </span>
                   <span className="font-medium">
                     {stats?.total_requests !== undefined
@@ -150,7 +159,7 @@ export function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.totalQueries')}
+                    {t("settings.database.totalQueries")}
                   </span>
                   <span className="font-medium">
                     {stats?.total_queries !== undefined
@@ -160,7 +169,7 @@ export function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.totalExceptions')}
+                    {t("settings.database.totalExceptions")}
                   </span>
                   <span className="font-medium">
                     {stats?.total_exceptions !== undefined
@@ -170,7 +179,7 @@ export function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.slowQueries')}
+                    {t("settings.database.slowQueries")}
                   </span>
                   <span className="font-medium">
                     {stats?.slow_queries !== undefined
@@ -181,7 +190,7 @@ export function SettingsPage() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.avgResponseTime')}
+                    {t("settings.database.avgResponseTime")}
                   </span>
                   <span className="font-medium">
                     {stats?.avg_response_time !== null &&
@@ -192,7 +201,7 @@ export function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t('settings.database.requestsPerMinute')}
+                    {t("settings.database.requestsPerMinute")}
                   </span>
                   <span className="font-medium">
                     {stats?.requests_per_minute !== undefined
@@ -208,16 +217,16 @@ export function SettingsPage() {
         {/* Data Management */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>{t('settings.dataManagement.title')}</CardTitle>
+            <CardTitle>{t("settings.dataManagement.title")}</CardTitle>
             <CardDescription>
-              {t('settings.dataManagement.description')}
+              {t("settings.dataManagement.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('settings.dataManagement.quickActions')}</Label>
+              <Label>{t("settings.dataManagement.quickActions")}</Label>
               <p className="text-sm text-muted-foreground mb-3">
-                {t('settings.dataManagement.quickActionsDescription')}
+                {t("settings.dataManagement.quickActionsDescription")}
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
                 <Button
@@ -226,7 +235,7 @@ export function SettingsPage() {
                   onClick={() => handleClearOldData(24)}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  {t('settings.dataManagement.clear1Day')}
+                  {t("settings.dataManagement.clear1Day")}
                 </Button>
                 <Button
                   variant="outline"
@@ -234,7 +243,7 @@ export function SettingsPage() {
                   onClick={() => handleClearOldData(24 * 7)}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  {t('settings.dataManagement.clear7Days')}
+                  {t("settings.dataManagement.clear7Days")}
                 </Button>
                 <Button
                   variant="outline"
@@ -242,19 +251,19 @@ export function SettingsPage() {
                   onClick={() => handleClearOldData(24 * 30)}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  {t('settings.dataManagement.clear30Days')}
+                  {t("settings.dataManagement.clear30Days")}
                 </Button>
               </div>
             </div>
             <Separator />
             <div className="space-y-2">
-              <Label>{t('settings.dataManagement.dangerZone')}</Label>
+              <Label>{t("settings.dataManagement.dangerZone")}</Label>
               <p className="text-sm text-muted-foreground mb-3">
-                {t('settings.dataManagement.dangerZoneDescription')}
+                {t("settings.dataManagement.dangerZoneDescription")}
               </p>
               <Button variant="destructive" onClick={handleClearData}>
                 <AlertTriangle className="mr-2 h-4 w-4" />
-                {t('settings.dataManagement.clearAll')}
+                {t("settings.dataManagement.clearAll")}
               </Button>
             </div>
           </CardContent>
@@ -263,37 +272,37 @@ export function SettingsPage() {
         {/* About */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>{t('settings.about.title')}</CardTitle>
-            <CardDescription>
-              {t('settings.about.description')}
-            </CardDescription>
+            <CardTitle>{t("settings.about.title")}</CardTitle>
+            <CardDescription>{t("settings.about.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p className="mb-2">
-                {t('settings.about.content')}
-              </p>
+              <p className="mb-2">{t("settings.about.content")}</p>
               <p>
-                <strong>{t('settings.about.features')}:</strong>
+                <strong>{t("settings.about.features")}:</strong>
               </p>
               <ul className="list-disc list-inside mt-1 space-y-1">
-                <li>{t('settings.about.feature1')}</li>
-                <li>{t('settings.about.feature2')}</li>
-                <li>{t('settings.about.feature3')}</li>
-                <li>{t('settings.about.feature4')}</li>
-                <li>{t('settings.about.feature5')}</li>
+                <li>{t("settings.about.feature1")}</li>
+                <li>{t("settings.about.feature2")}</li>
+                <li>{t("settings.about.feature3")}</li>
+                <li>{t("settings.about.feature4")}</li>
+                <li>{t("settings.about.feature5")}</li>
               </ul>
             </div>
             <Separator />
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t('settings.about.version')}</span>
-              <span className="font-medium">0.1.5</span>
+              <span className="text-muted-foreground">
+                {t("settings.about.version")}
+              </span>
+              <span className="font-medium">0.1.6</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t('settings.about.dashboard')}</span>
+              <span className="text-muted-foreground">
+                {t("settings.about.dashboard")}
+              </span>
               <span className="font-medium">
                 <Database className="inline h-3 w-3 mr-1" />
-                {t('settings.about.connected')}
+                {t("settings.about.connected")}
               </span>
             </div>
           </CardContent>
