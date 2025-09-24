@@ -7,6 +7,7 @@ import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
+import { LanguageProvider } from "@/i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,25 +23,27 @@ const BASE_PATH = "/__radar/";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <DetailDrawerProvider>
-        <BrowserRouter basename={BASE_PATH}>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="requests" element={<RequestsPage />} />
-              <Route path="performance" element={<PerformancePage />} />
-              <Route path="database" element={<DatabasePage />} />
-              <Route path="exceptions" element={<ExceptionsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              {/* Fallback to dashboard for unmatched routes */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-        <DetailDrawerWrapper />
-      </DetailDrawerProvider>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <DetailDrawerProvider>
+          <BrowserRouter basename={BASE_PATH}>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="requests" element={<RequestsPage />} />
+                <Route path="performance" element={<PerformancePage />} />
+                <Route path="database" element={<DatabasePage />} />
+                <Route path="exceptions" element={<ExceptionsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                {/* Fallback to dashboard for unmatched routes */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+          <DetailDrawerWrapper />
+        </DetailDrawerProvider>
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 }
 
@@ -66,24 +69,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useT } from "@/i18n";
 
 function DatabasePage() {
+  const t = useT();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Database Monitoring
+          {t("pages.database.title")}
         </h1>
         <p className="text-muted-foreground">
-          Track SQL queries and database performance
+          {t("pages.database.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>SQL Queries</CardTitle>
+          <CardTitle>{t("database.queries")}</CardTitle>
           <CardDescription>
-            All database queries executed by your application
+            {t("pages.database.cardDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -98,23 +104,23 @@ function DatabasePage() {
 import { ExceptionsList } from "@/components/ExceptionsList";
 
 function ExceptionsPage() {
+  const t = useT();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Exception Tracking
+          {t("pages.exceptions.title")}
         </h1>
         <p className="text-muted-foreground">
-          Monitor and debug application exceptions
+          {t("pages.exceptions.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Exceptions</CardTitle>
-          <CardDescription>
-            All exceptions caught during request processing
-          </CardDescription>
+          <CardTitle>{t("exceptions.recentExceptions")}</CardTitle>
+          <CardDescription>{t("pages.exceptions.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ExceptionsList />

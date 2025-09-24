@@ -12,48 +12,50 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { useT } from "@/i18n";
 
 interface SidebarProps {
   className?: string;
   collapsed?: boolean;
 }
 
-const mainNavItems = [
+// 导航项配置 - 使用翻译键而不是硬编码文本
+const mainNavItemsConfig = [
   {
-    title: "Dashboard",
+    titleKey: "nav.dashboard",
     icon: Home,
     href: "/",
     badge: null,
   },
   {
-    title: "Requests",
+    titleKey: "nav.requests",
     icon: Activity,
     href: "/requests",
     badge: null,
   },
   {
-    title: "Database",
+    titleKey: "nav.database",
     icon: Database,
     href: "/database",
     badge: null,
   },
   {
-    title: "Exceptions",
+    titleKey: "nav.exceptions",
     icon: AlertTriangle,
     href: "/exceptions",
     badge: null,
   },
   {
-    title: "Performance",
+    titleKey: "nav.performance",
     icon: TrendingUp,
     href: "/performance",
     badge: null,
   },
 ];
 
-const systemNavItems = [
+const systemNavItemsConfig = [
   {
-    title: "Settings",
+    titleKey: "nav.settings",
     icon: Settings,
     href: "/settings",
     badge: null,
@@ -62,6 +64,7 @@ const systemNavItems = [
 
 export function Sidebar({ className, collapsed = false }: SidebarProps) {
   const location = useLocation();
+  const t = useT();
 
   // Get real-time stats for badges
   const { data: stats } = useQuery({
@@ -70,10 +73,21 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
     refetchInterval: 30000, // Update every 30 seconds
   });
 
+  // 构建带翻译的导航项
+  const mainNavItems = mainNavItemsConfig.map((item) => ({
+    ...item,
+    title: t(item.titleKey),
+  }));
+
+  const systemNavItems = systemNavItemsConfig.map((item) => ({
+    ...item,
+    title: t(item.titleKey),
+  }));
+
   // Update nav items with real data
   const navItemsWithBadges = mainNavItems.map((item) => {
     if (
-      item.title === "Exceptions" &&
+      item.titleKey === "nav.exceptions" &&
       stats?.total_exceptions &&
       stats.total_exceptions > 0
     ) {
