@@ -1,13 +1,14 @@
 """API endpoints for FastAPI Radar dashboard."""
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Query, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
-from pydantic import BaseModel
+from typing import Any, Dict, List, Optional
 
-from .models import CapturedRequest, CapturedQuery, CapturedException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+from .models import CapturedException, CapturedQuery, CapturedRequest
 
 
 def round_float(value: Optional[float], decimals: int = 2) -> Optional[float]:

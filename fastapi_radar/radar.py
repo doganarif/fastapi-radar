@@ -1,17 +1,18 @@
 """Main Radar class for FastAPI Radar."""
 
-from typing import Optional, List
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
+from typing import List, Optional
+
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from .models import Base
-from .middleware import RadarMiddleware
-from .capture import QueryCapture
 from .api import create_api_router
+from .capture import QueryCapture
+from .middleware import RadarMiddleware
+from .models import Base
 
 
 class Radar:
@@ -28,6 +29,7 @@ class Radar:
         slow_query_threshold: int = 100,
         capture_sql_bindings: bool = True,
         exclude_paths: Optional[List[str]] = None,
+        include_in_schema: bool = True,
         theme: str = "auto",
     ):
         self.app = app
@@ -69,8 +71,8 @@ class Radar:
         if self.db_engine:
             self._setup_query_capture()
 
-        self._setup_api()
-        self._setup_dashboard()
+        self._setup_api(include_in_schema=include_in_schema)
+        self._setup_dashboard(include_in_schema=include_in_schema)
 
     @contextmanager
     def get_session(self) -> Session:
@@ -104,15 +106,15 @@ class Radar:
         )
         self.query_capture.register(self.db_engine)
 
-    def _setup_api(self) -> None:
+    def _setup_api(self, include_in_schema: bool) -> None:
         """Mount API endpoints."""
         api_router = create_api_router(self.get_session)
-        self.app.include_router(api_router)
+        self.app.include_router(api_router, include_in_schema=include_in_schema)
 
-    def _setup_dashboard(self) -> None:
+    def _setup_dashboard(self, include_in_schema: bool) -> None:
         """Mount dashboard static files."""
-        from fastapi.responses import FileResponse
         from fastapi import Request
+        from fastapi.responses import FileResponse
 
         dashboard_dir = Path(__file__).parent / "dashboard" / "dist"
 
@@ -131,7 +133,10 @@ class Radar:
 
         # Add a catch-all route for the dashboard SPA
         # This ensures all sub-routes under /__radar serve the index.html
-        @self.app.get(f"{self.dashboard_path}/{{full_path:path}}")
+        @self.app.get(
+            f"{self.dashboard_path}/{{full_path:path}}",
+            include_in_schema=include_in_schema,
+        )
         async def serve_dashboard(request: Request, full_path: str = ""):
             # Check if it's a request for a static asset
             if full_path and any(
@@ -292,6 +297,7 @@ class Radar:
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
         """Clean up old captured data."""
         from datetime import datetime, timedelta
+
         from .models import CapturedRequest
 
         with self.get_session() as session:
