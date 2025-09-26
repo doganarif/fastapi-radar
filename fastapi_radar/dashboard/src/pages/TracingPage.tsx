@@ -6,22 +6,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TracesList } from "@/components/TracesList";
+import { useT } from "@/i18n";
 
 export function TracingPage() {
+  const t = useT();
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">链路跟踪</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("pages.tracing.title")}
+        </h1>
         <p className="text-muted-foreground">
-          查看应用程序的分布式追踪信息和瀑布流图
+          {t("pages.tracing.description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>追踪记录</CardTitle>
+          <CardTitle>{t("pages.tracing.tracesCardTitle")}</CardTitle>
           <CardDescription>
-            浏览所有链路追踪数据，点击查看详细的瀑布流图
+            {t("pages.tracing.tracesCardDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>

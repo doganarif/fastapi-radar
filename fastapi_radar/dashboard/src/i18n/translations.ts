@@ -8,10 +8,19 @@ export interface Translations {
   nav: {
     dashboard: string;
     requests: string;
+    tracking: string;
     database: string;
     exceptions: string;
     performance: string;
     settings: string;
+  };
+
+  // 侧边栏额外键（页面顶部分组标题等）
+  sidebar: {
+    navigation: string;
+    system: string;
+    collapse: string;
+    expand: string;
   };
 
   // 页面标题和描述
@@ -23,6 +32,14 @@ export interface Translations {
     requests: {
       title: string;
       description: string;
+    };
+    tracing: {
+      title: string;
+      description: string;
+      tracesCardTitle: string;
+      tracesCardDescription: string;
+      noTraces: string;
+      viewTrace: string;
     };
     database: {
       title: string;
@@ -291,10 +308,18 @@ const en: Translations = {
   nav: {
     dashboard: "Dashboard",
     requests: "Requests",
+    tracking: "Tracking",
     database: "Database",
     exceptions: "Exceptions",
     performance: "Performance",
     settings: "Settings",
+  },
+
+  sidebar: {
+    navigation: "Navigation",
+    system: "System",
+    collapse: "Collapse sidebar",
+    expand: "Expand sidebar",
   },
 
   pages: {
@@ -305,6 +330,16 @@ const en: Translations = {
     requests: {
       title: "Requests",
       description: "Monitor HTTP requests and responses",
+    },
+    tracing: {
+      title: "Tracing",
+      description:
+        "View distributed traces and waterfall diagrams for your services",
+      tracesCardTitle: "Traces",
+      tracesCardDescription:
+        "Browse all distributed tracing data and open detailed waterfall views",
+      noTraces: "No trace data available",
+      viewTrace: "View trace",
     },
     database: {
       title: "Database",
@@ -567,10 +602,18 @@ const zh: Translations = {
   nav: {
     dashboard: "仪表板",
     requests: "请求监控",
+    tracking: "链路跟踪",
     database: "数据库",
     exceptions: "异常监控",
     performance: "性能分析",
     settings: "设置",
+  },
+
+  sidebar: {
+    navigation: "导航",
+    system: "系统",
+    collapse: "收起侧边栏",
+    expand: "展开侧边栏",
   },
 
   pages: {
@@ -581,6 +624,14 @@ const zh: Translations = {
     requests: {
       title: "请求监控",
       description: "监控 HTTP 请求和响应",
+    },
+    tracing: {
+      title: "链路跟踪",
+      description: "查看服务的分布式追踪和瀑布流图",
+      tracesCardTitle: "追踪记录",
+      tracesCardDescription: "浏览所有链路追踪数据，点击查看详细的瀑布流图",
+      noTraces: "暂无追踪数据",
+      viewTrace: "查看追踪详情",
     },
     database: {
       title: "数据库监控",
@@ -854,7 +905,7 @@ export function getTranslation(language: Language): Translations {
 // 获取嵌套翻译值的辅助函数
 export function getNestedTranslation(
   translations: Translations,
-  key: string
+  key: string,
 ): string {
   const keys = key.split(".");
   let value: any = translations;

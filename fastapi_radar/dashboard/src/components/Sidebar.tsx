@@ -1,4 +1,3 @@
-/fastapi-radar/_aaaadfiprrst / dashboard / src / components / Sidebar.tsx;
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +36,7 @@ const mainNavItemsConfig = [
   },
   {
     // tracing 应该使用翻译键，避免硬编码
-    titleKey: "nav.tracing",
+    titleKey: "nav.tracking",
     icon: GitBranch,
     href: "/tracing",
     badge: null,

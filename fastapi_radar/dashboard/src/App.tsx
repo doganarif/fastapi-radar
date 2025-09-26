@@ -6,8 +6,7 @@ import { RequestsPage } from "@/pages/RequestsPage";
 import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
-import { DatabasePage } from "@/pages/DatabasePage";
-import { ExceptionsPage } from "@/pages/ExceptionsPage";
+
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
 import { LanguageProvider, useT } from "@/i18n";
@@ -37,8 +36,8 @@ function App() {
                 <Route path="requests" element={<RequestsPage />} />
                 <Route path="tracing" element={<TracingPage />} />
                 <Route path="performance" element={<PerformancePage />} />
-                <Route path="database" element={<DatabasePage />} />
-                <Route path="exceptions" element={<ExceptionsPage />} />
+                <Route path="database" element={<DatabasePageWrapped />} />
+                <Route path="exceptions" element={<ExceptionsPageWrapped />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Fallback to dashboard for unmatched routes */}
                 <Route path="*" element={<Navigate to="/" replace />} />
