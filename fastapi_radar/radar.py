@@ -58,7 +58,13 @@ class Radar:
         else:
             radar_db_path = Path.cwd() / "radar.duckdb"
             self.storage_engine = create_engine(
-                f"duckdb:///{radar_db_path}"
+                f"duckdb:///{radar_db_path}",
+                connect_args={
+                    "read_only": False,
+                    "config": {
+                        "memory_limit": "500mb"
+                    }
+                }
             )
 
         # Create session maker for storage

@@ -67,7 +67,7 @@ export function TracesList({ className }: TracesListProps) {
 
   const [filters, setFilters] = useState({
     search: "",
-    status: "",
+    status: "all",
     service: "",
     hours: 24,
     minDuration: 0,
@@ -87,7 +87,7 @@ export function TracesList({ className }: TracesListProps) {
       apiClient.getTraces({
         limit: pageSize,
         offset: page * pageSize,
-        status: filters.status || undefined,
+        status: filters.status === "all" ? undefined : filters.status,
         service_name: filters.service || undefined,
         min_duration_ms: filters.minDuration || undefined,
         hours: filters.hours,
@@ -151,7 +151,7 @@ export function TracesList({ className }: TracesListProps) {
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="ok">Success</SelectItem>
                 <SelectItem value="error">Error</SelectItem>
               </SelectContent>

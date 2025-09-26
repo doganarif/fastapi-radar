@@ -23,11 +23,16 @@ function formatDuration(ms: number | null): string {
   return `${(ms / 1000).toFixed(2)}s`;
 }
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string, tags?: Record<string, any>): string {
+  // 检查是否是数据库操作
+  const isDatabase = tags?.component === "database";
+
   switch (status.toLowerCase()) {
     case "ok":
     case "success":
-      return "bg-green-500";
+      return isDatabase ? "bg-blue-600" : "bg-green-500";
+    case "slow":
+      return "bg-yellow-500";
     case "error":
     case "failure":
       return "bg-red-500";
@@ -36,7 +41,7 @@ function getStatusColor(status: string): string {
     case "timeout":
       return "bg-orange-500";
     default:
-      return "bg-blue-500";
+      return isDatabase ? "bg-blue-400" : "bg-blue-500";
   }
 }
 
@@ -165,7 +170,10 @@ export function WaterfallChart({
                             <div
                               className={cn(
                                 "h-6 rounded cursor-pointer transition-all hover:opacity-80",
-                                getStatusColor(span.status),
+                                getStatusColor(
+                                  span.status,
+                                  span.tags || undefined,
+                                ),
                               )}
                               style={{
                                 marginLeft: `${span.leftPercent}%`,
@@ -175,12 +183,27 @@ export function WaterfallChart({
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-2">
-                              <div className="font-semibold">
-                                {span.operation_name}
+                              <div className="flex items-center gap-2">
+                                <div className="font-semibold">
+                                  {span.operation_name}
+                                </div>
+                                {span.tags?.component === "database" && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs bg-blue-50"
+                                  >
+                                    DB
+                                  </Badge>
+                                )}
                               </div>
                               <div className="text-sm">
                                 <div>
                                   Duration: {formatDuration(span.duration_ms)}
+                                  {span.tags?.["db.slow_query"] && (
+                                    <span className="text-yellow-600 ml-1">
+                                      (慢查询)
+                                    </span>
+                                  )}
                                 </div>
                                 <div>
                                   Start: {formatDuration(span.offset_ms)}
@@ -188,6 +211,21 @@ export function WaterfallChart({
                                 <div>
                                   Service: {span.service_name || "Unknown"}
                                 </div>
+                                {span.tags?.["db.operation_type"] && (
+                                  <div>
+                                    SQL Type:{" "}
+                                    <span className="font-mono">
+                                      {span.tags["db.operation_type"]}
+                                    </span>
+                                  </div>
+                                )}
+                                {span.tags?.["db.rows_affected"] !== null &&
+                                  span.tags?.["db.rows_affected"] !==
+                                    undefined && (
+                                    <div>
+                                      Rows: {span.tags["db.rows_affected"]}
+                                    </div>
+                                  )}
                                 <div className="flex items-center gap-1 mt-1">
                                   <span>Status:</span>
                                   <Badge

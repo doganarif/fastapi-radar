@@ -1,9 +1,12 @@
 """Storage models for FastAPI Radar."""
 
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, JSON, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, JSON, Boolean, Sequence
+try:
+    from sqlalchemy.orm import declarative_base
+except ImportError:
+    from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, foreign
 
 Base = declarative_base()
 
@@ -11,7 +14,7 @@ Base = declarative_base()
 class CapturedRequest(Base):
     __tablename__ = "radar_requests"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, Sequence("radar_requests_id_seq"), primary_key=True, index=True)
     request_id = Column(String(36), unique=True, index=True, nullable=False)
     method = Column(String(10), nullable=False)
     url = Column(String(500), nullable=False)
@@ -27,20 +30,24 @@ class CapturedRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     queries = relationship(
-        "CapturedQuery", back_populates="request", cascade="all, delete-orphan"
+        "CapturedQuery",
+        back_populates="request",
+        primaryjoin="CapturedRequest.request_id == foreign(CapturedQuery.request_id)",
+        cascade="all, delete-orphan"
     )
     exceptions = relationship(
-        "CapturedException", back_populates="request", cascade="all, delete-orphan"
+        "CapturedException",
+        back_populates="request",
+        primaryjoin="CapturedRequest.request_id == foreign(CapturedException.request_id)",
+        cascade="all, delete-orphan"
     )
 
 
 class CapturedQuery(Base):
     __tablename__ = "radar_queries"
 
-    id = Column(Integer, primary_key=True, index=True)
-    request_id = Column(
-        String(36), ForeignKey("radar_requests.request_id", ondelete="CASCADE")
-    )
+    id = Column(Integer, Sequence("radar_queries_id_seq"), primary_key=True, index=True)
+    request_id = Column(String(36), index=True)
     sql = Column(Text, nullable=False)
     parameters = Column(JSON)
     duration_ms = Column(Float)
@@ -48,22 +55,28 @@ class CapturedQuery(Base):
     connection_name = Column(String(100))
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
-    request = relationship("CapturedRequest", back_populates="queries")
+    request = relationship(
+        "CapturedRequest",
+        back_populates="queries",
+        primaryjoin="foreign(CapturedQuery.request_id) == CapturedRequest.request_id"
+    )
 
 
 class CapturedException(Base):
     __tablename__ = "radar_exceptions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    request_id = Column(
-        String(36), ForeignKey("radar_requests.request_id", ondelete="CASCADE")
-    )
+    id = Column(Integer, Sequence("radar_exceptions_id_seq"), primary_key=True, index=True)
+    request_id = Column(String(36), index=True)
     exception_type = Column(String(100), nullable=False)
     exception_value = Column(Text)
     traceback = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
-    request = relationship("CapturedRequest", back_populates="exceptions")
+    request = relationship(
+        "CapturedRequest",
+        back_populates="exceptions",
+        primaryjoin="foreign(CapturedException.request_id) == CapturedRequest.request_id"
+    )
 
 
 class Trace(Base):
@@ -81,7 +94,12 @@ class Trace(Base):
     tags = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
-    spans = relationship("Span", back_populates="trace", cascade="all, delete-orphan")
+    spans = relationship(
+        "Span",
+        back_populates="trace",
+        primaryjoin="Trace.trace_id == foreign(Span.trace_id)",
+        cascade="all, delete-orphan"
+    )
 
 
 class Span(Base):
@@ -89,7 +107,7 @@ class Span(Base):
     __tablename__ = "radar_spans"
 
     span_id = Column(String(16), primary_key=True, index=True)
-    trace_id = Column(String(32), ForeignKey("radar_traces.trace_id", ondelete="CASCADE"), index=True)
+    trace_id = Column(String(32), index=True)
     parent_span_id = Column(String(16), index=True, nullable=True)
     operation_name = Column(String(200), nullable=False)
     service_name = Column(String(100), index=True)
@@ -102,14 +120,18 @@ class Span(Base):
     logs = Column(JSON)  # 存储span事件日志
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
-    trace = relationship("Trace", back_populates="spans")
+    trace = relationship(
+        "Trace",
+        back_populates="spans",
+        primaryjoin="foreign(Span.trace_id) == Trace.trace_id"
+    )
 
 
 class SpanRelation(Base):
     """Span之间的关系表（用于复杂的父子关系查询优化）"""
     __tablename__ = "radar_span_relations"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, Sequence("radar_span_relations_id_seq"), primary_key=True, index=True)
     trace_id = Column(String(32), index=True)
     parent_span_id = Column(String(16), index=True)
     child_span_id = Column(String(16), index=True)
