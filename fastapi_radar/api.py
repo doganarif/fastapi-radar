@@ -1,7 +1,7 @@
 """API endpoints for FastAPI Radar dashboard."""
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -53,7 +53,7 @@ class QueryDetail(BaseModel):
     id: int
     request_id: str
     sql: str
-    parameters: Optional[Dict[str, Any]]
+    parameters: Union[Dict[str, str], List[str], None]
     duration_ms: Optional[float]
     rows_affected: Optional[int]
     connection_name: Optional[str]
