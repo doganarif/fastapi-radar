@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { RequestsPage } from "@/pages/RequestsPage";
+import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
@@ -29,6 +30,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="requests" element={<RequestsPage />} />
+              <Route path="tracing" element={<TracingPage />} />
               <Route path="performance" element={<PerformancePage />} />
               <Route path="database" element={<DatabasePage />} />
               <Route path="exceptions" element={<ExceptionsPage />} />

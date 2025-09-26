@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Settings,
   Home,
+  GitBranch,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,12 @@ const mainNavItems = [
     title: "Requests",
     icon: Activity,
     href: "/requests",
+    badge: null,
+  },
+  {
+    title: "链路跟踪",
+    icon: GitBranch,
+    href: "/tracing",
     badge: null,
   },
   {
@@ -113,7 +120,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <h2
               className={cn(
                 "mb-2 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase",
-                collapsed && "sr-only"
+                collapsed && "sr-only",
               )}
             >
               {!collapsed && "Navigation"}
@@ -126,7 +133,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 }
                 className={cn(
                   "w-full justify-start relative",
-                  collapsed && "justify-center"
+                  collapsed && "justify-center",
                 )}
                 asChild
               >
@@ -154,7 +161,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <h2
               className={cn(
                 "mb-2 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase",
-                collapsed && "sr-only"
+                collapsed && "sr-only",
               )}
             >
               {!collapsed && "System"}
@@ -167,7 +174,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 }
                 className={cn(
                   "w-full justify-start",
-                  collapsed && "justify-center"
+                  collapsed && "justify-center",
                 )}
                 asChild
               >

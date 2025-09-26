@@ -29,6 +29,8 @@ class Radar:
         capture_sql_bindings: bool = True,
         exclude_paths: Optional[List[str]] = None,
         theme: str = "auto",
+        enable_tracing: bool = True,
+        service_name: str = "fastapi-app",
     ):
         self.app = app
         self.db_engine = db_engine
@@ -39,6 +41,8 @@ class Radar:
         self.capture_sql_bindings = capture_sql_bindings
         self.exclude_paths = exclude_paths or []
         self.theme = theme
+        self.enable_tracing = enable_tracing
+        self.service_name = service_name
         self.query_capture = None  # Initialize to None
 
         # Add all radar paths to excluded paths - exclude everything under /__radar
@@ -48,13 +52,13 @@ class Radar:
         # Exclude favicon.ico
         self.exclude_paths.append("/favicon.ico")
 
-        # Setup storage engine (default to SQLite)
+        # Setup storage engine (using DuckDB for better analytics performance)
         if storage_engine:
             self.storage_engine = storage_engine
         else:
-            radar_db_path = Path.cwd() / "radar.db"
+            radar_db_path = Path.cwd() / "radar.duckdb"
             self.storage_engine = create_engine(
-                f"sqlite:///{radar_db_path}", connect_args={"check_same_thread": False}
+                f"duckdb:///{radar_db_path}"
             )
 
         # Create session maker for storage
@@ -89,6 +93,8 @@ class Radar:
             exclude_paths=self.exclude_paths,
             max_body_size=10000,
             capture_response_body=True,
+            enable_tracing=self.enable_tracing,
+            service_name=self.service_name,
         )
 
     def _setup_query_capture(self) -> None:
