@@ -1,3 +1,4 @@
+/fastapi-radar/_aaaadfiprrst / dashboard / src / components / Sidebar.tsx;
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,54 +14,57 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { useT } from "@/i18n";
 
 interface SidebarProps {
   className?: string;
   collapsed?: boolean;
 }
 
-const mainNavItems = [
+// 导航项配置 - 使用翻译键而不是硬编码文本
+const mainNavItemsConfig = [
   {
-    title: "Dashboard",
+    titleKey: "nav.dashboard",
     icon: Home,
     href: "/",
     badge: null,
   },
   {
-    title: "Requests",
+    titleKey: "nav.requests",
     icon: Activity,
     href: "/requests",
     badge: null,
   },
   {
-    title: "链路跟踪",
+    // tracing 应该使用翻译键，避免硬编码
+    titleKey: "nav.tracing",
     icon: GitBranch,
     href: "/tracing",
     badge: null,
   },
   {
-    title: "Database",
+    titleKey: "nav.database",
     icon: Database,
     href: "/database",
     badge: null,
   },
   {
-    title: "Exceptions",
+    titleKey: "nav.exceptions",
     icon: AlertTriangle,
     href: "/exceptions",
     badge: null,
   },
   {
-    title: "Performance",
+    titleKey: "nav.performance",
     icon: TrendingUp,
     href: "/performance",
     badge: null,
   },
 ];
 
-const systemNavItems = [
+const systemNavItemsConfig = [
   {
-    title: "Settings",
+    titleKey: "nav.settings",
     icon: Settings,
     href: "/settings",
     badge: null,
@@ -69,6 +73,7 @@ const systemNavItems = [
 
 export function Sidebar({ className, collapsed = false }: SidebarProps) {
   const location = useLocation();
+  const t = useT();
 
   // Get real-time stats for badges
   const { data: stats } = useQuery({
@@ -77,10 +82,22 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
     refetchInterval: 30000, // Update every 30 seconds
   });
 
-  // Update nav items with real data
+  // 构建带翻译的导航项
+  const mainNavItems = mainNavItemsConfig.map((item) => ({
+    ...item,
+    // 如果 translation 中没有对应键，useT 会回退到 key 本身
+    title: t(item.titleKey),
+  }));
+
+  const systemNavItems = systemNavItemsConfig.map((item) => ({
+    ...item,
+    title: t(item.titleKey),
+  }));
+
+  // Update nav items with real data (e.g. exception count badge)
   const navItemsWithBadges = mainNavItems.map((item) => {
     if (
-      item.title === "Exceptions" &&
+      item.titleKey === "nav.exceptions" &&
       stats?.total_exceptions &&
       stats.total_exceptions > 0
     ) {
@@ -107,7 +124,11 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                       FastAPI Radar
                     </h2>
                     <span className="text-xs text-muted-foreground">
-                      Performance Monitoring
+                      {
+                        t(
+                          "settings.about.description",
+                        ) /* reuse an existing description if available */
+                      }
                     </span>
                   </div>
                 </div>
@@ -123,7 +144,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 collapsed && "sr-only",
               )}
             >
-              {!collapsed && "Navigation"}
+              {!collapsed ? t("sidebar.navigation") : null}
             </h2>
             {navItemsWithBadges.map((item) => (
               <Button
@@ -164,7 +185,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 collapsed && "sr-only",
               )}
             >
-              {!collapsed && "System"}
+              {!collapsed ? t("sidebar.system") : null}
             </h2>
             {systemNavItems.map((item) => (
               <Button

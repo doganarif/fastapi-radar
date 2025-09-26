@@ -10,12 +10,14 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Clock, Database, AlertCircle } from "lucide-react";
 import { format } from "@/lib/date";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useT } from "@/i18n";
 
 export function QueriesList() {
   const [showSlowOnly, setShowSlowOnly] = useState(false);
   const [slowThreshold, setSlowThreshold] = useState(100);
   const [searchTerm, setSearchTerm] = useState("");
   const { openDetail } = useDetailDrawer();
+  const t = useT();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -53,7 +55,7 @@ export function QueriesList() {
     <div className="space-y-4">
       {/* Search Input */}
       <SearchInput
-        placeholder="Search queries..."
+        placeholder={t('database.searchPlaceholder')}
         value={searchTerm}
         onValueChange={setSearchTerm}
       />
@@ -67,10 +69,10 @@ export function QueriesList() {
               checked={showSlowOnly}
               onCheckedChange={setShowSlowOnly}
             />
-            <Label htmlFor="slow-only">Show slow queries only</Label>
+            <Label htmlFor="slow-only">{t('database.showSlowOnly')}</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Label htmlFor="threshold">Slow threshold (ms):</Label>
+            <Label htmlFor="threshold">{t('database.slowThreshold')}:</Label>
             <Input
               id="threshold"
               type="number"
@@ -136,7 +138,7 @@ export function QueriesList() {
         ))}
         {queries?.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            {showSlowOnly ? "No slow queries found" : "No queries captured yet"}
+            {showSlowOnly ? t('database.noSlowQueries') : t('database.noQueries')}
           </div>
         )}
       </div>

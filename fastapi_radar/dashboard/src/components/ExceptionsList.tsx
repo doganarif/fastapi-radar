@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, ChevronRight } from "lucide-react";
 import { format } from "@/lib/date";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useT } from "@/i18n";
 
 export function ExceptionsList() {
   const { openDetail } = useDetailDrawer();
+  const t = useT();
 
   const { data: exceptions, isLoading } = useQuery({
     queryKey: ["exceptions"],
@@ -18,7 +20,7 @@ export function ExceptionsList() {
   });
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading exceptions...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   return (
@@ -46,7 +48,7 @@ export function ExceptionsList() {
             </div>
             <details className="text-xs">
               <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                View traceback preview
+                {t('exceptions.traceback')}
               </summary>
               <pre className="mt-2 p-2 bg-muted rounded overflow-x-auto max-h-40 text-destructive">
                 {exception.traceback}
@@ -57,7 +59,7 @@ export function ExceptionsList() {
       ))}
       {exceptions?.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          No exceptions captured yet
+          {t('exceptions.noExceptions')}
         </div>
       )}
     </div>

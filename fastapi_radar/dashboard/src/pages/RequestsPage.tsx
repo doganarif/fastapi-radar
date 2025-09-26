@@ -24,6 +24,7 @@ import { RequestItem } from "@/components/RequestItem";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Filter, Download, RefreshCw } from "lucide-react";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useT } from "@/i18n";
 
 export function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -31,6 +32,7 @@ export function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { openDetail } = useDetailDrawer();
+  const t = useT();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -108,61 +110,61 @@ export function RequestsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">HTTP Requests</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('pages.requests.title')}</h1>
         <p className="text-muted-foreground">
-          Monitor and analyze all incoming HTTP requests to your application
+          {t('pages.requests.description')}
         </p>
       </div>
 
       {/* Filters and Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t('common.filter')}</CardTitle>
           <CardDescription>
-            Filter and search through request logs
+            {t('requests.filters.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
+              <Label htmlFor="search">{t('common.search')}</Label>
               <SearchInput
                 id="search"
-                placeholder="Search by path..."
+                placeholder={t('requests.filters.searchPlaceholder')}
                 value={searchTerm}
                 onValueChange={setSearchTerm}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status Code</Label>
+              <Label htmlFor="status">{t('requests.filters.status')}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status">
-                  <SelectValue placeholder="All status codes" />
+                  <SelectValue placeholder={t('requests.statusFilters.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All status codes</SelectItem>
-                  <SelectItem value="2xx">2xx Success</SelectItem>
-                  <SelectItem value="3xx">3xx Redirect</SelectItem>
-                  <SelectItem value="4xx">4xx Client Error</SelectItem>
-                  <SelectItem value="5xx">5xx Server Error</SelectItem>
+                  <SelectItem value="all">{t('requests.statusFilters.all')}</SelectItem>
+                  <SelectItem value="2xx">{t('requests.statusFilters.success')}</SelectItem>
+                  <SelectItem value="3xx">{t('requests.statusFilters.redirect')}</SelectItem>
+                  <SelectItem value="4xx">{t('requests.statusFilters.clientErrors')}</SelectItem>
+                  <SelectItem value="5xx">{t('requests.statusFilters.serverErrors')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="method">Method</Label>
+              <Label htmlFor="method">{t('requests.filters.method')}</Label>
               <Select value={methodFilter} onValueChange={setMethodFilter}>
                 <SelectTrigger id="method">
-                  <SelectValue placeholder="All methods" />
+                  <SelectValue placeholder={t('requests.methodFilters.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All methods</SelectItem>
-                  <SelectItem value="GET">GET</SelectItem>
-                  <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                  <SelectItem value="PATCH">PATCH</SelectItem>
-                  <SelectItem value="DELETE">DELETE</SelectItem>
+                  <SelectItem value="all">{t('requests.methodFilters.all')}</SelectItem>
+                  <SelectItem value="GET">{t('requests.methodFilters.get')}</SelectItem>
+                  <SelectItem value="POST">{t('requests.methodFilters.post')}</SelectItem>
+                  <SelectItem value="PUT">{t('requests.methodFilters.put')}</SelectItem>
+                  <SelectItem value="PATCH">{t('requests.methodFilters.patch')}</SelectItem>
+                  <SelectItem value="DELETE">{t('requests.methodFilters.delete')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -194,7 +196,7 @@ export function RequestsPage() {
       >
         <TabsList>
           <TabsTrigger value="all">
-            All Requests
+            {t('requests.tabs.all')}
             {allRequests && allRequests.length > 0 && (
               <Badge variant="outline" className="ml-2">
                 {allRequests.length}
@@ -202,7 +204,7 @@ export function RequestsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="successful">
-            Successful
+            {t('requests.tabs.successful')}
             {successfulCount > 0 && (
               <Badge variant="outline" className="ml-2">
                 {successfulCount}
@@ -210,7 +212,7 @@ export function RequestsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="failed">
-            Failed
+            {t('requests.tabs.failed')}
             {failedCount > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {failedCount}
@@ -218,7 +220,7 @@ export function RequestsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="slow">
-            Slow
+            {t('requests.tabs.slow')}
             {slowCount > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {slowCount}
@@ -231,18 +233,16 @@ export function RequestsPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {activeTab === "all" && "All Requests"}
-                {activeTab === "successful" && "Successful Requests"}
-                {activeTab === "failed" && "Failed Requests"}
-                {activeTab === "slow" && "Slow Requests"}
+                {activeTab === "all" && t('requests.tabs.all')}
+                {activeTab === "successful" && t('requests.tabs.successful')}
+                {activeTab === "failed" && t('requests.tabs.failed')}
+                {activeTab === "slow" && t('requests.tabs.slow')}
               </CardTitle>
               <CardDescription>
-                {activeTab === "all" && "Complete list of all HTTP requests"}
-                {activeTab === "successful" &&
-                  "Requests that completed successfully (2xx status codes)"}
-                {activeTab === "failed" &&
-                  "Requests that resulted in errors (4xx and 5xx status codes)"}
-                {activeTab === "slow" && "Requests that took longer than 500ms"}
+                {activeTab === "all" && t('requests.descriptions.all')}
+                {activeTab === "successful" && t('requests.descriptions.successful')}
+                {activeTab === "failed" && t('requests.descriptions.failed')}
+                {activeTab === "slow" && t('requests.descriptions.slow')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -256,10 +256,10 @@ export function RequestsPage() {
                 ))}
                 {(!filteredRequests || filteredRequests.length === 0) && (
                   <div className="text-center py-8 text-muted-foreground">
-                    {activeTab === "all" && "No requests captured yet"}
-                    {activeTab === "successful" && "No successful requests"}
-                    {activeTab === "failed" && "No failed requests"}
-                    {activeTab === "slow" && "No slow requests"}
+                    {activeTab === "all" && t('requests.empty.all')}
+                    {activeTab === "successful" && t('requests.empty.successful')}
+                    {activeTab === "failed" && t('requests.empty.failed')}
+                    {activeTab === "slow" && t('requests.empty.slow')}
                   </div>
                 )}
               </div>
