@@ -15,11 +15,7 @@ from fastapi_radar import Radar
 
 # In-memory storage (simulating a NoSQL database or cache)
 # In a real application, this could be Redis, MongoDB, DynamoDB, etc.
-STORAGE: Dict[str, Any] = {
-    "products": {},
-    "users": {},
-    "orders": {}
-}
+STORAGE: Dict[str, Any] = {"products": {}, "users": {}, "orders": {}}
 
 # Counter for generating IDs
 ID_COUNTER = {"products": 0, "users": 0, "orders": 0}
@@ -103,7 +99,7 @@ def get_from_storage(collection: str, item_id: int) -> Optional[dict]:
 def list_from_storage(collection: str, skip: int = 0, limit: int = 10) -> List[dict]:
     """List items from storage with pagination."""
     items = list(STORAGE[collection].values())
-    return items[skip:skip + limit]
+    return items[skip : skip + limit]
 
 
 def delete_from_storage(collection: str, item_id: int) -> bool:
@@ -122,7 +118,7 @@ async def root():
         "message": "Welcome to the NoSQL Example API",
         "description": "This API demonstrates Radar without SQL database monitoring",
         "dashboard": "Visit /__radar to see the debugging dashboard",
-        "note": "SQL queries tab will be empty as we're not using a SQL database"
+        "note": "SQL queries tab will be empty as we're not using a SQL database",
     }
 
 
@@ -221,7 +217,9 @@ async def create_order(order: Order):
     for product_id in order.product_ids:
         product = get_from_storage("products", product_id)
         if not product:
-            raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Product {product_id} not found"
+            )
         total += product["price"]
 
     order_dict = order.dict(exclude={"id", "created_at"})
@@ -259,7 +257,7 @@ async def simulate_slow_endpoint():
         "processing_time_ms": round(processing_time * 1000, 2),
         "products_count": len(products),
         "users_count": len(users),
-        "note": "No SQL queries were harmed in the making of this response"
+        "note": "No SQL queries were harmed in the making of this response",
     }
 
 
@@ -283,8 +281,7 @@ async def external_api_call():
     # Simulate random success/failure
     if random.random() < 0.1:  # 10% chance of failure
         raise HTTPException(
-            status_code=503,
-            detail="External API temporarily unavailable"
+            status_code=503, detail="External API temporarily unavailable"
         )
 
     return {
@@ -292,8 +289,8 @@ async def external_api_call():
         "latency_ms": round(latency * 1000, 2),
         "data": {
             "timestamp": datetime.utcnow().isoformat(),
-            "value": random.randint(1, 100)
-        }
+            "value": random.randint(1, 100),
+        },
     }
 
 
@@ -318,20 +315,57 @@ def init_sample_data():
     """Initialize storage with sample data."""
     if not STORAGE["products"]:
         sample_products = [
-            {"name": "Laptop", "description": "High-performance laptop", "price": 999.99, "in_stock": True},
-            {"name": "Mouse", "description": "Wireless mouse", "price": 29.99, "in_stock": True},
-            {"name": "Keyboard", "description": "Mechanical keyboard", "price": 149.99, "in_stock": False},
-            {"name": "Monitor", "description": "4K display", "price": 499.99, "in_stock": True},
-            {"name": "Headphones", "description": "Noise-cancelling", "price": 199.99, "in_stock": True},
+            {
+                "name": "Laptop",
+                "description": "High-performance laptop",
+                "price": 999.99,
+                "in_stock": True,
+            },
+            {
+                "name": "Mouse",
+                "description": "Wireless mouse",
+                "price": 29.99,
+                "in_stock": True,
+            },
+            {
+                "name": "Keyboard",
+                "description": "Mechanical keyboard",
+                "price": 149.99,
+                "in_stock": False,
+            },
+            {
+                "name": "Monitor",
+                "description": "4K display",
+                "price": 499.99,
+                "in_stock": True,
+            },
+            {
+                "name": "Headphones",
+                "description": "Noise-cancelling",
+                "price": 199.99,
+                "in_stock": True,
+            },
         ]
         for product in sample_products:
             save_to_storage("products", product)
 
     if not STORAGE["users"]:
         sample_users = [
-            {"username": "johndoe", "email": "john@example.com", "full_name": "John Doe"},
-            {"username": "janedoe", "email": "jane@example.com", "full_name": "Jane Doe"},
-            {"username": "admin", "email": "admin@example.com", "full_name": "Admin User"},
+            {
+                "username": "johndoe",
+                "email": "john@example.com",
+                "full_name": "John Doe",
+            },
+            {
+                "username": "janedoe",
+                "email": "jane@example.com",
+                "full_name": "Jane Doe",
+            },
+            {
+                "username": "admin",
+                "email": "admin@example.com",
+                "full_name": "Admin User",
+            },
         ]
         for user in sample_users:
             save_to_storage("users", user)

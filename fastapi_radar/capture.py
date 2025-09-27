@@ -25,12 +25,10 @@ class QueryCapture:
         self._query_start_times = {}
 
     def register(self, engine: Engine) -> None:
-        """Register SQLAlchemy event listeners."""
         event.listen(engine, "before_cursor_execute", self._before_cursor_execute)
         event.listen(engine, "after_cursor_execute", self._after_cursor_execute)
 
     def unregister(self, engine: Engine) -> None:
-        """Unregister SQLAlchemy event listeners."""
         event.remove(engine, "before_cursor_execute", self._before_cursor_execute)
         event.remove(engine, "after_cursor_execute", self._after_cursor_execute)
 
@@ -47,11 +45,9 @@ class QueryCapture:
         if not request_id:
             return
 
-        # 存储查询开始时间
         context_id = id(context)
         self._query_start_times[context_id] = time.time()
 
-        # 如果启用了链路跟踪，创建数据库span
         trace_ctx = get_current_trace_context()
         if trace_ctx:
             formatted_sql = format_sql(statement)
@@ -60,13 +56,12 @@ class QueryCapture:
                 operation_name=f"DB {operation_type}",
                 span_kind="client",
                 tags={
-                    "db.statement": formatted_sql[:500],  # 限制SQL语句长度
+                    "db.statement": formatted_sql[:500],  # limit SQL length
                     "db.operation_type": operation_type,
-                    "component": "database"
-                }
+                    "component": "database",
+                },
             )
-            # 存储span_id以便在查询结束时使用
-            setattr(context, '_radar_span_id', span_id)
+            setattr(context, "_radar_span_id", span_id)
 
     def _after_cursor_execute(
         self,
@@ -87,17 +82,16 @@ class QueryCapture:
 
         duration_ms = round((time.time() - start_time) * 1000, 2)
 
-        # 完成链路跟踪span
         trace_ctx = get_current_trace_context()
-        if trace_ctx and hasattr(context, '_radar_span_id'):
-            span_id = getattr(context, '_radar_span_id')
-            # 添加执行结果到span标签
+        if trace_ctx and hasattr(context, "_radar_span_id"):
+            span_id = getattr(context, "_radar_span_id")
             additional_tags = {
                 "db.duration_ms": duration_ms,
-                "db.rows_affected": cursor.rowcount if hasattr(cursor, "rowcount") else None,
+                "db.rows_affected": (
+                    cursor.rowcount if hasattr(cursor, "rowcount") else None
+                ),
             }
 
-            # 判断查询状态
             status = "ok"
             if duration_ms >= self.slow_query_threshold:
                 status = "slow"
@@ -105,7 +99,6 @@ class QueryCapture:
 
             trace_ctx.finish_span(span_id, status=status, tags=additional_tags)
 
-        # Skip radar's own queries for storage
         if "radar_" in statement:
             return
 
@@ -129,39 +122,37 @@ class QueryCapture:
                 session.add(captured_query)
                 session.commit()
         except Exception:
-            pass  # Silently ignore storage errors
+            pass
 
     def _get_operation_type(self, statement: str) -> str:
-        """Extract SQL operation type from statement."""
         if not statement:
             return "unknown"
 
         statement = statement.strip().upper()
 
-        if statement.startswith('SELECT'):
+        if statement.startswith("SELECT"):
             return "SELECT"
-        elif statement.startswith('INSERT'):
+        elif statement.startswith("INSERT"):
             return "INSERT"
-        elif statement.startswith('UPDATE'):
+        elif statement.startswith("UPDATE"):
             return "UPDATE"
-        elif statement.startswith('DELETE'):
+        elif statement.startswith("DELETE"):
             return "DELETE"
-        elif statement.startswith('CREATE'):
+        elif statement.startswith("CREATE"):
             return "CREATE"
-        elif statement.startswith('DROP'):
+        elif statement.startswith("DROP"):
             return "DROP"
-        elif statement.startswith('ALTER'):
+        elif statement.startswith("ALTER"):
             return "ALTER"
         else:
             return "OTHER"
 
     def _serialize_parameters(self, parameters: Any) -> Optional[list]:
-        """Serialize query parameters for storage."""
         if not parameters:
             return None
 
         if isinstance(parameters, (list, tuple)):
-            return [str(p) for p in parameters[:100]]  # Limit to 100 params
+            return [str(p) for p in parameters[:100]]
         elif isinstance(parameters, dict):
             return {k: str(v) for k, v in list(parameters.items())[:100]}
 

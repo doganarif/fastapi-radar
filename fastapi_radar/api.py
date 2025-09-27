@@ -97,13 +97,13 @@ class WaterfallSpan(BaseModel):
     parent_span_id: Optional[str]
     operation_name: str
     service_name: Optional[str]
-    start_time: Optional[str]  # ISO格式字符串
-    end_time: Optional[str]    # ISO格式字符串
+    start_time: Optional[str]  # ISO 8601 string
+    end_time: Optional[str]  # ISO 8601 string
     duration_ms: Optional[float]
     status: str
     tags: Optional[Dict[str, Any]]
     depth: int
-    offset_ms: float  # 相对于trace开始的偏移时间
+    offset_ms: float  # Offset from trace start in ms
 
 
 class TraceDetail(BaseModel):
@@ -140,7 +140,6 @@ def create_api_router(get_session_context) -> APIRouter:
         query = session.query(CapturedRequest)
 
         if status_code:
-            # Handle status code ranges (e.g., 200 for 2xx, 400 for 4xx)
             if status_code in [200, 300, 400, 500]:
                 # Filter by status code range
                 lower_bound = status_code
@@ -370,7 +369,7 @@ def create_api_router(get_session_context) -> APIRouter:
         session.commit()
         return {"message": "Data cleared successfully"}
 
-    # 链路跟踪相关API端点
+    # Tracing-related API endpoints
 
     @router.get("/traces", response_model=List[TraceSummary])
     async def get_traces(
@@ -382,7 +381,7 @@ def create_api_router(get_session_context) -> APIRouter:
         hours: int = Query(24, ge=1, le=720),
         session: Session = Depends(get_db),
     ):
-        """获取trace列表"""
+        """List traces."""
         since = datetime.utcnow() - timedelta(hours=hours)
         query = session.query(Trace).filter(Trace.created_at >= since)
 
@@ -393,7 +392,9 @@ def create_api_router(get_session_context) -> APIRouter:
         if min_duration_ms:
             query = query.filter(Trace.duration_ms >= min_duration_ms)
 
-        traces = query.order_by(desc(Trace.start_time)).offset(offset).limit(limit).all()
+        traces = (
+            query.order_by(desc(Trace.start_time)).offset(offset).limit(limit).all()
+        )
 
         return [
             TraceSummary(
@@ -415,12 +416,12 @@ def create_api_router(get_session_context) -> APIRouter:
         trace_id: str,
         session: Session = Depends(get_db),
     ):
-        """获取trace详情"""
+        """Get trace details."""
         trace = session.query(Trace).filter(Trace.trace_id == trace_id).first()
         if not trace:
             raise HTTPException(status_code=404, detail="Trace not found")
 
-        # 获取瀑布流数据
+        # Fetch waterfall data
         tracing_manager = TracingManager(lambda: get_session_context())
         waterfall_spans = tracing_manager.get_waterfall_data(trace_id)
 
@@ -435,7 +436,7 @@ def create_api_router(get_session_context) -> APIRouter:
             status=trace.status,
             tags=trace.tags,
             created_at=trace.created_at,
-            spans=[WaterfallSpan(**span) for span in waterfall_spans]
+            spans=[WaterfallSpan(**span) for span in waterfall_spans],
         )
 
     @router.get("/traces/{trace_id}/waterfall")
@@ -443,13 +444,12 @@ def create_api_router(get_session_context) -> APIRouter:
         trace_id: str,
         session: Session = Depends(get_db),
     ):
-        """获取trace的瀑布流数据（专门为瀑布流视图优化）"""
-        # 验证trace存在
+        """Get optimized waterfall data for a trace."""
+        # Ensure the trace exists
         trace = session.query(Trace).filter(Trace.trace_id == trace_id).first()
         if not trace:
             raise HTTPException(status_code=404, detail="Trace not found")
 
-        # 使用DuckDB优化的瀑布流查询
         tracing_manager = TracingManager(lambda: get_session_context())
         waterfall_data = tracing_manager.get_waterfall_data(trace_id)
 
@@ -461,8 +461,8 @@ def create_api_router(get_session_context) -> APIRouter:
                 "operation_name": trace.operation_name,
                 "total_duration_ms": trace.duration_ms,
                 "span_count": trace.span_count,
-                "status": trace.status
-            }
+                "status": trace.status,
+            },
         }
 
     @router.get("/spans/{span_id}")
@@ -470,7 +470,7 @@ def create_api_router(get_session_context) -> APIRouter:
         span_id: str,
         session: Session = Depends(get_db),
     ):
-        """获取span详情"""
+        """Get span details."""
         span = session.query(Span).filter(Span.span_id == span_id).first()
         if not span:
             raise HTTPException(status_code=404, detail="Span not found")
@@ -488,7 +488,7 @@ def create_api_router(get_session_context) -> APIRouter:
             "status": span.status,
             "tags": span.tags,
             "logs": span.logs,
-            "created_at": span.created_at.isoformat()
+            "created_at": span.created_at.isoformat(),
         }
 
     return router

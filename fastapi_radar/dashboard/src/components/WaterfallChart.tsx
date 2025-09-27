@@ -24,7 +24,7 @@ function formatDuration(ms: number | null): string {
 }
 
 function getStatusColor(status: string, tags?: Record<string, any>): string {
-  // 检查是否是数据库操作
+  // Identify database operations for distinct coloring
   const isDatabase = tags?.component === "database";
 
   switch (status.toLowerCase()) {
@@ -71,7 +71,7 @@ export function WaterfallChart({
   const chartData = useMemo(() => {
     if (!spans || spans.length === 0) return [];
 
-    // 按深度和开始时间排序
+    // Sort by depth and start time
     const sortedSpans = [...spans].sort((a, b) => {
       if (a.depth !== b.depth) return a.depth - b.depth;
       return a.offset_ms - b.offset_ms;
@@ -79,7 +79,7 @@ export function WaterfallChart({
 
     return sortedSpans.map((span) => ({
       ...span,
-      // 计算在图表中的位置和宽度（百分比）
+      // Compute position and width in the chart (percent)
       leftPercent: (span.offset_ms / totalDurationMs) * 100,
       widthPercent: ((span.duration_ms || 0) / totalDurationMs) * 100,
     }));
@@ -98,14 +98,14 @@ export function WaterfallChart({
   }
 
   const rowHeight = 40;
-  const chartHeight = spans.length * rowHeight + 60; // 额外空间用于时间轴
+  const chartHeight = spans.length * rowHeight + 60; // Extra space for the time axis
 
   return (
     <TooltipProvider>
       <Card className={className}>
         <CardContent className="p-0">
           <div className="relative overflow-x-auto">
-            {/* 时间轴 */}
+            {/* Time axis */}
             <div className="sticky top-0 bg-background border-b p-4">
               <div className="relative h-6">
                 <div className="absolute left-0 text-xs text-muted-foreground">
@@ -126,10 +126,10 @@ export function WaterfallChart({
               </div>
             </div>
 
-            {/* 瀑布图主体 */}
+            {/* Waterfall body */}
             <div className="p-4" style={{ minHeight: chartHeight }}>
               <div className="relative">
-                {/* 网格线 */}
+                {/* Grid lines */}
                 <div className="absolute inset-0 pointer-events-none">
                   {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
                     <div
@@ -151,7 +151,7 @@ export function WaterfallChart({
                     }}
                   >
                     <div className="flex items-center h-full">
-                      {/* Span名称和服务 */}
+                      {/* Span name and service */}
                       <div className="flex-shrink-0 w-1/3 pr-4">
                         <div className="text-sm font-medium truncate">
                           {span.operation_name}
@@ -163,7 +163,7 @@ export function WaterfallChart({
                         )}
                       </div>
 
-                      {/* 时间条 */}
+                      {/* Time bar */}
                       <div className="flex-1 relative">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -177,7 +177,7 @@ export function WaterfallChart({
                               )}
                               style={{
                                 marginLeft: `${span.leftPercent}%`,
-                                width: `${Math.max(span.widthPercent, 0.5)}%`, // 最小宽度确保可见
+                                width: `${Math.max(span.widthPercent, 0.5)}%`, // Minimum width to keep visible
                               }}
                             />
                           </TooltipTrigger>
@@ -201,7 +201,7 @@ export function WaterfallChart({
                                   Duration: {formatDuration(span.duration_ms)}
                                   {span.tags?.["db.slow_query"] && (
                                     <span className="text-yellow-600 ml-1">
-                                      (慢查询)
+                                      (slow query)
                                     </span>
                                   )}
                                 </div>
@@ -259,7 +259,7 @@ export function WaterfallChart({
                         </Tooltip>
                       </div>
 
-                      {/* 持续时间 */}
+                      {/* Duration */}
                       <div className="flex-shrink-0 w-20 text-right text-sm">
                         {formatDuration(span.duration_ms)}
                       </div>

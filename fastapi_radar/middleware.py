@@ -14,8 +14,10 @@ from starlette.responses import Response, StreamingResponse
 from .models import CapturedRequest, CapturedException
 from .utils import serialize_headers, get_client_ip, truncate_body
 from .tracing import (
-    TraceContext, TracingManager,
-    create_trace_context, set_trace_context, get_current_trace_context
+    TraceContext,
+    TracingManager,
+    create_trace_context,
+    set_trace_context,
 )
 
 request_context: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
@@ -49,26 +51,25 @@ class RadarMiddleware(BaseHTTPMiddleware):
         request_context.set(request_id)
         start_time = time.time()
 
-        # 创建链路跟踪上下文
+        # Create tracing context for this request
         trace_ctx = None
         root_span_id = None
 
         if self.enable_tracing and self.tracing_manager:
-            # 检查请求头中是否有现有的trace信息
-            existing_trace_id = request.headers.get('x-trace-id')
-            parent_span_id = request.headers.get('x-parent-span-id')
+            existing_trace_id = request.headers.get("x-trace-id")
+            parent_span_id = request.headers.get("x-parent-span-id")
 
             if existing_trace_id:
-                # 如果有现有trace，创建子span
+                # Child span for existing trace
                 trace_ctx = TraceContext(existing_trace_id, self.service_name)
             else:
-                # 创建新的trace
+                # Create a new trace
                 trace_ctx = create_trace_context(self.service_name)
 
-            # 设置trace上下文
+            # Set tracing context
             set_trace_context(trace_ctx)
 
-            # 创建根span
+            # Create root span
             root_span_id = trace_ctx.create_span(
                 operation_name=f"{request.method} {request.url.path}",
                 parent_span_id=parent_span_id,
@@ -77,10 +78,12 @@ class RadarMiddleware(BaseHTTPMiddleware):
                     "http.method": request.method,
                     "http.url": str(request.url),
                     "http.path": request.url.path,
-                    "http.query": str(request.query_params) if request.query_params else None,
+                    "http.query": (
+                        str(request.query_params) if request.query_params else None
+                    ),
                     "user_agent": request.headers.get("user-agent"),
-                    "request_id": request_id
-                }
+                    "request_id": request_id,
+                },
             )
 
             trace_ctx.set_current_span(root_span_id)
@@ -133,13 +136,13 @@ class RadarMiddleware(BaseHTTPMiddleware):
             exception_occurred = True
             self._capture_exception(request_id, e)
 
-            # 在span中记录异常
+            # Record exception in span
             if trace_ctx and root_span_id:
                 trace_ctx.add_span_log(
                     root_span_id,
                     f"Exception occurred: {str(e)}",
                     level="error",
-                    exception_type=type(e).__name__
+                    exception_type=type(e).__name__,
                 )
 
             raise
@@ -148,7 +151,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
             duration = round((time.time() - start_time) * 1000, 2)
             captured_request.duration_ms = duration
 
-            # 完成span跟踪
+            # Finish span tracking
             if trace_ctx and root_span_id:
                 status = "error" if exception_occurred else "ok"
                 trace_ctx.finish_span(
@@ -156,8 +159,8 @@ class RadarMiddleware(BaseHTTPMiddleware):
                     status=status,
                     tags={
                         "http.status_code": response.status_code if response else None,
-                        "duration_ms": duration
-                    }
+                        "duration_ms": duration,
+                    },
                 )
 
             with self.get_session() as session:
@@ -167,7 +170,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
                     if exception_data:
                         session.add(exception_data)
 
-                # 保存trace数据
+                # Persist trace data
                 if trace_ctx and self.tracing_manager:
                     self.tracing_manager.save_trace_context(trace_ctx)
 

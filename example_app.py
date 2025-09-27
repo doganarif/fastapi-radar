@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean
+
 try:
     from sqlalchemy.orm import declarative_base
 except ImportError:

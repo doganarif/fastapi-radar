@@ -20,7 +20,7 @@ interface SidebarProps {
   collapsed?: boolean;
 }
 
-// 导航项配置 - 使用翻译键而不是硬编码文本
+// Navigation items – use translation keys instead of hardcoded text
 const mainNavItemsConfig = [
   {
     titleKey: "nav.dashboard",
@@ -35,7 +35,7 @@ const mainNavItemsConfig = [
     badge: null,
   },
   {
-    // tracing 应该使用翻译键，避免硬编码
+    // Tracing uses a translation key to avoid hardcoding
     titleKey: "nav.tracking",
     icon: GitBranch,
     href: "/tracing",

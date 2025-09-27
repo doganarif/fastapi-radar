@@ -1,6 +1,7 @@
 """Main Radar class for FastAPI Radar."""
 
 from contextlib import contextmanager
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -47,37 +48,38 @@ class Radar:
         self.service_name = service_name
         self.query_capture = None
 
-        # Add all radar paths to excluded paths - exclude everything under /__radar
+        # Exclude radar dashboard paths
         if dashboard_path not in self.exclude_paths:
             self.exclude_paths.append(dashboard_path)
-
-        # Exclude favicon.ico
         self.exclude_paths.append("/favicon.ico")
 
-        # Setup storage engine (using DuckDB for better analytics performance)
+        # Setup storage engine
         if storage_engine:
             self.storage_engine = storage_engine
         else:
-            radar_db_path = Path.cwd() / "radar.duckdb"
-            self.storage_engine = create_engine(
-                f"duckdb:///{radar_db_path}",
-                connect_args={
-                    "read_only": False,
-                    "config": {
-                        "memory_limit": "500mb"
-                    }
-                }
-            )
+            storage_url = os.environ.get("RADAR_STORAGE_URL")
+            if storage_url:
+                self.storage_engine = create_engine(storage_url)
+            else:
+                # Use DuckDB for analytics-optimized storage
+                # Import duckdb_engine to register the dialect
+                import duckdb_engine  # noqa: F401
 
-        # Create session maker for storage
+                radar_db_path = Path.cwd() / "radar.duckdb"
+                self.storage_engine = create_engine(
+                    f"duckdb:///{radar_db_path}",
+                    connect_args={
+                        "read_only": False,
+                        "config": {"memory_limit": "500mb"},
+                    },
+                )
+
         self.SessionLocal = sessionmaker(
             autocommit=False, autoflush=False, bind=self.storage_engine
         )
 
-        # Initialize components
         self._setup_middleware()
 
-        # Only setup query capture if db_engine is provided
         if self.db_engine:
             self._setup_query_capture()
 
@@ -177,7 +179,6 @@ class Radar:
                 return {"error": "Dashboard not found. Please build the dashboard."}
 
     def _create_placeholder_dashboard(self, dashboard_dir: Path) -> None:
-        """Create a placeholder dashboard for development."""
         index_html = dashboard_dir / "index.html"
         index_html.write_text(
             """
@@ -299,15 +300,12 @@ class Radar:
         )
 
     def create_tables(self) -> None:
-        """Create radar storage tables."""
         Base.metadata.create_all(bind=self.storage_engine)
 
     def drop_tables(self) -> None:
-        """Drop radar storage tables."""
         Base.metadata.drop_all(bind=self.storage_engine)
 
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
-        """Clean up old captured data."""
         from datetime import datetime, timedelta
 
         from .models import CapturedRequest
