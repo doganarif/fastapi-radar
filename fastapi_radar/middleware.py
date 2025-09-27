@@ -114,8 +114,11 @@ class RadarMiddleware(BaseHTTPMiddleware):
             captured_request.status_code = response.status_code
             captured_request.response_headers = serialize_headers(response.headers)
 
-            if self.capture_response_body and not isinstance(
-                response, StreamingResponse
+            content_type = response.headers.get("content-type", "").lower()
+            if (
+                self.capture_response_body
+                and not isinstance(response, StreamingResponse)
+                and not content_type.startswith("text/event-stream")
             ):
                 response_body = b""
                 async for chunk in response.body_iterator:
