@@ -1,10 +1,10 @@
-// 国际化模块统一导出
-// 简化其他文件的导入路径
+// i18n module re-exports
+// Simplify import paths for other files
 
 export * from './translations';
 export * from './LanguageContext';
 
-// 便捷的重新导出
+// Convenience re-exports
 export { LanguageProvider, useTranslation, useT, useLanguage } from './LanguageContext';
 export { translations, DEFAULT_LANGUAGE, getTranslation } from './translations';
 export type { Language, Translations } from './translations';

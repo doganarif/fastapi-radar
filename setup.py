@@ -5,14 +5,17 @@ from pathlib import Path
 
 # Read README for long description
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
+long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="fastapi-radar",
     version="0.1.6",
     author="Arif Dogan",
     author_email="me@arif.sh",
-    description="A debugging dashboard for FastAPI applications with real-time request, database query, and exception monitoring",
+    description=(
+        "A debugging dashboard for FastAPI applications with real-time "
+        "request, database query, and exception monitoring"
+    ),
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/doganarif/fastapi-radar",
@@ -36,6 +39,8 @@ setup(
         "sqlalchemy>=1.4.0",
         "pydantic>=1.8.0",
         "starlette>=0.14.2",
+        "duckdb-engine>=0.9.0",
+        "duckdb>=1.3.0",
     ],
     extras_require={
         "dev": [
