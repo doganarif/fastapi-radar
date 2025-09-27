@@ -1,7 +1,7 @@
 """SQLAlchemy query capture for FastAPI Radar."""
 
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Union
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -147,7 +147,9 @@ class QueryCapture:
         else:
             return "OTHER"
 
-    def _serialize_parameters(self, parameters: Any) -> Union[Dict[str, str], List[str], None]:
+    def _serialize_parameters(
+        self, parameters: Any
+    ) -> Union[Dict[str, str], List[str], None]:
         """Serialize query parameters for storage."""
         if not parameters:
             return None
