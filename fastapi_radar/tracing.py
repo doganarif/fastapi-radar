@@ -208,7 +208,8 @@ class TracingManager:
                         COALESCE(r.depth, 0) as depth,
                         -- Offset relative to trace start
                         EXTRACT(EPOCH FROM (
-                            s.start_time - MIN(s.start_time) OVER (PARTITION BY s.trace_id)
+                            s.start_time - MIN(s.start_time)
+                                OVER (PARTITION BY s.trace_id)
                         )) * 1000 as offset_ms
                     FROM radar_spans s
                     LEFT JOIN radar_span_relations r ON s.span_id = r.child_span_id

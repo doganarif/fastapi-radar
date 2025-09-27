@@ -273,11 +273,15 @@ class Radar:
                 const response = await fetch('/__radar/api/stats?hours=1');
                 const data = await response.json();
 
-                document.querySelectorAll('.stat-value')[0].textContent = data.total_requests;
-                document.querySelectorAll('.stat-value')[1].textContent = data.total_queries;
+                document.querySelectorAll('.stat-value')[0].textContent =
+                    data.total_requests;
+                document.querySelectorAll('.stat-value')[1].textContent =
+                    data.total_queries;
                 document.querySelectorAll('.stat-value')[2].textContent =
-                    data.avg_response_time ? `${{data.avg_response_time.toFixed(1)}}ms` : '--';
-                document.querySelectorAll('.stat-value')[3].textContent = data.total_exceptions;
+                    data.avg_response_time ?
+                        `${{data.avg_response_time.toFixed(1)}}ms` : '--';
+                document.querySelectorAll('.stat-value')[3].textContent =
+                    data.total_exceptions;
 
                 document.querySelectorAll('.stat-value').forEach(el => {{
                     el.classList.remove('loading');

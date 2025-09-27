@@ -57,6 +57,7 @@ def test_middleware_captures_requests():
     engine = create_engine("sqlite:///:memory:")
     # Use a file-based SQLite for storage to persist tables
     import tempfile
+
     with tempfile.NamedTemporaryFile(suffix=".db") as temp_db:
         storage_engine = create_engine(f"sqlite:///{temp_db.name}")
 

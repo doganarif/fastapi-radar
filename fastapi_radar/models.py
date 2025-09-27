@@ -51,7 +51,9 @@ class CapturedRequest(Base):
     exceptions = relationship(
         "CapturedException",
         back_populates="request",
-        primaryjoin="CapturedRequest.request_id == foreign(CapturedException.request_id)",
+        primaryjoin=(
+            "CapturedRequest.request_id == foreign(CapturedException.request_id)"
+        ),
         cascade="all, delete-orphan",
     )
 
@@ -90,7 +92,9 @@ class CapturedException(Base):
     request = relationship(
         "CapturedRequest",
         back_populates="exceptions",
-        primaryjoin="foreign(CapturedException.request_id) == CapturedRequest.request_id",
+        primaryjoin=(
+            "foreign(CapturedException.request_id) == CapturedRequest.request_id"
+        ),
     )
 
 

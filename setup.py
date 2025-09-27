@@ -12,7 +12,10 @@ setup(
     version="0.1.6",
     author="Arif Dogan",
     author_email="me@arif.sh",
-    description="A debugging dashboard for FastAPI applications with real-time request, database query, and exception monitoring",
+    description=(
+        "A debugging dashboard for FastAPI applications with real-time "
+        "request, database query, and exception monitoring"
+    ),
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/doganarif/fastapi-radar",
