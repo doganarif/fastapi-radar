@@ -31,6 +31,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
         exclude_paths: list[str] = None,
         max_body_size: int = 10000,
         capture_response_body: bool = True,
+        capture_sse_responses: bool = False,
         enable_tracing: bool = True,
         service_name: str = "fastapi-app",
     ):
@@ -39,6 +40,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
         self.exclude_paths = exclude_paths or []
         self.max_body_size = max_body_size
         self.capture_response_body = capture_response_body
+        self.capture_sse_responses = capture_sse_responses
         self.enable_tracing = enable_tracing
         self.service_name = service_name
         self.tracing_manager = TracingManager(get_session) if enable_tracing else None
@@ -115,10 +117,14 @@ class RadarMiddleware(BaseHTTPMiddleware):
             captured_request.response_headers = serialize_headers(response.headers)
 
             content_type = response.headers.get("content-type", "").lower()
+            # Skip body capture for streaming responses and optionally for SSE responses
             if (
                 self.capture_response_body
                 and not isinstance(response, StreamingResponse)
-                and not content_type.startswith("text/event-stream")
+                and (
+                    self.capture_sse_responses
+                    or not content_type.startswith("text/event-stream")
+                )
             ):
                 response_body = b""
                 async for chunk in response.body_iterator:

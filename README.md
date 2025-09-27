@@ -92,6 +92,7 @@ radar = Radar(
     retention_hours=24,          # Data retention period (default: 24)
     slow_query_threshold=100,    # Mark queries slower than this as slow (ms)
     capture_sql_bindings=True,   # Capture SQL query parameters
+    capture_sse_responses=False, # Capture Server-Sent Events response bodies (default: False)
     exclude_paths=["/health"],   # Paths to exclude from monitoring
     theme="auto",                # Dashboard theme: "light", "dark", or "auto"
 )

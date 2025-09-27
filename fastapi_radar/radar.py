@@ -29,6 +29,7 @@ class Radar:
         retention_hours: int = 24,
         slow_query_threshold: int = 100,
         capture_sql_bindings: bool = True,
+        capture_sse_responses: bool = False,
         exclude_paths: Optional[List[str]] = None,
         theme: str = "auto",
         enable_tracing: bool = True,
@@ -42,6 +43,7 @@ class Radar:
         self.retention_hours = retention_hours
         self.slow_query_threshold = slow_query_threshold
         self.capture_sql_bindings = capture_sql_bindings
+        self.capture_sse_responses = capture_sse_responses
         self.exclude_paths = exclude_paths or []
         self.theme = theme
         self.enable_tracing = enable_tracing
@@ -103,6 +105,7 @@ class Radar:
             exclude_paths=self.exclude_paths,
             max_body_size=10000,
             capture_response_body=True,
+            capture_sse_responses=self.capture_sse_responses,
             enable_tracing=self.enable_tracing,
             service_name=self.service_name,
         )
