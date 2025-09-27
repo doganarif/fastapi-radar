@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from .models import CapturedException, CapturedQuery, CapturedRequest
+from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span
+from .tracing import TracingManager
 
 
 def round_float(value: Optional[float], decimals: int = 2) -> Optional[float]:
@@ -79,6 +80,46 @@ class DashboardStats(BaseModel):
     requests_per_minute: float
 
 
+class TraceSummary(BaseModel):
+    trace_id: str
+    service_name: Optional[str]
+    operation_name: Optional[str]
+    start_time: datetime
+    end_time: Optional[datetime]
+    duration_ms: Optional[float]
+    span_count: int
+    status: str
+    created_at: datetime
+
+
+class WaterfallSpan(BaseModel):
+    span_id: str
+    parent_span_id: Optional[str]
+    operation_name: str
+    service_name: Optional[str]
+    start_time: Optional[str]  # ISO 8601 string
+    end_time: Optional[str]  # ISO 8601 string
+    duration_ms: Optional[float]
+    status: str
+    tags: Optional[Dict[str, Any]]
+    depth: int
+    offset_ms: float  # Offset from trace start in ms
+
+
+class TraceDetail(BaseModel):
+    trace_id: str
+    service_name: Optional[str]
+    operation_name: Optional[str]
+    start_time: datetime
+    end_time: Optional[datetime]
+    duration_ms: Optional[float]
+    span_count: int
+    status: str
+    tags: Optional[Dict[str, Any]]
+    created_at: datetime
+    spans: List[WaterfallSpan]
+
+
 def create_api_router(get_session_context) -> APIRouter:
     router = APIRouter(prefix="/__radar/api", tags=["radar"])
 
@@ -99,7 +140,6 @@ def create_api_router(get_session_context) -> APIRouter:
         query = session.query(CapturedRequest)
 
         if status_code:
-            # Handle status code ranges (e.g., 200 for 2xx, 400 for 4xx)
             if status_code in [200, 300, 400, 500]:
                 # Filter by status code range
                 lower_bound = status_code
@@ -328,5 +368,127 @@ def create_api_router(get_session_context) -> APIRouter:
 
         session.commit()
         return {"message": "Data cleared successfully"}
+
+    # Tracing-related API endpoints
+
+    @router.get("/traces", response_model=List[TraceSummary])
+    async def get_traces(
+        limit: int = Query(100, ge=1, le=1000),
+        offset: int = Query(0, ge=0),
+        status: Optional[str] = Query(None),
+        service_name: Optional[str] = Query(None),
+        min_duration_ms: Optional[float] = Query(None),
+        hours: int = Query(24, ge=1, le=720),
+        session: Session = Depends(get_db),
+    ):
+        """List traces."""
+        since = datetime.utcnow() - timedelta(hours=hours)
+        query = session.query(Trace).filter(Trace.created_at >= since)
+
+        if status:
+            query = query.filter(Trace.status == status)
+        if service_name:
+            query = query.filter(Trace.service_name == service_name)
+        if min_duration_ms:
+            query = query.filter(Trace.duration_ms >= min_duration_ms)
+
+        traces = (
+            query.order_by(desc(Trace.start_time)).offset(offset).limit(limit).all()
+        )
+
+        return [
+            TraceSummary(
+                trace_id=t.trace_id,
+                service_name=t.service_name,
+                operation_name=t.operation_name,
+                start_time=t.start_time,
+                end_time=t.end_time,
+                duration_ms=round_float(t.duration_ms),
+                span_count=t.span_count,
+                status=t.status,
+                created_at=t.created_at,
+            )
+            for t in traces
+        ]
+
+    @router.get("/traces/{trace_id}", response_model=TraceDetail)
+    async def get_trace_detail(
+        trace_id: str,
+        session: Session = Depends(get_db),
+    ):
+        """Get trace details."""
+        trace = session.query(Trace).filter(Trace.trace_id == trace_id).first()
+        if not trace:
+            raise HTTPException(status_code=404, detail="Trace not found")
+
+        # Fetch waterfall data
+        tracing_manager = TracingManager(lambda: get_session_context())
+        waterfall_spans = tracing_manager.get_waterfall_data(trace_id)
+
+        return TraceDetail(
+            trace_id=trace.trace_id,
+            service_name=trace.service_name,
+            operation_name=trace.operation_name,
+            start_time=trace.start_time,
+            end_time=trace.end_time,
+            duration_ms=round_float(trace.duration_ms),
+            span_count=trace.span_count,
+            status=trace.status,
+            tags=trace.tags,
+            created_at=trace.created_at,
+            spans=[WaterfallSpan(**span) for span in waterfall_spans],
+        )
+
+    @router.get("/traces/{trace_id}/waterfall")
+    async def get_trace_waterfall(
+        trace_id: str,
+        session: Session = Depends(get_db),
+    ):
+        """Get optimized waterfall data for a trace."""
+        # Ensure the trace exists
+        trace = session.query(Trace).filter(Trace.trace_id == trace_id).first()
+        if not trace:
+            raise HTTPException(status_code=404, detail="Trace not found")
+
+        tracing_manager = TracingManager(lambda: get_session_context())
+        waterfall_data = tracing_manager.get_waterfall_data(trace_id)
+
+        return {
+            "trace_id": trace_id,
+            "spans": waterfall_data,
+            "trace_info": {
+                "service_name": trace.service_name,
+                "operation_name": trace.operation_name,
+                "total_duration_ms": trace.duration_ms,
+                "span_count": trace.span_count,
+                "status": trace.status,
+            },
+        }
+
+    @router.get("/spans/{span_id}")
+    async def get_span_detail(
+        span_id: str,
+        session: Session = Depends(get_db),
+    ):
+        """Get span details."""
+        span = session.query(Span).filter(Span.span_id == span_id).first()
+        if not span:
+            raise HTTPException(status_code=404, detail="Span not found")
+
+        return {
+            "span_id": span.span_id,
+            "trace_id": span.trace_id,
+            "parent_span_id": span.parent_span_id,
+            "operation_name": span.operation_name,
+            "service_name": span.service_name,
+            "span_kind": span.span_kind,
+            "start_time": span.start_time.isoformat() if span.start_time else None,
+            "end_time": span.end_time.isoformat() if span.end_time else None,
+            "duration_ms": span.duration_ms,
+            "status": span.status,
+            "tags": span.tags,
+            "logs": span.logs,
+            "created_at": span.created_at.isoformat(),
+        }
 
     return router

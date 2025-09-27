@@ -77,6 +77,58 @@ export interface DashboardStats {
   requests_per_minute: number;
 }
 
+export interface TraceSummary {
+  trace_id: string;
+  service_name: string | null;
+  operation_name: string | null;
+  start_time: string;
+  end_time: string | null;
+  duration_ms: number | null;
+  span_count: number;
+  status: string;
+  created_at: string;
+}
+
+export interface WaterfallSpan {
+  span_id: string;
+  parent_span_id: string | null;
+  operation_name: string;
+  service_name: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  duration_ms: number | null;
+  status: string;
+  tags: Record<string, any> | null;
+  depth: number;
+  offset_ms: number;
+}
+
+export interface TraceDetail {
+  trace_id: string;
+  service_name: string | null;
+  operation_name: string | null;
+  start_time: string;
+  end_time: string | null;
+  duration_ms: number | null;
+  span_count: number;
+  status: string;
+  tags: Record<string, any> | null;
+  created_at: string;
+  spans: WaterfallSpan[];
+}
+
+export interface WaterfallData {
+  trace_id: string;
+  spans: WaterfallSpan[];
+  trace_info: {
+    service_name: string | null;
+    operation_name: string | null;
+    total_duration_ms: number | null;
+    span_count: number;
+    status: string;
+  };
+}
+
 class APIClient {
   private baseUrl = "/__radar/api";
 
@@ -151,6 +203,38 @@ class APIClient {
     const response = await fetch(`${this.baseUrl}/clear${queryParams}`, {
       method: "DELETE",
     });
+    return response.json();
+  }
+
+  async getTraces(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    service_name?: string;
+    min_duration_ms?: number;
+    hours?: number;
+  }): Promise<TraceSummary[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.offset) queryParams.append("offset", params.offset.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.service_name)
+      queryParams.append("service_name", params.service_name);
+    if (params?.min_duration_ms)
+      queryParams.append("min_duration_ms", params.min_duration_ms.toString());
+    if (params?.hours) queryParams.append("hours", params.hours.toString());
+
+    const response = await fetch(`${this.baseUrl}/traces?${queryParams}`);
+    return response.json();
+  }
+
+  async getTraceDetail(traceId: string): Promise<TraceDetail> {
+    const response = await fetch(`${this.baseUrl}/traces/${traceId}`);
+    return response.json();
+  }
+
+  async getTraceWaterfall(traceId: string): Promise<WaterfallData> {
+    const response = await fetch(`${this.baseUrl}/traces/${traceId}/waterfall`);
     return response.json();
   }
 }

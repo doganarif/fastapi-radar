@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Settings,
   Home,
+  GitBranch,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ interface SidebarProps {
   collapsed?: boolean;
 }
 
-// 导航项配置 - 使用翻译键而不是硬编码文本
+// Navigation items – use translation keys instead of hardcoded text
 const mainNavItemsConfig = [
   {
     titleKey: "nav.dashboard",
@@ -31,6 +32,13 @@ const mainNavItemsConfig = [
     titleKey: "nav.requests",
     icon: Activity,
     href: "/requests",
+    badge: null,
+  },
+  {
+    // Tracing uses a translation key to avoid hardcoding
+    titleKey: "nav.tracking",
+    icon: GitBranch,
+    href: "/tracing",
     badge: null,
   },
   {
@@ -76,6 +84,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
   // 构建带翻译的导航项
   const mainNavItems = mainNavItemsConfig.map((item) => ({
     ...item,
+    // 如果 translation 中没有对应键，useT 会回退到 key 本身
     title: t(item.titleKey),
   }));
 
@@ -84,7 +93,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
     title: t(item.titleKey),
   }));
 
-  // Update nav items with real data
+  // Update nav items with real data (e.g. exception count badge)
   const navItemsWithBadges = mainNavItems.map((item) => {
     if (
       item.titleKey === "nav.exceptions" &&
@@ -114,7 +123,11 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                       FastAPI Radar
                     </h2>
                     <span className="text-xs text-muted-foreground">
-                      Performance Monitoring
+                      {
+                        t(
+                          "settings.about.description",
+                        ) /* reuse an existing description if available */
+                      }
                     </span>
                   </div>
                 </div>
@@ -127,10 +140,10 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <h2
               className={cn(
                 "mb-2 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase",
-                collapsed && "sr-only"
+                collapsed && "sr-only",
               )}
             >
-              {!collapsed && "Navigation"}
+              {!collapsed ? t("sidebar.navigation") : null}
             </h2>
             {navItemsWithBadges.map((item) => (
               <Button
@@ -140,7 +153,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 }
                 className={cn(
                   "w-full justify-start relative",
-                  collapsed && "justify-center"
+                  collapsed && "justify-center",
                 )}
                 asChild
               >
@@ -168,10 +181,10 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <h2
               className={cn(
                 "mb-2 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase",
-                collapsed && "sr-only"
+                collapsed && "sr-only",
               )}
             >
-              {!collapsed && "System"}
+              {!collapsed ? t("sidebar.system") : null}
             </h2>
             {systemNavItems.map((item) => (
               <Button
@@ -181,7 +194,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
                 }
                 className={cn(
                   "w-full justify-start",
-                  collapsed && "justify-center"
+                  collapsed && "justify-center",
                 )}
                 asChild
               >

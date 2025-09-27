@@ -1,20 +1,29 @@
-// FastAPI Radar 国际化翻译文件
-// 使用最简单的键值对结构，避免过度设计
+// FastAPI Radar translations
+// Simple key-value structure to avoid over-engineering
 
 export type Language = "en" | "zh";
 
 export interface Translations {
-  // 导航和菜单
+  // Navigation and menus
   nav: {
     dashboard: string;
     requests: string;
+    tracking: string;
     database: string;
     exceptions: string;
     performance: string;
     settings: string;
   };
 
-  // 页面标题和描述
+  // Sidebar extras (section titles, etc.)
+  sidebar: {
+    navigation: string;
+    system: string;
+    collapse: string;
+    expand: string;
+  };
+
+  // Page titles and descriptions
   pages: {
     dashboard: {
       title: string;
@@ -23,6 +32,14 @@ export interface Translations {
     requests: {
       title: string;
       description: string;
+    };
+    tracing: {
+      title: string;
+      description: string;
+      tracesCardTitle: string;
+      tracesCardDescription: string;
+      noTraces: string;
+      viewTrace: string;
     };
     database: {
       title: string;
@@ -43,7 +60,7 @@ export interface Translations {
     };
   };
 
-  // 通用UI文本
+  // Common UI text
   common: {
     loading: string;
     error: string;
@@ -72,7 +89,7 @@ export interface Translations {
     viewAll: string;
   };
 
-  // 时间范围
+  // Time ranges
   timeRange: {
     lastHour: string;
     last24Hours: string;
@@ -80,7 +97,7 @@ export interface Translations {
     last30Days: string;
   };
 
-  // 指标和统计
+  // Metrics and statistics
   metrics: {
     totalRequests: string;
     avgResponseTime: string;
@@ -98,7 +115,7 @@ export interface Translations {
     timestamp: string;
   };
 
-  // 设置页面
+  // Settings page
   settings: {
     appearance: {
       title: string;
@@ -166,7 +183,7 @@ export interface Translations {
     };
   };
 
-  // 请求页面
+  // Requests page
   requests: {
     filters: {
       status: string;
@@ -212,7 +229,7 @@ export interface Translations {
     };
   };
 
-  // 异常页面
+  // Exceptions page
   exceptions: {
     noExceptions: string;
     recentExceptions: string;
@@ -222,7 +239,7 @@ export interface Translations {
     clickToView: string;
   };
 
-  // 性能页面
+  // Performance page
   performance: {
     overview: string;
     responseTimeChart: string;
@@ -270,7 +287,7 @@ export interface Translations {
     successRate: string;
   };
 
-  // 数据库页面
+  // Database page
   database: {
     queries: string;
     slowQueries: string;
@@ -286,15 +303,23 @@ export interface Translations {
   };
 }
 
-// 英文翻译
+// English translations
 const en: Translations = {
   nav: {
     dashboard: "Dashboard",
     requests: "Requests",
+    tracking: "Tracking",
     database: "Database",
     exceptions: "Exceptions",
     performance: "Performance",
     settings: "Settings",
+  },
+
+  sidebar: {
+    navigation: "Navigation",
+    system: "System",
+    collapse: "Collapse sidebar",
+    expand: "Expand sidebar",
   },
 
   pages: {
@@ -305,6 +330,16 @@ const en: Translations = {
     requests: {
       title: "Requests",
       description: "Monitor HTTP requests and responses",
+    },
+    tracing: {
+      title: "Tracing",
+      description:
+        "View distributed traces and waterfall diagrams for your services",
+      tracesCardTitle: "Traces",
+      tracesCardDescription:
+        "Browse all distributed tracing data and open detailed waterfall views",
+      noTraces: "No trace data available",
+      viewTrace: "View trace",
     },
     database: {
       title: "Database",
@@ -562,15 +597,23 @@ const en: Translations = {
   },
 };
 
-// 中文翻译
+// Chinese translations
 const zh: Translations = {
   nav: {
     dashboard: "仪表板",
     requests: "请求监控",
+    tracking: "链路跟踪",
     database: "数据库",
     exceptions: "异常监控",
     performance: "性能分析",
     settings: "设置",
+  },
+
+  sidebar: {
+    navigation: "导航",
+    system: "系统",
+    collapse: "收起侧边栏",
+    expand: "展开侧边栏",
   },
 
   pages: {
@@ -581,6 +624,14 @@ const zh: Translations = {
     requests: {
       title: "请求监控",
       description: "监控 HTTP 请求和响应",
+    },
+    tracing: {
+      title: "链路跟踪",
+      description: "查看服务的分布式追踪和瀑布流图",
+      tracesCardTitle: "追踪记录",
+      tracesCardDescription: "浏览所有链路追踪数据，点击查看详细的瀑布流图",
+      noTraces: "暂无追踪数据",
+      viewTrace: "查看追踪详情",
     },
     database: {
       title: "数据库监控",
@@ -837,24 +888,24 @@ const zh: Translations = {
   },
 };
 
-// 导出翻译对象
+// Export translations
 export const translations = {
   en,
   zh,
 } as const;
 
-// 默认语言
+// Default language
 export const DEFAULT_LANGUAGE: Language = "en";
 
-// 获取翻译函数
+// Get translation object
 export function getTranslation(language: Language): Translations {
   return translations[language] || translations[DEFAULT_LANGUAGE];
 }
 
-// 获取嵌套翻译值的辅助函数
+// Helper to get nested translation values
 export function getNestedTranslation(
   translations: Translations,
-  key: string
+  key: string,
 ): string {
   const keys = key.split(".");
   let value: any = translations;
@@ -863,7 +914,7 @@ export function getNestedTranslation(
     if (value && typeof value === "object" && k in value) {
       value = value[k];
     } else {
-      return key; // 如果找不到翻译，返回原始key
+      return key; // If translation missing, return key
     }
   }
 

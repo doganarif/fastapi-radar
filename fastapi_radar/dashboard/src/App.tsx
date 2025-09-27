@@ -3,11 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { RequestsPage } from "@/pages/RequestsPage";
+import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
+
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
-import { LanguageProvider } from "@/i18n";
+import { LanguageProvider, useT } from "@/i18n";
+import { useDetailDrawer } from "@/context/DetailDrawerContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,9 +34,10 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="requests" element={<RequestsPage />} />
+                <Route path="tracing" element={<TracingPage />} />
                 <Route path="performance" element={<PerformancePage />} />
-                <Route path="database" element={<DatabasePage />} />
-                <Route path="exceptions" element={<ExceptionsPage />} />
+                <Route path="database" element={<DatabasePageWrapped />} />
+                <Route path="exceptions" element={<ExceptionsPageWrapped />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Fallback to dashboard for unmatched routes */}
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -69,9 +73,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useT } from "@/i18n";
 
-function DatabasePage() {
+function DatabasePageWrapped() {
   const t = useT();
 
   return (
@@ -103,7 +106,7 @@ function DatabasePage() {
 // Exceptions Page
 import { ExceptionsList } from "@/components/ExceptionsList";
 
-function ExceptionsPage() {
+function ExceptionsPageWrapped() {
   const t = useT();
 
   return (
@@ -129,8 +132,5 @@ function ExceptionsPage() {
     </div>
   );
 }
-
-// Import useDetailDrawer for the wrapper component
-import { useDetailDrawer } from "@/context/DetailDrawerContext";
 
 export default App;

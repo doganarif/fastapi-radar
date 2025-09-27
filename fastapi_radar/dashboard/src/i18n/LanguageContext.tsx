@@ -1,5 +1,5 @@
-// 国际化Context和Hook实现
-// 使用最简单的React Context模式，避免过度复杂化
+// i18n context and hooks
+// Simple React Context pattern to avoid unnecessary complexity
 
 import {
   createContext,
@@ -16,7 +16,7 @@ import {
   Translations,
 } from "./translations";
 
-// Context接口定义
+// Context interface definition
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -24,21 +24,21 @@ interface LanguageContextType {
   translations: Translations;
 }
 
-// 创建Context
+// Create context
 const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined
 );
 
-// Provider组件属性
+// Provider props
 interface LanguageProviderProps {
   children: ReactNode;
   defaultLanguage?: Language;
 }
 
-// 本地存储键名
+// Local storage key
 const LANGUAGE_STORAGE_KEY = "fastapi-radar-language";
 
-// 从本地存储获取语言设置
+// Read language from local storage
 function getStoredLanguage(): Language {
   try {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -46,23 +46,23 @@ function getStoredLanguage(): Language {
       return stored;
     }
   } catch (error) {
-    // 忽略localStorage错误，使用默认语言
+    // Ignore localStorage errors; fall back to default language
     console.warn("Failed to read language from localStorage:", error);
   }
   return DEFAULT_LANGUAGE;
 }
 
-// 保存语言设置到本地存储
+// Persist language to local storage
 function setStoredLanguage(language: Language): void {
   try {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   } catch (error) {
-    // 忽略localStorage错误
+    // Ignore localStorage errors
     console.warn("Failed to save language to localStorage:", error);
   }
 }
 
-// 检测浏览器语言
+// Detect browser language
 function detectBrowserLanguage(): Language {
   try {
     const browserLang = navigator.language.toLowerCase();
@@ -70,17 +70,17 @@ function detectBrowserLanguage(): Language {
       return "zh";
     }
   } catch (error) {
-    // 忽略检测错误
+    // Ignore detection errors
   }
   return DEFAULT_LANGUAGE;
 }
 
-// Provider组件实现
+// Provider implementation
 export function LanguageProvider({
   children,
   defaultLanguage,
 }: LanguageProviderProps) {
-  // 初始化语言：优先级 -> 存储的语言 > 传入的默认语言 > 浏览器语言 > 系统默认
+  // Initialize language: stored > prop default > browser > fallback
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = getStoredLanguage();
     if (stored) {
@@ -89,26 +89,26 @@ export function LanguageProvider({
     return defaultLanguage || detectBrowserLanguage();
   });
 
-  // 获取当前语言的翻译对象
+  // Get translation set for current language
   const translations = getTranslation(language);
 
-  // 翻译函数 - 支持嵌套键名如 "nav.dashboard"
+  // Translate function – supports nested keys like "nav.dashboard"
   const t = (key: string): string => {
     return getNestedTranslation(translations, key);
   };
 
-  // 设置语言函数
+  // Set language helper
   const setLanguage = (newLanguage: Language) => {
     setLanguageState(newLanguage);
     setStoredLanguage(newLanguage);
   };
 
-  // 监听语言变化，更新HTML lang属性
+  // Update HTML lang attribute when language changes
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
-  // Context值
+  // Context value
   const contextValue: LanguageContextType = {
     language,
     setLanguage,
@@ -123,7 +123,7 @@ export function LanguageProvider({
   );
 }
 
-// Hook：使用翻译功能
+// Hook: use translation utilities
 export function useTranslation() {
   const context = useContext(LanguageContext);
 
@@ -134,17 +134,17 @@ export function useTranslation() {
   return context;
 }
 
-// Hook：仅获取翻译函数（性能优化版本）
+// Hook: get only the translate function (perf-friendly)
 export function useT() {
   const { t } = useTranslation();
   return t;
 }
 
-// Hook：获取当前语言
+// Hook: get current language
 export function useLanguage() {
   const { language, setLanguage } = useTranslation();
   return { language, setLanguage };
 }
 
-// 导出类型供其他文件使用
+// Export types for other files
 export type { Language, LanguageContextType };
