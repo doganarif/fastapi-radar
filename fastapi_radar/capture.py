@@ -1,7 +1,8 @@
 """SQLAlchemy query capture for FastAPI Radar."""
 
 import time
-from typing import Any, Optional, Callable
+from typing import Any, Callable, Optional
+
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 

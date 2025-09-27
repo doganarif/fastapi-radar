@@ -1,8 +1,9 @@
 """Utility functions for FastAPI Radar."""
 
 from typing import Dict, Optional
-from starlette.requests import Request
+
 from starlette.datastructures import Headers
+from starlette.requests import Request
 
 
 def serialize_headers(headers: Headers) -> Dict[str, str]:

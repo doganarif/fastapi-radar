@@ -4,11 +4,13 @@ import json
 import time
 import traceback
 import uuid
-from typing import Optional, Callable
 from contextvars import ContextVar
+from typing import Callable, Optional
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
+
 from .models import CapturedRequest, CapturedException
 from .utils import serialize_headers, get_client_ip, truncate_body
 from .tracing import (

@@ -1,6 +1,7 @@
 """Storage models for FastAPI Radar."""
 
 from datetime import datetime
+
 from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, JSON, Boolean, Sequence
 try:
     from sqlalchemy.orm import declarative_base
