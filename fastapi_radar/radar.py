@@ -34,6 +34,7 @@ class Radar:
         enable_tracing: bool = True,
         service_name: str = "fastapi-app",
         include_in_schema: bool = True,
+        db_path: Optional[str] = None
     ):
         self.app = app
         self.db_engine = db_engine
@@ -46,6 +47,7 @@ class Radar:
         self.theme = theme
         self.enable_tracing = enable_tracing
         self.service_name = service_name
+        self.db_path = db_path
         self.query_capture = None
 
         # Exclude radar dashboard paths
@@ -64,8 +66,16 @@ class Radar:
                 # Use DuckDB for analytics-optimized storage
                 # Import duckdb_engine to register the dialect
                 import duckdb_engine  # noqa: F401
-
-                radar_db_path = Path.cwd() / "radar.duckdb"
+                
+                if self.db_path:
+                    db_path = Path(self.db_path)
+                    # If the path doesn't end with .duckdb, treat it as a directory and append radar.duckdb
+                    if not str(db_path).endswith('.duckdb'):
+                        radar_db_path = db_path / "radar.duckdb"
+                    else:
+                        radar_db_path = db_path
+                else:
+                    radar_db_path = Path.cwd() / "radar.duckdb"
                 self.storage_engine = create_engine(
                     f"duckdb:///{radar_db_path}",
                     connect_args={
