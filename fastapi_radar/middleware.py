@@ -109,24 +109,28 @@ class RadarMiddleware(BaseHTTPMiddleware):
         exception_occurred = False
 
         try:
-            response = await call_next(request)
+            response = original_response = await call_next(request)
 
             captured_request.status_code = response.status_code
             captured_request.response_headers = serialize_headers(response.headers)
 
-            if self.capture_response_body and not isinstance(
-                response, StreamingResponse
-            ):
-                response_body = b""
-                async for chunk in response.body_iterator:
-                    response_body += chunk
+            if self.capture_response_body:
 
-                captured_request.response_body = truncate_body(
-                    response_body.decode("utf-8", errors="ignore"), self.max_body_size
-                )
+                async def capture_response():
+                    response_body = ""
+                    async for chunk in original_response.body_iterator:
+                        yield chunk
+                        if len(response_body) < self.max_body_size:
+                            response_body += chunk.decode("utf-8", errors="ignore")
+                            with self.get_session() as session:
+                                captured_request.response_body = truncate_body(
+                                    response_body, self.max_body_size
+                                )
+                                session.add(captured_request)
+                                session.commit()
 
-                response = Response(
-                    content=response_body,
+                response = StreamingResponse(
+                    content=capture_response(),
                     status_code=response.status_code,
                     headers=dict(response.headers),
                     media_type=response.media_type,
