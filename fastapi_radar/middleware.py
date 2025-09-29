@@ -7,7 +7,7 @@ import uuid
 from contextvars import ContextVar
 from typing import Callable, Optional
 
-from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
@@ -131,7 +131,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
                                     )
                                     session.add(captured_request)
                                     session.commit()
-                            except ObjectDeletedError:
+                            except SQLAlchemyError:
                                 # CapturedRequest record has been deleted.
                                 capturing = False
                             else:
