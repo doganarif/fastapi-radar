@@ -87,6 +87,8 @@ export interface Translations {
     yes: string;
     no: string;
     viewAll: string;
+    copy: string;
+    copied: string;
   };
 
   // Time ranges
@@ -301,6 +303,85 @@ export interface Translations {
     noSlowQueriesShort: string;
     noQueries: string;
   };
+
+  detailDrawer: {
+    title: {
+      request: string;
+      query: string;
+      exception: string;
+      trace: string;
+    };
+    common: {
+      pending: string;
+      unknown: string;
+    };
+    request: {
+      overview: {
+        timestamp: string;
+        clientIp: string;
+        requestId: string;
+        url: string;
+      };
+      tabs: {
+        headers: string;
+        body: string;
+        response: string;
+        queries: string;
+        errors: string;
+      };
+      headers: {
+        requestTitle: string;
+        responseTitle: string;
+        noRequestHeaders: string;
+        noResponseHeaders: string;
+      };
+      body: {
+        queryParameters: string;
+        requestTitle: string;
+        noRequestBody: string;
+        responseTitle: string;
+        noResponseBody: string;
+      };
+      queries: {
+        empty: string;
+        queryLabel: string;
+        rows: string;
+        parameters: string;
+      };
+      errors: {
+        empty: string;
+      };
+    };
+    query: {
+      placeholder: string;
+    };
+    exception: {
+      placeholder: string;
+    };
+    trace: {
+      overview: {
+        unknownOperation: string;
+        unknownService: string;
+        traceId: string;
+        spanCount: string;
+        startTime: string;
+        duration: string;
+        tags: string;
+      };
+      totalDuration: string;
+      waterfall: {
+        title: string;
+      };
+      spans: {
+        title: string;
+        service: string;
+        duration: string;
+        startOffset: string;
+        depth: string;
+        tags: string;
+      };
+    };
+  };
 }
 
 // English translations
@@ -386,6 +467,8 @@ const en: Translations = {
     yes: "Yes",
     no: "No",
     viewAll: "View all",
+    copy: "Copy",
+    copied: "Copied!",
   },
 
   timeRange: {
@@ -595,6 +678,85 @@ const en: Translations = {
     noSlowQueriesShort: "All fast",
     noQueries: "No queries captured yet",
   },
+
+  detailDrawer: {
+    title: {
+      request: "Request Details",
+      query: "Query Details",
+      exception: "Exception Details",
+      trace: "Trace Details",
+    },
+    common: {
+      pending: "pending",
+      unknown: "Unknown",
+    },
+    request: {
+      overview: {
+        timestamp: "Timestamp",
+        clientIp: "Client IP",
+        requestId: "Request ID",
+        url: "URL",
+      },
+      tabs: {
+        headers: "Headers",
+        body: "Body",
+        response: "Response",
+        queries: "Queries",
+        errors: "Errors",
+      },
+      headers: {
+        requestTitle: "Request Headers",
+        responseTitle: "Response Headers",
+        noRequestHeaders: "No headers",
+        noResponseHeaders: "No response headers",
+      },
+      body: {
+        queryParameters: "Query Parameters",
+        requestTitle: "Request Body",
+        noRequestBody: "No request body",
+        responseTitle: "Response Body",
+        noResponseBody: "No response body",
+      },
+      queries: {
+        empty: "No queries executed",
+        queryLabel: "Query",
+        rows: "rows",
+        parameters: "Parameters:",
+      },
+      errors: {
+        empty: "No exceptions occurred",
+      },
+    },
+    query: {
+      placeholder: "Query details view",
+    },
+    exception: {
+      placeholder: "Exception details view",
+    },
+    trace: {
+      overview: {
+        unknownOperation: "Unknown Operation",
+        unknownService: "Unknown Service",
+        traceId: "Trace ID",
+        spanCount: "Span Count",
+        startTime: "Start Time",
+        duration: "Duration",
+        tags: "Tags",
+      },
+      totalDuration: "Total duration",
+      waterfall: {
+        title: "Waterfall",
+      },
+      spans: {
+        title: "Span Details",
+        service: "Service",
+        duration: "Duration",
+        startOffset: "Start Offset",
+        depth: "Depth",
+        tags: "Tags:",
+      },
+    },
+  },
 };
 
 // Chinese translations
@@ -678,6 +840,8 @@ const zh: Translations = {
     yes: "是",
     no: "否",
     viewAll: "查看全部",
+    copy: "复制",
+    copied: "已复制!",
   },
 
   timeRange: {
@@ -885,6 +1049,85 @@ const zh: Translations = {
     noSlowQueries: "未发现慢查询",
     noSlowQueriesShort: "全部快速",
     noQueries: "尚未捕获任何查询",
+  },
+
+  detailDrawer: {
+    title: {
+      request: "请求详情",
+      query: "查询详情",
+      exception: "异常详情",
+      trace: "链路跟踪详情",
+    },
+    common: {
+      pending: "待处理",
+      unknown: "未知",
+    },
+    request: {
+      overview: {
+        timestamp: "时间",
+        clientIp: "客户端 IP",
+        requestId: "请求 ID",
+        url: "URL",
+      },
+      tabs: {
+        headers: "请求头",
+        body: "请求体",
+        response: "响应体",
+        queries: "数据库查询",
+        errors: "异常",
+      },
+      headers: {
+        requestTitle: "请求头",
+        responseTitle: "响应头",
+        noRequestHeaders: "无请求头",
+        noResponseHeaders: "无响应头",
+      },
+      body: {
+        queryParameters: "查询参数",
+        requestTitle: "请求体",
+        noRequestBody: "无请求体",
+        responseTitle: "响应体",
+        noResponseBody: "无响应体",
+      },
+      queries: {
+        empty: "无数据库查询",
+        queryLabel: "查询",
+        rows: "行",
+        parameters: "参数:",
+      },
+      errors: {
+        empty: "无异常发生",
+      },
+    },
+    query: {
+      placeholder: "查询详情视图",
+    },
+    exception: {
+      placeholder: "异常详情视图",
+    },
+    trace: {
+      overview: {
+        unknownOperation: "未知操作",
+        unknownService: "未知服务",
+        traceId: "Trace ID",
+        spanCount: "Span 数量",
+        startTime: "开始时间",
+        duration: "持续时间",
+        tags: "标签",
+      },
+      totalDuration: "总时长",
+      waterfall: {
+        title: "瀑布图",
+      },
+      spans: {
+        title: "Span 详情",
+        service: "服务",
+        duration: "持续时间",
+        startOffset: "起始偏移",
+        depth: "层级",
+        tags: "标签:",
+      },
+    },
   },
 };
 

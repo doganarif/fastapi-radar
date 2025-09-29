@@ -14,9 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
 import { format } from "date-fns";
+import { useT } from "@/i18n";
 import {
   AlertTriangle,
-  ChevronDown,
   Copy,
   Activity,
   Clock,
@@ -39,6 +39,7 @@ export function DetailDrawer({
   id,
 }: DetailDrawerProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const t = useT();
 
   const { data: requestDetail } = useQuery({
     queryKey: ["request-detail", id],
@@ -100,7 +101,7 @@ export function DetailDrawer({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Badge variant={getStatusColor(requestDetail.status_code) as any}>
-                {requestDetail.status_code || "pending"}
+                {requestDetail.status_code || t("detailDrawer.common.pending")}
               </Badge>
               <span className="font-mono text-sm">{requestDetail.method}</span>
               <span className="text-sm text-muted-foreground">
@@ -114,23 +115,31 @@ export function DetailDrawer({
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="space-y-1">
-              <p className="text-muted-foreground">Timestamp</p>
+              <p className="text-muted-foreground">
+                {t("detailDrawer.request.overview.timestamp")}
+              </p>
               <p className="font-medium">
                 {format(new Date(requestDetail.created_at), "PPpp")}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground">Client IP</p>
+              <p className="text-muted-foreground">
+                {t("detailDrawer.request.overview.clientIp")}
+              </p>
               <p className="font-medium">
-                {requestDetail.client_ip || "Unknown"}
+                {requestDetail.client_ip || t("detailDrawer.common.unknown")}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground">Request ID</p>
+              <p className="text-muted-foreground">
+                {t("detailDrawer.request.overview.requestId")}
+              </p>
               <p className="font-mono text-xs">{requestDetail.request_id}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground">URL</p>
+              <p className="text-muted-foreground">
+                {t("detailDrawer.request.overview.url")}
+              </p>
               <p className="font-mono text-xs break-all">{requestDetail.url}</p>
             </div>
           </div>
@@ -141,25 +150,33 @@ export function DetailDrawer({
         {/* Tabs for detailed information */}
         <Tabs defaultValue="headers" className="w-full">
           <TabsList className="flex flex-wrap w-full gap-1">
-            <TabsTrigger value="headers">Headers</TabsTrigger>
-            <TabsTrigger value="body">Body</TabsTrigger>
-            <TabsTrigger value="response">Response</TabsTrigger>
+            <TabsTrigger value="headers">
+              {t("detailDrawer.request.tabs.headers")}
+            </TabsTrigger>
+            <TabsTrigger value="body">
+              {t("detailDrawer.request.tabs.body")}
+            </TabsTrigger>
+            <TabsTrigger value="response">
+              {t("detailDrawer.request.tabs.response")}
+            </TabsTrigger>
             <TabsTrigger value="queries">
-              Queries{" "}
+              {t("detailDrawer.request.tabs.queries")}
               {requestDetail.queries.length > 0 &&
-                `(${requestDetail.queries.length})`}
+                ` (${requestDetail.queries.length})`}
             </TabsTrigger>
             <TabsTrigger value="errors">
-              Errors{" "}
+              {t("detailDrawer.request.tabs.errors")}
               {requestDetail.exceptions.length > 0 &&
-                `(${requestDetail.exceptions.length})`}
+                ` (${requestDetail.exceptions.length})`}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="headers" className="space-y-4 mt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Request Headers</h4>
+                <h4 className="text-sm font-medium">
+                  {t("detailDrawer.request.headers.requestTitle")}
+                </h4>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -171,12 +188,15 @@ export function DetailDrawer({
                   }
                 >
                   <Copy className="h-3 w-3 mr-1" />
-                  {copiedField === "req-headers" ? "Copied!" : "Copy"}
+                  {copiedField === "req-headers"
+                    ? t("common.copied")
+                    : t("common.copy")}
                 </Button>
               </div>
               <ScrollArea className="h-[200px] rounded-md border p-3">
                 <pre className="text-xs whitespace-pre-wrap break-all">
-                  {formatJson(requestDetail.headers) || "No headers"}
+                  {formatJson(requestDetail.headers) ||
+                    t("detailDrawer.request.headers.noRequestHeaders")}
                 </pre>
               </ScrollArea>
             </div>
@@ -184,7 +204,9 @@ export function DetailDrawer({
             {requestDetail.response_headers && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Response Headers</h4>
+                  <h4 className="text-sm font-medium">
+                    {t("detailDrawer.request.headers.responseTitle")}
+                  </h4>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -196,13 +218,15 @@ export function DetailDrawer({
                     }
                   >
                     <Copy className="h-3 w-3 mr-1" />
-                    {copiedField === "res-headers" ? "Copied!" : "Copy"}
+                    {copiedField === "res-headers"
+                      ? t("common.copied")
+                      : t("common.copy")}
                   </Button>
                 </div>
                 <ScrollArea className="h-[200px] rounded-md border p-3">
                   <pre className="text-xs whitespace-pre-wrap break-all">
                     {formatJson(requestDetail.response_headers) ||
-                      "No response headers"}
+                      t("detailDrawer.request.headers.noResponseHeaders")}
                   </pre>
                 </ScrollArea>
               </div>
@@ -213,7 +237,9 @@ export function DetailDrawer({
             {requestDetail.query_params &&
               Object.keys(requestDetail.query_params).length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Query Parameters</h4>
+                  <h4 className="text-sm font-medium">
+                    {t("detailDrawer.request.body.queryParameters")}
+                  </h4>
                   <ScrollArea className="h-[100px] rounded-md border p-3">
                     <pre className="text-xs whitespace-pre-wrap break-all">
                       {formatJson(requestDetail.query_params)}
@@ -224,7 +250,9 @@ export function DetailDrawer({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Request Body</h4>
+                <h4 className="text-sm font-medium">
+                  {t("detailDrawer.request.body.requestTitle")}
+                </h4>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -233,12 +261,15 @@ export function DetailDrawer({
                   }
                 >
                   <Copy className="h-3 w-3 mr-1" />
-                  {copiedField === "body" ? "Copied!" : "Copy"}
+                  {copiedField === "body"
+                    ? t("common.copied")
+                    : t("common.copy")}
                 </Button>
               </div>
               <ScrollArea className="h-[300px] rounded-md border p-3">
                 <pre className="text-xs whitespace-pre-wrap break-all">
-                  {requestDetail.body || "No request body"}
+                  {requestDetail.body ||
+                    t("detailDrawer.request.body.noRequestBody")}
                 </pre>
               </ScrollArea>
             </div>
@@ -247,7 +278,9 @@ export function DetailDrawer({
           <TabsContent value="response" className="space-y-4 mt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Response Body</h4>
+                <h4 className="text-sm font-medium">
+                  {t("detailDrawer.request.body.responseTitle")}
+                </h4>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -259,12 +292,15 @@ export function DetailDrawer({
                   }
                 >
                   <Copy className="h-3 w-3 mr-1" />
-                  {copiedField === "response" ? "Copied!" : "Copy"}
+                  {copiedField === "response"
+                    ? t("common.copied")
+                    : t("common.copy")}
                 </Button>
               </div>
               <ScrollArea className="h-[400px] rounded-md border p-3">
                 <pre className="text-xs whitespace-pre-wrap break-all">
-                  {requestDetail.response_body || "No response body"}
+                  {requestDetail.response_body ||
+                    t("detailDrawer.request.body.noResponseBody")}
                 </pre>
               </ScrollArea>
             </div>
@@ -273,7 +309,7 @@ export function DetailDrawer({
           <TabsContent value="queries" className="space-y-4 mt-4">
             {requestDetail.queries.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No queries executed
+                {t("detailDrawer.request.queries.empty")}
               </p>
             ) : (
               <div className="space-y-3">
@@ -282,7 +318,9 @@ export function DetailDrawer({
                     <CardHeader className="py-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm">
-                          Query #{index + 1}
+                          {`${t("detailDrawer.request.queries.queryLabel")} #${
+                            index + 1
+                          }`}
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">
@@ -290,7 +328,7 @@ export function DetailDrawer({
                           </Badge>
                           {query.rows_affected !== null && (
                             <Badge variant="secondary">
-                              {query.rows_affected} rows
+                              {query.rows_affected} {t("detailDrawer.request.queries.rows")}
                             </Badge>
                           )}
                         </div>
@@ -306,7 +344,7 @@ export function DetailDrawer({
                         {query.parameters && query.parameters.length > 0 && (
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">
-                              Parameters:
+                              {t("detailDrawer.request.queries.parameters")}
                             </p>
                             <code className="text-xs bg-muted px-2 py-1 rounded">
                               {JSON.stringify(query.parameters)}
@@ -324,7 +362,7 @@ export function DetailDrawer({
           <TabsContent value="errors" className="space-y-4 mt-4">
             {requestDetail.exceptions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No exceptions occurred
+                {t("detailDrawer.request.errors.empty")}
               </p>
             ) : (
               <div className="space-y-3">
@@ -366,7 +404,9 @@ export function DetailDrawer({
     // For standalone query detail
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground">Query details view</p>
+        <p className="text-muted-foreground">
+          {t("detailDrawer.query.placeholder")}
+        </p>
       </div>
     );
   };
@@ -377,7 +417,9 @@ export function DetailDrawer({
     // For standalone exception detail
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground">Exception details view</p>
+        <p className="text-muted-foreground">
+          {t("detailDrawer.exception.placeholder")}
+        </p>
       </div>
     );
   };
@@ -429,10 +471,12 @@ export function DetailDrawer({
               {getStatusIcon(traceDetail.status)}
               <div>
                 <h2 className="text-xl font-semibold">
-                  {traceDetail.operation_name || "Unknown Operation"}
+                  {traceDetail.operation_name ||
+                    t("detailDrawer.trace.overview.unknownOperation")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {traceDetail.service_name || "Unknown Service"}
+                  {traceDetail.service_name ||
+                    t("detailDrawer.trace.overview.unknownService")}
                 </p>
               </div>
             </div>
@@ -449,21 +493,29 @@ export function DetailDrawer({
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Trace ID</p>
+              <p className="text-sm text-muted-foreground">
+                {t("detailDrawer.trace.overview.traceId")}
+              </p>
               <p className="font-mono text-sm">{traceDetail.trace_id}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Span Count</p>
+              <p className="text-sm text-muted-foreground">
+                {t("detailDrawer.trace.overview.spanCount")}
+              </p>
               <p className="font-medium">{traceDetail.span_count}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Start Time</p>
+              <p className="text-sm text-muted-foreground">
+                {t("detailDrawer.trace.overview.startTime")}
+              </p>
               <p className="text-sm">
                 {format(new Date(traceDetail.start_time), "PPpp")}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Duration</p>
+              <p className="text-sm text-muted-foreground">
+                {t("detailDrawer.trace.overview.duration")}
+              </p>
               <p className="font-medium">
                 {formatDuration(traceDetail.duration_ms)}
               </p>
@@ -473,7 +525,9 @@ export function DetailDrawer({
           {/* Tags */}
           {traceDetail.tags && Object.keys(traceDetail.tags).length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Tags</p>
+              <p className="text-sm font-medium">
+                {t("detailDrawer.trace.overview.tags")}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(traceDetail.tags).map(([key, value]) => (
                   <Badge key={key} variant="outline" className="text-xs">
@@ -490,12 +544,15 @@ export function DetailDrawer({
         {/* Waterfall Chart */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">瀑布流图</h3>
+            <h3 className="text-lg font-semibold">
+              {t("detailDrawer.trace.waterfall.title")}
+            </h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>
-                总时长:{" "}
-                {formatDuration(waterfallData.trace_info.total_duration_ms)}
+                {`${t("detailDrawer.trace.totalDuration")}: ${formatDuration(
+                  waterfallData.trace_info.total_duration_ms,
+                )}`}
               </span>
             </div>
           </div>
@@ -508,7 +565,9 @@ export function DetailDrawer({
 
         {/* Spans List */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Span详情</h3>
+          <h3 className="text-lg font-semibold">
+            {t("detailDrawer.trace.spans.title")}
+          </h3>
           <div className="space-y-2">
             {waterfallData.spans.map((span) => (
               <Card key={span.span_id}>
@@ -528,19 +587,27 @@ export function DetailDrawer({
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Service</p>
-                          <p>{span.service_name || "Unknown"}</p>
+                          <p className="text-muted-foreground">
+                            {t("detailDrawer.trace.spans.service")}
+                          </p>
+                          <p>{span.service_name || t("detailDrawer.common.unknown")}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Duration</p>
+                          <p className="text-muted-foreground">
+                            {t("detailDrawer.trace.spans.duration")}
+                          </p>
                           <p>{formatDuration(span.duration_ms)}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Start Offset</p>
+                          <p className="text-muted-foreground">
+                            {t("detailDrawer.trace.spans.startOffset")}
+                          </p>
                           <p>{formatDuration(span.offset_ms)}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Depth</p>
+                          <p className="text-muted-foreground">
+                            {t("detailDrawer.trace.spans.depth")}
+                          </p>
                           <p>{span.depth}</p>
                         </div>
                       </div>
@@ -548,7 +615,7 @@ export function DetailDrawer({
                       {span.tags && Object.keys(span.tags).length > 0 && (
                         <div className="mt-2">
                           <p className="text-sm text-muted-foreground mb-1">
-                            Tags:
+                            {t("detailDrawer.trace.spans.tags")}
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {Object.entries(span.tags).map(([key, value]) => (
@@ -581,18 +648,11 @@ export function DetailDrawer({
           <SheetHeader className="px-6 py-4 border-b">
             <SheetTitle className="flex items-center justify-between">
               <span>
-                {type === "request" && "Request Details"}
-                {type === "query" && "Query Details"}
-                {type === "exception" && "Exception Details"}
-                {type === "trace" && "链路跟踪详情"}
+                {type === "request" && t("detailDrawer.title.request")}
+                {type === "query" && t("detailDrawer.title.query")}
+                {type === "exception" && t("detailDrawer.title.exception")}
+                {type === "trace" && t("detailDrawer.title.trace")}
               </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
             </SheetTitle>
           </SheetHeader>
 
