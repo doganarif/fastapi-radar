@@ -1,6 +1,6 @@
 """API endpoints for FastAPI Radar dashboard."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -302,7 +302,7 @@ def create_api_router(get_session_context) -> APIRouter:
         slow_threshold: int = Query(100),
         session: Session = Depends(get_db),
     ):
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         requests = (
             session.query(CapturedRequest)
@@ -359,7 +359,7 @@ def create_api_router(get_session_context) -> APIRouter:
         older_than_hours: Optional[int] = None, session: Session = Depends(get_db)
     ):
         if older_than_hours:
-            cutoff = datetime.utcnow() - timedelta(hours=older_than_hours)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
             session.query(CapturedRequest).filter(
                 CapturedRequest.created_at < cutoff
             ).delete()
@@ -382,7 +382,7 @@ def create_api_router(get_session_context) -> APIRouter:
         session: Session = Depends(get_db),
     ):
         """List traces."""
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
         query = session.query(Trace).filter(Trace.created_at >= since)
 
         if status:

@@ -1,6 +1,6 @@
 """Storage models for FastAPI Radar."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column,
@@ -40,7 +40,9 @@ class CapturedRequest(Base):
     response_headers = Column(JSON)
     duration_ms = Column(Float)
     client_ip = Column(String(50))
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     queries = relationship(
         "CapturedQuery",
@@ -68,7 +70,9 @@ class CapturedQuery(Base):
     duration_ms = Column(Float)
     rows_affected = Column(Integer)
     connection_name = Column(String(100))
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     request = relationship(
         "CapturedRequest",
@@ -87,7 +91,9 @@ class CapturedException(Base):
     exception_type = Column(String(100), nullable=False)
     exception_value = Column(Text)
     traceback = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     request = relationship(
         "CapturedRequest",
@@ -104,13 +110,17 @@ class Trace(Base):
     trace_id = Column(String(32), primary_key=True, index=True)
     service_name = Column(String(100), index=True)
     operation_name = Column(String(200))
-    start_time = Column(DateTime, default=datetime.utcnow, index=True)
+    start_time = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     end_time = Column(DateTime)
     duration_ms = Column(Float)
     span_count = Column(Integer, default=0)
     status = Column(String(20), default="ok")
     tags = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     spans = relationship(
         "Span",
@@ -135,7 +145,9 @@ class Span(Base):
     status = Column(String(20), default="ok")
     tags = Column(JSON)
     logs = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     trace = relationship(
         "Trace",
@@ -154,4 +166,4 @@ class SpanRelation(Base):
     parent_span_id = Column(String(16), index=True)
     child_span_id = Column(String(16), index=True)
     depth = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
