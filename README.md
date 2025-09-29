@@ -118,6 +118,23 @@ radar = Radar(app, db_path="./data")
 
 If the specified path cannot be created, FastAPI Radar will fallback to using the current directory with a warning.
 
+### Development Mode with Auto-Reload
+
+When running your FastAPI application with `fastapi dev` (which uses auto-reload), FastAPI Radar automatically switches to an in-memory database to avoid file locking issues. This means:
+
+- **No file locking errors** - The dashboard will work seamlessly in development
+- **Data doesn't persist between reloads** - Each reload starts with a fresh database
+- **Production behavior unchanged** - When using `fastapi run` or deploying, the normal file-based database is used
+
+```python
+# With fastapi dev (auto-reload enabled):
+# Automatically uses in-memory database - no configuration needed!
+radar = Radar(app)
+radar.create_tables()  # Safe to call - handles multiple processes gracefully
+```
+
+This behavior only applies when using the development server with auto-reload (`fastapi dev`). In production or when using `fastapi run`, the standard file-based DuckDB storage is used.
+
 ## What Gets Captured?
 
 - ✅ HTTP requests and responses

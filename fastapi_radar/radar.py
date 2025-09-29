@@ -2,6 +2,8 @@
 
 from contextlib import contextmanager
 import os
+import sys
+import multiprocessing
 from pathlib import Path
 from typing import List, Optional
 
@@ -14,6 +16,31 @@ from .api import create_api_router
 from .capture import QueryCapture
 from .middleware import RadarMiddleware
 from .models import Base
+
+
+def is_reload_worker() -> bool:
+    """Check if we're running in a reload worker process (used by fastapi dev)."""
+    # Check for uvicorn reload worker
+    if os.environ.get("UVICORN_RELOAD"):
+        return True
+
+    # Check for Werkzeug reloader (used by some dev servers)
+    if os.environ.get("WERKZEUG_RUN_MAIN"):
+        return True
+
+    # Check if we're not the main process (common in reload scenarios)
+    # On Windows, the main process name is often "MainProcess"
+    if hasattr(multiprocessing.current_process(), "name"):
+        process_name = multiprocessing.current_process().name
+        if process_name != "MainProcess" and "SpawnProcess" in process_name:
+            return True
+
+    return False
+
+
+def is_windows() -> bool:
+    """Check if we're running on Windows."""
+    return sys.platform.startswith("win")
 
 
 class Radar:
@@ -95,13 +122,34 @@ class Radar:
                 else:
                     radar_db_path = Path.cwd() / "radar.duckdb"
                     radar_db_path.parent.mkdir(parents=True, exist_ok=True)
-                self.storage_engine = create_engine(
-                    f"duckdb:///{radar_db_path}",
-                    connect_args={
-                        "read_only": False,
-                        "config": {"memory_limit": "500mb"},
-                    },
-                )
+
+                # Handle reload worker scenario (fastapi dev) on all platforms
+                if is_reload_worker():
+                    import warnings
+
+                    warnings.warn(
+                        "FastAPI Radar: Detected development mode with auto-reload. "
+                        "Using in-memory database to avoid file locking issues. "
+                        "Data will not persist between reloads.",
+                        UserWarning,
+                    )
+                    # Use in-memory database for dev mode with reload
+                    self.storage_engine = create_engine(
+                        "duckdb:///:memory:",
+                        connect_args={
+                            "read_only": False,
+                            "config": {"memory_limit": "500mb"},
+                        },
+                    )
+                else:
+                    # Normal file-based database for production
+                    self.storage_engine = create_engine(
+                        f"duckdb:///{radar_db_path}",
+                        connect_args={
+                            "read_only": False,
+                            "config": {"memory_limit": "500mb"},
+                        },
+                    )
 
         self.SessionLocal = sessionmaker(
             autocommit=False, autoflush=False, bind=self.storage_engine
@@ -333,19 +381,34 @@ class Radar:
         )
 
     def create_tables(self) -> None:
-        Base.metadata.create_all(bind=self.storage_engine)
+        """Create database tables.
+
+        With dev mode (fastapi dev), this will safely handle
+        multiple process attempts to create tables.
+        """
+        try:
+            Base.metadata.create_all(bind=self.storage_engine)
+        except Exception as e:
+            # With reload workers, table creation might fail
+            # if another process already created them or has a lock
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "lock" in error_msg:
+                pass  # Tables already exist or locked, that's fine in dev mode
+            else:
+                # Re-raise other exceptions
+                raise
 
     def drop_tables(self) -> None:
         Base.metadata.drop_all(bind=self.storage_engine)
 
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         from .models import CapturedRequest
 
         with self.get_session() as session:
             hours = older_than_hours or self.retention_hours
-            cutoff = datetime.utcnow() - timedelta(hours=hours)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
 
             deleted = (
                 session.query(CapturedRequest)

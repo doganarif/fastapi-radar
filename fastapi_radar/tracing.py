@@ -1,7 +1,7 @@
 """Tracing core functionality module."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from contextvars import ContextVar
 from sqlalchemy.orm import Session
@@ -23,7 +23,7 @@ class TraceContext:
         self.root_span_id: Optional[str] = None
         self.current_span_id: Optional[str] = None
         self.spans: Dict[str, Dict[str, Any]] = {}
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
 
     def create_span(
         self,
@@ -42,7 +42,7 @@ class TraceContext:
             "operation_name": operation_name,
             "service_name": self.service_name,
             "span_kind": span_kind,
-            "start_time": datetime.utcnow(),
+            "start_time": datetime.now(timezone.utc),
             "tags": tags or {},
             "logs": [],
             "status": "ok",
@@ -64,7 +64,7 @@ class TraceContext:
             return
 
         span_data = self.spans[span_id]
-        span_data["end_time"] = datetime.utcnow()
+        span_data["end_time"] = datetime.now(timezone.utc)
         span_data["duration_ms"] = (
             span_data["end_time"] - span_data["start_time"]
         ).total_seconds() * 1000
@@ -79,7 +79,7 @@ class TraceContext:
             return
 
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": level,
             "message": message,
             **fields,
@@ -108,7 +108,7 @@ class TraceContext:
                 error_count += 1
 
         start_time = min(all_times) if all_times else self.start_time
-        end_time = max(all_times) if all_times else datetime.utcnow()
+        end_time = max(all_times) if all_times else datetime.now(timezone.utc)
 
         return {
             "trace_id": self.trace_id,
