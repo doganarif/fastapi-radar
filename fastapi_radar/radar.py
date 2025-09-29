@@ -34,7 +34,7 @@ class Radar:
         enable_tracing: bool = True,
         service_name: str = "fastapi-app",
         include_in_schema: bool = True,
-        db_path: Optional[str] = None
+        db_path: Optional[str] = None,
     ):
         self.app = app
         self.db_engine = db_engine
@@ -66,22 +66,30 @@ class Radar:
                 # Use DuckDB for analytics-optimized storage
                 # Import duckdb_engine to register the dialect
                 import duckdb_engine  # noqa: F401
-                
+
                 if self.db_path:
                     try:
                         # Avoid shadowing the attribute name by using a different variable name
                         provided_path = Path(self.db_path).resolve()
-                        if provided_path.suffix.lower() == '.duckdb':
+                        if provided_path.suffix.lower() == ".duckdb":
                             radar_db_path = provided_path
                             radar_db_path.parent.mkdir(parents=True, exist_ok=True)
                         else:
                             radar_db_path = provided_path / "radar.duckdb"
                             provided_path.mkdir(parents=True, exist_ok=True)
-                            
+
                     except Exception as e:
                         # Fallback to current directory if path creation fails
                         import warnings
-                        warnings.warn(f"Failed to create database path '{self.db_path}': {e}. Using current directory.", UserWarning)
+
+                        warnings.warn(
+                            (
+                                f"Failed to create database path '{self.db_path}': {e}. "
+                                f"Using current directory."
+                            ),
+                            UserWarning,
+                        )
+
                         radar_db_path = Path.cwd() / "radar.duckdb"
                         radar_db_path.parent.mkdir(parents=True, exist_ok=True)
                 else:
