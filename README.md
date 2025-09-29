@@ -94,8 +94,29 @@ radar = Radar(
     capture_sql_bindings=True,   # Capture SQL query parameters
     exclude_paths=["/health"],   # Paths to exclude from monitoring
     theme="auto",                # Dashboard theme: "light", "dark", or "auto"
+    db_path="/path/to/db",       # Custom path for radar.duckdb file (default: current directory)
 )
 ```
+
+### Custom Database Location
+
+By default, FastAPI Radar stores its monitoring data in a `radar.duckdb` file in your current working directory. You can customize this location using the `db_path` parameter:
+
+```python
+# Store in a specific directory
+radar = Radar(app, db_path="/var/data/monitoring")
+# Creates: /var/data/monitoring/radar.duckdb
+
+# Store with a specific filename
+radar = Radar(app, db_path="/var/data/my_app_monitoring.duckdb")
+# Creates: /var/data/my_app_monitoring.duckdb
+
+# Use a relative path
+radar = Radar(app, db_path="./data")
+# Creates: ./data/radar.duckdb
+```
+
+If the specified path cannot be created, FastAPI Radar will fallback to using the current directory with a warning.
 
 ## What Gets Captured?
 
