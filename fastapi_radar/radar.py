@@ -68,14 +68,25 @@ class Radar:
                 import duckdb_engine  # noqa: F401
                 
                 if self.db_path:
-                    db_path = Path(self.db_path)
-                    # If the path doesn't end with .duckdb, treat it as a directory and append radar.duckdb
-                    if not str(db_path).endswith('.duckdb'):
-                        radar_db_path = db_path / "radar.duckdb"
-                    else:
-                        radar_db_path = db_path
+                    try:
+                        # Avoid shadowing the attribute name by using a different variable name
+                        provided_path = Path(self.db_path).resolve()
+                        if provided_path.suffix.lower() == '.duckdb':
+                            radar_db_path = provided_path
+                            radar_db_path.parent.mkdir(parents=True, exist_ok=True)
+                        else:
+                            radar_db_path = provided_path / "radar.duckdb"
+                            provided_path.mkdir(parents=True, exist_ok=True)
+                            
+                    except Exception as e:
+                        # Fallback to current directory if path creation fails
+                        import warnings
+                        warnings.warn(f"Failed to create database path '{self.db_path}': {e}. Using current directory.", UserWarning)
+                        radar_db_path = Path.cwd() / "radar.duckdb"
+                        radar_db_path.parent.mkdir(parents=True, exist_ok=True)
                 else:
                     radar_db_path = Path.cwd() / "radar.duckdb"
+                    radar_db_path.parent.mkdir(parents=True, exist_ok=True)
                 self.storage_engine = create_engine(
                     f"duckdb:///{radar_db_path}",
                     connect_args={
