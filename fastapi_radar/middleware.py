@@ -7,6 +7,7 @@ import uuid
 from contextvars import ContextVar
 from typing import Callable, Optional
 
+from sqlalchemy.orm.exc import ObjectDeletedError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
@@ -118,16 +119,23 @@ class RadarMiddleware(BaseHTTPMiddleware):
 
                 async def capture_response():
                     response_body = ""
+                    capturing = True
                     async for chunk in original_response.body_iterator:
                         yield chunk
-                        if len(response_body) < self.max_body_size:
+                        if capturing:
                             response_body += chunk.decode("utf-8", errors="ignore")
-                            with self.get_session() as session:
-                                captured_request.response_body = truncate_body(
-                                    response_body, self.max_body_size
-                                )
-                                session.add(captured_request)
-                                session.commit()
+                            try:
+                                with self.get_session() as session:
+                                    captured_request.response_body = truncate_body(
+                                        response_body, self.max_body_size
+                                    )
+                                    session.add(captured_request)
+                                    session.commit()
+                            except ObjectDeletedError:
+                                # CapturedRequest record has been deleted.
+                                capturing = False
+                            else:
+                                capturing = len(response_body) < self.max_body_size
 
                 response = StreamingResponse(
                     content=capture_response(),
