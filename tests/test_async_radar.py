@@ -19,7 +19,7 @@ users_table = Table(
 )
 
 
-radar = Radar(app,db_engine=engine)
+radar = Radar(app, db_engine=engine)
 radar.create_tables()
 
 
@@ -38,6 +38,8 @@ async def on_startup() -> None:
                 [{"name": "Alice"}, {"name": "Bob"}, {"name": "Carol"}],
             )
             await session.commit()
+
+
 # Your routes work unchanged
 @app.get("/users")
 async def get_users():
@@ -50,4 +52,5 @@ async def get_users():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

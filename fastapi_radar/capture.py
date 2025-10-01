@@ -1,8 +1,10 @@
 """SQLAlchemy query capture for FastAPI Radar."""
+
 import time
 from typing import Any, Callable, Dict, List, Optional, Union
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+
 try:  # SQLAlchemy async support is optional
     from sqlalchemy.ext.asyncio import AsyncEngine
 except Exception:  # pragma: no cover - module might not exist in older SQLAlchemy
@@ -11,11 +13,9 @@ from .middleware import request_context
 from .models import CapturedQuery
 
 
-
-
-
 from .utils import format_sql
 from .tracing import get_current_trace_context
+
 
 class QueryCapture:
     def __init__(
@@ -29,17 +29,20 @@ class QueryCapture:
         self.slow_query_threshold = slow_query_threshold
         self._query_start_times = {}
         self._registered_engines: Dict[int, Engine] = {}
+
     def register(self, engine: Engine) -> None:
         sync_engine = self._resolve_engine(engine)
         event.listen(sync_engine, "before_cursor_execute", self._before_cursor_execute)
         event.listen(sync_engine, "after_cursor_execute", self._after_cursor_execute)
         self._registered_engines[id(engine)] = sync_engine
+
     def unregister(self, engine: Engine) -> None:
         sync_engine = self._registered_engines.pop(id(engine), None)
         if not sync_engine:
             sync_engine = self._resolve_engine(engine)
         event.remove(sync_engine, "before_cursor_execute", self._before_cursor_execute)
         event.remove(sync_engine, "after_cursor_execute", self._after_cursor_execute)
+
     def _before_cursor_execute(
         self,
         conn: Any,
@@ -71,6 +74,7 @@ class QueryCapture:
                 },
             )
             setattr(context, "_radar_span_id", span_id)
+
     def _after_cursor_execute(
         self,
         conn: Any,
@@ -78,7 +82,6 @@ class QueryCapture:
         statement: str,
         parameters: Any,
         context: Any,
-
         executemany: bool,
     ) -> None:
         request_id = request_context.get()
@@ -170,10 +173,12 @@ class QueryCapture:
             return {k: str(v) for k, v in list(parameters.items())[:100]}
 
         return [str(parameters)]
+
     def _resolve_engine(self, engine: Engine) -> Engine:
         if AsyncEngine is not None and isinstance(engine, AsyncEngine):
             return engine.sync_engine
         return engine
+
     def _get_db_tags(self, conn: Any) -> Dict[str, Optional[str]]:
         tags: Dict[str, Optional[str]] = {}
         engine = getattr(conn, "engine", None)
