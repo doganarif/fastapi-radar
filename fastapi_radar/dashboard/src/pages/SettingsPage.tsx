@@ -294,7 +294,7 @@ export function SettingsPage() {
               <span className="text-muted-foreground">
                 {t("settings.about.version")}
               </span>
-              <span className="font-medium">0.1.9</span>
+              <span className="font-medium">0.2.0</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">

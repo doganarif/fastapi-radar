@@ -1,6 +1,6 @@
 [project]
 name = "fastapi-radar"
-version = "0.1.9"
+version = "0.2.0"
 description = "A debugging dashboard for FastAPI applications with real-time monitoring"
 readme = "README.md"
 requires-python = ">=3.9"
