@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from .api import create_api_router
 from .capture import QueryCapture
@@ -20,16 +21,12 @@ from .models import Base
 
 def is_reload_worker() -> bool:
     """Check if we're running in a reload worker process (used by fastapi dev)."""
-    # Check for uvicorn reload worker
     if os.environ.get("UVICORN_RELOAD"):
         return True
 
-    # Check for Werkzeug reloader (used by some dev servers)
     if os.environ.get("WERKZEUG_RUN_MAIN"):
         return True
 
-    # Check if we're not the main process (common in reload scenarios)
-    # On Windows, the main process name is often "MainProcess"
     if hasattr(multiprocessing.current_process(), "name"):
         process_name = multiprocessing.current_process().name
         if process_name != "MainProcess" and "SpawnProcess" in process_name:
@@ -77,26 +74,26 @@ class Radar:
         self.db_path = db_path
         self.query_capture = None
 
-        # Exclude radar dashboard paths
         if dashboard_path not in self.exclude_paths:
             self.exclude_paths.append(dashboard_path)
         self.exclude_paths.append("/favicon.ico")
 
-        # Setup storage engine
         if storage_engine:
             self.storage_engine = storage_engine
         else:
             storage_url = os.environ.get("RADAR_STORAGE_URL")
             if storage_url:
-                self.storage_engine = create_engine(storage_url)
+                if "duckdb" in storage_url:
+                    self.storage_engine = create_engine(
+                        storage_url, poolclass=StaticPool
+                    )
+                else:
+                    self.storage_engine = create_engine(storage_url)
             else:
-                # Use DuckDB for analytics-optimized storage
-                # Import duckdb_engine to register the dialect
                 import duckdb_engine  # noqa: F401
 
                 if self.db_path:
                     try:
-                        # Avoid shadowing the attribute name by using a different variable name
                         provided_path = Path(self.db_path).resolve()
                         if provided_path.suffix.lower() == ".duckdb":
                             radar_db_path = provided_path
@@ -106,7 +103,6 @@ class Radar:
                             provided_path.mkdir(parents=True, exist_ok=True)
 
                     except Exception as e:
-                        # Fallback to current directory if path creation fails
                         import warnings
 
                         warnings.warn(
@@ -123,7 +119,6 @@ class Radar:
                     radar_db_path = Path.cwd() / "radar.duckdb"
                     radar_db_path.parent.mkdir(parents=True, exist_ok=True)
 
-                # Handle reload worker scenario (fastapi dev) on all platforms
                 if is_reload_worker():
                     import warnings
 
@@ -133,22 +128,22 @@ class Radar:
                         "Data will not persist between reloads.",
                         UserWarning,
                     )
-                    # Use in-memory database for dev mode with reload
                     self.storage_engine = create_engine(
                         "duckdb:///:memory:",
                         connect_args={
                             "read_only": False,
                             "config": {"memory_limit": "500mb"},
                         },
+                        poolclass=StaticPool,
                     )
                 else:
-                    # Normal file-based database for production
                     self.storage_engine = create_engine(
                         f"duckdb:///{radar_db_path}",
                         connect_args={
                             "read_only": False,
                             "config": {"memory_limit": "500mb"},
                         },
+                        poolclass=StaticPool,
                     )
 
         self.SessionLocal = sessionmaker(
@@ -210,7 +205,6 @@ class Radar:
         dashboard_dir = Path(__file__).parent / "dashboard" / "dist"
 
         if not dashboard_dir.exists():
-            # Create placeholder dashboard for development
             dashboard_dir.mkdir(parents=True, exist_ok=True)
             self._create_placeholder_dashboard(dashboard_dir)
             print("\n" + "=" * 60)
@@ -222,14 +216,11 @@ class Radar:
             print("  npm run build")
             print("=" * 60 + "\n")
 
-        # Add a catch-all route for the dashboard SPA
-        # This ensures all sub-routes under /__radar serve the index.html
         @self.app.get(
             f"{self.dashboard_path}/{{full_path:path}}",
             include_in_schema=include_in_schema,
         )
         async def serve_dashboard(request: Request, full_path: str = ""):
-            # Check if it's a request for a static asset
             if full_path and any(
                 full_path.endswith(ext)
                 for ext in [
@@ -248,7 +239,6 @@ class Radar:
                 if file_path.exists():
                     return FileResponse(file_path)
 
-            # For all other routes, serve index.html (SPA behavior)
             index_path = dashboard_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)
@@ -344,7 +334,6 @@ class Radar:
         </div>
     </div>
     <script>
-        // Fetch stats from API
         async function loadStats() {{
             try {{
                 const response = await fetch('/__radar/api/stats?hours=1');
@@ -368,9 +357,7 @@ class Radar:
             }}
         }}
 
-        // Load stats on page load
         loadStats();
-        // Refresh stats every 5 seconds
         setInterval(loadStats, 5000);
     </script>
 </body>
@@ -383,19 +370,14 @@ class Radar:
     def create_tables(self) -> None:
         """Create database tables.
 
-        With dev mode (fastapi dev), this will safely handle
+        With dev mode (fastapi dev), this safely handles
         multiple process attempts to create tables.
         """
         try:
             Base.metadata.create_all(bind=self.storage_engine)
         except Exception as e:
-            # With reload workers, table creation might fail
-            # if another process already created them or has a lock
             error_msg = str(e).lower()
-            if "already exists" in error_msg or "lock" in error_msg:
-                pass  # Tables already exist or locked, that's fine in dev mode
-            else:
-                # Re-raise other exceptions
+            if "already exists" not in error_msg and "lock" not in error_msg:
                 raise
 
     def drop_tables(self) -> None:
