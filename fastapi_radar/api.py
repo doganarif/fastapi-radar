@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import desc
+from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
 
 from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span
@@ -305,42 +305,40 @@ def create_api_router(get_session_context) -> APIRouter:
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         requests = (
-            session.query(CapturedRequest)
+            session.query(
+                func.count().label("total_requests"),
+                func.avg(CapturedRequest.duration_ms).label("avg_response_time"),
+            )
             .filter(CapturedRequest.created_at >= since)
-            .all()
+            .one()
         )
 
         queries = (
-            session.query(CapturedQuery).filter(CapturedQuery.created_at >= since).all()
+            session.query(
+                func.count().label("total_queries"),
+                func.avg(CapturedQuery.duration_ms).label("avg_query_time"),
+                func.sum(
+                    case((CapturedQuery.duration_ms >= slow_threshold, 1), else_=0)
+                ).label("slow_queries"),
+            )
+            .filter(CapturedQuery.created_at >= since)
+            .one()
         )
 
         exceptions = (
-            session.query(CapturedException)
+            session.query(func.count().label("total_exceptions"))
             .filter(CapturedException.created_at >= since)
-            .all()
+            .one()
         )
 
-        total_requests = len(requests)
-        avg_response_time = None
-        if requests:
-            valid_times = [r.duration_ms for r in requests if r.duration_ms is not None]
-            if valid_times:
-                avg_response_time = sum(valid_times) / len(valid_times)
+        total_requests = requests.total_requests
+        avg_response_time = requests.avg_response_time
 
-        total_queries = len(queries)
-        avg_query_time = None
-        slow_queries = 0
-        if queries:
-            valid_times = [q.duration_ms for q in queries if q.duration_ms is not None]
-            if valid_times:
-                avg_query_time = sum(valid_times) / len(valid_times)
-            slow_queries = len(
-                [
-                    q
-                    for q in queries
-                    if q.duration_ms and q.duration_ms >= slow_threshold
-                ]
-            )
+        total_queries = queries.total_queries
+        avg_query_time = queries.avg_query_time
+        slow_queries = queries.slow_queries or 0
+
+        total_exceptions = exceptions.total_exceptions
 
         requests_per_minute = total_requests / (hours * 60)
 
@@ -349,7 +347,7 @@ def create_api_router(get_session_context) -> APIRouter:
             avg_response_time=round_float(avg_response_time),
             total_queries=total_queries,
             avg_query_time=round_float(avg_query_time),
-            total_exceptions=len(exceptions),
+            total_exceptions=total_exceptions,
             slow_queries=slow_queries,
             requests_per_minute=round_float(requests_per_minute),
         )
