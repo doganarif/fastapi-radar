@@ -17,6 +17,7 @@ from .api import create_api_router
 from .capture import QueryCapture
 from .middleware import RadarMiddleware
 from .models import Base
+from .tracing import instrument_outbound_http_clients
 
 
 def is_reload_worker() -> bool:
@@ -149,6 +150,8 @@ class Radar:
         self.SessionLocal = sessionmaker(
             autocommit=False, autoflush=False, bind=self.storage_engine
         )
+        if self.enable_tracing:
+            instrument_outbound_http_clients()
 
         self._setup_middleware()
 
@@ -157,7 +160,7 @@ class Radar:
 
         self._setup_api(include_in_schema=include_in_schema)
         self._setup_dashboard(include_in_schema=include_in_schema)
-
+    
     @contextmanager
     def get_session(self) -> Session:
         """Get a database session for radar storage."""
@@ -179,6 +182,10 @@ class Radar:
             service_name=self.service_name,
         )
 
+    def get_session_factory(self):
+        """Return the SessionLocal factory for creating independent sessions."""
+        return self.SessionLocal
+
     def _setup_query_capture(self) -> None:
         """Setup SQLAlchemy query capture."""
         assert (
@@ -194,7 +201,7 @@ class Radar:
 
     def _setup_api(self, include_in_schema: bool) -> None:
         """Mount API endpoints."""
-        api_router = create_api_router(self.get_session)
+        api_router = create_api_router(self.get_session,self.get_session_factory)
         self.app.include_router(api_router, include_in_schema=include_in_schema)
 
     def _setup_dashboard(self, include_in_schema: bool) -> None:

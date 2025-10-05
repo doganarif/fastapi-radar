@@ -213,6 +213,7 @@ class APIClient {
     service_name?: string;
     min_duration_ms?: number;
     hours?: number;
+    search?: string;
   }): Promise<TraceSummary[]> {
     const queryParams = new URLSearchParams();
     if (params?.limit) queryParams.append("limit", params.limit.toString());
@@ -223,6 +224,7 @@ class APIClient {
     if (params?.min_duration_ms)
       queryParams.append("min_duration_ms", params.min_duration_ms.toString());
     if (params?.hours) queryParams.append("hours", params.hours.toString());
+    if (params?.search) queryParams.append("search", params.search);
 
     const response = await fetch(`${this.baseUrl}/traces?${queryParams}`);
     return response.json();

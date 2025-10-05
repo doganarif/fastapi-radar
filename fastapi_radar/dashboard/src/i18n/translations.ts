@@ -40,6 +40,23 @@ export interface Translations {
       tracesCardDescription: string;
       noTraces: string;
       viewTrace: string;
+      searchPlaceholder: string;
+      allStatuses: string;
+      success: string;
+      error: string;
+      lastHour: string;
+      last6Hours: string;
+      last24Hours: string;
+      lastWeek: string;
+      refresh: string;
+      failedToLoad: string;
+      failedToLoadMessage: string;
+      tryAgain: string;
+      noTracesFound: string;
+      loadMore: string;
+      service: string;
+      spans: string;
+      duration: string;
     };
     database: {
       title: string;
@@ -421,6 +438,23 @@ const en: Translations = {
         "Browse all distributed tracing data and open detailed waterfall views",
       noTraces: "No trace data available",
       viewTrace: "View trace",
+      searchPlaceholder: "Search by operation name...",
+      allStatuses: "All statuses",
+      success: "Success",
+      error: "Error",
+      lastHour: "Last hour",
+      last6Hours: "Last 6 hours",
+      last24Hours: "Last 24 hours",
+      lastWeek: "Last week",
+      refresh: "Refresh",
+      failedToLoad: "Failed to load traces",
+      failedToLoadMessage: "There was an error loading the trace data.",
+      tryAgain: "Try again",
+      noTracesFound: "No traces found matching your criteria.",
+      loadMore: "Load more",
+      service: "Service",
+      spans: "Spans",
+      duration: "Duration",
     },
     database: {
       title: "Database",
@@ -794,6 +828,23 @@ const zh: Translations = {
       tracesCardDescription: "浏览所有链路追踪数据，点击查看详细的瀑布流图",
       noTraces: "暂无追踪数据",
       viewTrace: "查看追踪详情",
+      searchPlaceholder: "按操作名称搜索...",
+      allStatuses: "所有状态",
+      success: "成功",
+      error: "错误",
+      lastHour: "最近1小时",
+      last6Hours: "最近6小时",
+      last24Hours: "最近24小时",
+      lastWeek: "最近一周",
+      refresh: "刷新",
+      failedToLoad: "加载追踪失败",
+      failedToLoadMessage: "加载追踪数据时出错。",
+      tryAgain: "重试",
+      noTracesFound: "未找到符合条件的追踪记录。",
+      loadMore: "加载更多",
+      service: "服务",
+      spans: "Spans",
+      duration: "持续时间",
     },
     database: {
       title: "数据库监控",

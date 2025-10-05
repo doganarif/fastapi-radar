@@ -46,6 +46,9 @@ async def get_users():
     async with async_session() as session:
         result = await session.execute(select(users_table))
         rows = result.mappings().all()
+    import httpx,requests
+    res1 = httpx.get("http://www.baidu.com")
+    res2 = requests.get("http://www.baidu.com")
 
     return {"users": [dict(row) for row in rows]}
 

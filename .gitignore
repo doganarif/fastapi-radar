@@ -55,6 +55,10 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Claude Code & Serena
+.claude/
+.serena/
+
 # FastAPI Radar specific
 radar.db
 example.db
