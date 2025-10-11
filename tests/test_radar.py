@@ -1,6 +1,8 @@
 """Test suite for FastAPI Radar."""
 
-from fastapi import FastAPI
+import time
+
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
@@ -73,3 +75,49 @@ def test_middleware_captures_requests():
 
         assert response.status_code == 200
         assert response.json() == {"message": "test"}
+
+
+def test_background_tasks_api():
+    """Background task tracker should expose task lifecycle endpoints."""
+    app = FastAPI()
+    engine = create_engine("sqlite:///:memory:")
+    storage_engine = create_engine("sqlite:///:memory:")
+
+    radar = Radar(app, db_engine=engine, storage_engine=storage_engine)
+    radar.create_tables()
+
+    execution_log = []
+
+    def sample_task():
+        execution_log.append("ran")
+
+    @app.post("/trigger-task")
+    async def trigger_task(background_tasks: BackgroundTasks):
+        background_tasks.add_task(sample_task)
+        return {"ok": True}
+
+    client = TestClient(app)
+    trigger_response = client.post("/trigger-task")
+    assert trigger_response.status_code == 200
+    time.sleep(0.05)
+    assert execution_log, "background task should have executed at least once"
+
+    tasks_response = client.get("/__radar/api/background-tasks")
+    assert tasks_response.status_code == 200
+    tasks = tasks_response.json()
+    assert isinstance(tasks, list)
+    assert tasks, "expected at least one tracked task"
+
+    task_id = tasks[0]["id"]
+    rerun_response = client.post(
+        f"/__radar/api/background-tasks/{task_id}/rerun",
+    )
+    assert rerun_response.status_code == 200
+    time.sleep(0.05)
+    assert len(execution_log) >= 2, "rerun should execute the task again"
+
+    clear_response = client.delete("/__radar/api/background-tasks")
+    assert clear_response.status_code == 200
+
+    cleared_tasks = client.get("/__radar/api/background-tasks").json()
+    assert cleared_tasks == []

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useT } from "@/i18n";
 import { formatDistanceToNow } from "date-fns";
 import {
   Search,
@@ -64,6 +65,7 @@ function getStatusVariant(
 
 export function TracesList({ className }: TracesListProps) {
   const { openDetail } = useDetailDrawer();
+  const t = useT();
 
   const [filters, setFilters] = useState({
     search: "",
@@ -91,6 +93,7 @@ export function TracesList({ className }: TracesListProps) {
         service_name: filters.service || undefined,
         min_duration_ms: filters.minDuration || undefined,
         hours: filters.hours,
+        search: filters.search || undefined,
       }),
     refetchInterval: 30000,
   });
@@ -106,14 +109,14 @@ export function TracesList({ className }: TracesListProps) {
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Failed to load traces
+              {t("pages.tracing.failedToLoad")}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              There was an error loading the trace data.
+              {t("pages.tracing.failedToLoadMessage")}
             </p>
             <Button onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Try again
+              {t("pages.tracing.tryAgain")}
             </Button>
           </div>
         </CardContent>
@@ -131,7 +134,7 @@ export function TracesList({ className }: TracesListProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by operation name..."
+                  placeholder={t("pages.tracing.searchPlaceholder")}
                   value={filters.search}
                   onChange={(e) =>
                     setFilters({ ...filters, search: e.target.value })
@@ -148,12 +151,12 @@ export function TracesList({ className }: TracesListProps) {
               }
             >
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("pages.tracing.allStatuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="ok">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="all">{t("pages.tracing.allStatuses")}</SelectItem>
+                <SelectItem value="ok">{t("pages.tracing.success")}</SelectItem>
+                <SelectItem value="error">{t("pages.tracing.error")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -167,16 +170,16 @@ export function TracesList({ className }: TracesListProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Last hour</SelectItem>
-                <SelectItem value="6">Last 6 hours</SelectItem>
-                <SelectItem value="24">Last 24 hours</SelectItem>
-                <SelectItem value="168">Last week</SelectItem>
+                <SelectItem value="1">{t("pages.tracing.lastHour")}</SelectItem>
+                <SelectItem value="6">{t("pages.tracing.last6Hours")}</SelectItem>
+                <SelectItem value="24">{t("pages.tracing.last24Hours")}</SelectItem>
+                <SelectItem value="168">{t("pages.tracing.lastWeek")}</SelectItem>
               </SelectContent>
             </Select>
 
             <Button onClick={() => refetch()} size="sm" variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              {t("pages.tracing.refresh")}
             </Button>
           </div>
         </CardContent>
@@ -198,7 +201,7 @@ export function TracesList({ className }: TracesListProps) {
           ) : traces.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No traces found matching your criteria.</p>
+              <p>{t("pages.tracing.noTracesFound")}</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -224,10 +227,10 @@ export function TracesList({ className }: TracesListProps) {
                       </div>
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Service: {trace.service_name || "Unknown"}</span>
-                        <span>Spans: {trace.span_count}</span>
+                        <span>{t("pages.tracing.service")}: {trace.service_name || "Unknown"}</span>
+                        <span>{t("pages.tracing.spans")}: {trace.span_count}</span>
                         <span>
-                          Duration: {formatDuration(trace.duration_ms)}
+                          {t("pages.tracing.duration")}: {formatDuration(trace.duration_ms)}
                         </span>
                       </div>
 
@@ -252,7 +255,7 @@ export function TracesList({ className }: TracesListProps) {
           {traces.length === pageSize && (
             <div className="p-4 border-t flex justify-center">
               <Button variant="outline" onClick={() => setPage(page + 1)}>
-                Load more
+                {t("pages.tracing.loadMore")}
               </Button>
             </div>
           )}

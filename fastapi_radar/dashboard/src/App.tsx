@@ -6,6 +6,7 @@ import { RequestsPage } from "@/pages/RequestsPage";
 import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { BackgroundTasksPage } from "@/pages/BackgroundTasksPage";
 
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
@@ -34,6 +35,7 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="requests" element={<RequestsPage />} />
+                <Route path="background-tasks" element={<BackgroundTasksPage />} />
                 <Route path="tracing" element={<TracingPage />} />
                 <Route path="performance" element={<PerformancePage />} />
                 <Route path="database" element={<DatabasePageWrapped />} />

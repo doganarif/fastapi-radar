@@ -9,6 +9,7 @@ import {
   Settings,
   Home,
   GitBranch,
+  ListTodo,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +33,12 @@ const mainNavItemsConfig = [
     titleKey: "nav.requests",
     icon: Activity,
     href: "/requests",
+    badge: null,
+  },
+  {
+    titleKey: "nav.backgroundTasks",
+    icon: ListTodo,
+    href: "/background-tasks",
     badge: null,
   },
   {

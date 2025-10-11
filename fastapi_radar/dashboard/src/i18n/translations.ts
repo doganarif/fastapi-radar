@@ -8,6 +8,7 @@ export interface Translations {
   nav: {
     dashboard: string;
     requests: string;
+    backgroundTasks: string;
     tracking: string;
     database: string;
     exceptions: string;
@@ -33,6 +34,10 @@ export interface Translations {
       title: string;
       description: string;
     };
+    backgroundTasks: {
+      title: string;
+      description: string;
+    };
     tracing: {
       title: string;
       description: string;
@@ -40,6 +45,23 @@ export interface Translations {
       tracesCardDescription: string;
       noTraces: string;
       viewTrace: string;
+      searchPlaceholder: string;
+      allStatuses: string;
+      success: string;
+      error: string;
+      lastHour: string;
+      last6Hours: string;
+      last24Hours: string;
+      lastWeek: string;
+      refresh: string;
+      failedToLoad: string;
+      failedToLoadMessage: string;
+      tryAgain: string;
+      noTracesFound: string;
+      loadMore: string;
+      service: string;
+      spans: string;
+      duration: string;
     };
     database: {
       title: string;
@@ -304,6 +326,35 @@ export interface Translations {
     noQueries: string;
   };
 
+  backgroundTasks: {
+    status: {
+      queued: string;
+      running: string;
+      finished: string;
+      failed: string;
+    };
+    fields: {
+      id: string;
+      function: string;
+      status: string;
+      queuedAt: string;
+      startedAt: string;
+      finishedAt: string;
+      duration: string;
+      actions: string;
+    };
+    empty: string;
+    actions: {
+      rerun: string;
+      clear: string;
+      refresh: string;
+    };
+    connection: {
+      connected: string;
+      disconnected: string;
+    };
+  };
+
   detailDrawer: {
     title: {
       request: string;
@@ -389,6 +440,7 @@ const en: Translations = {
   nav: {
     dashboard: "Dashboard",
     requests: "Requests",
+    backgroundTasks: "Background Tasks",
     tracking: "Tracking",
     database: "Database",
     exceptions: "Exceptions",
@@ -412,6 +464,10 @@ const en: Translations = {
       title: "Requests",
       description: "Monitor HTTP requests and responses",
     },
+    backgroundTasks: {
+      title: "Background Tasks",
+      description: "Monitor FastAPI background tasks and reruns",
+    },
     tracing: {
       title: "Tracing",
       description:
@@ -421,6 +477,23 @@ const en: Translations = {
         "Browse all distributed tracing data and open detailed waterfall views",
       noTraces: "No trace data available",
       viewTrace: "View trace",
+      searchPlaceholder: "Search by operation name...",
+      allStatuses: "All statuses",
+      success: "Success",
+      error: "Error",
+      lastHour: "Last hour",
+      last6Hours: "Last 6 hours",
+      last24Hours: "Last 24 hours",
+      lastWeek: "Last week",
+      refresh: "Refresh",
+      failedToLoad: "Failed to load traces",
+      failedToLoadMessage: "There was an error loading the trace data.",
+      tryAgain: "Try again",
+      noTracesFound: "No traces found matching your criteria.",
+      loadMore: "Load more",
+      service: "Service",
+      spans: "Spans",
+      duration: "Duration",
     },
     database: {
       title: "Database",
@@ -679,6 +752,35 @@ const en: Translations = {
     noQueries: "No queries captured yet",
   },
 
+  backgroundTasks: {
+    status: {
+      queued: "Queued",
+      running: "Running",
+      finished: "Finished",
+      failed: "Failed",
+    },
+    fields: {
+      id: "Task ID",
+      function: "Function",
+      status: "Status",
+      queuedAt: "Queued",
+      startedAt: "Started",
+      finishedAt: "Finished",
+      duration: "Duration",
+      actions: "Actions",
+    },
+    empty: "No background tasks captured yet",
+    actions: {
+      rerun: "Run again",
+      clear: "Clear tasks",
+      refresh: "Refresh",
+    },
+    connection: {
+      connected: "Live updates enabled",
+      disconnected: "Live updates disconnected",
+    },
+  },
+
   detailDrawer: {
     title: {
       request: "Request Details",
@@ -764,6 +866,7 @@ const zh: Translations = {
   nav: {
     dashboard: "仪表板",
     requests: "请求监控",
+    backgroundTasks: "后台任务",
     tracking: "链路跟踪",
     database: "数据库",
     exceptions: "异常监控",
@@ -787,6 +890,10 @@ const zh: Translations = {
       title: "请求监控",
       description: "监控 HTTP 请求和响应",
     },
+    backgroundTasks: {
+      title: "后台任务",
+      description: "监控 FastAPI 后台任务及重新运行情况",
+    },
     tracing: {
       title: "链路跟踪",
       description: "查看服务的分布式追踪和瀑布流图",
@@ -794,6 +901,23 @@ const zh: Translations = {
       tracesCardDescription: "浏览所有链路追踪数据，点击查看详细的瀑布流图",
       noTraces: "暂无追踪数据",
       viewTrace: "查看追踪详情",
+      searchPlaceholder: "按操作名称搜索...",
+      allStatuses: "所有状态",
+      success: "成功",
+      error: "错误",
+      lastHour: "最近1小时",
+      last6Hours: "最近6小时",
+      last24Hours: "最近24小时",
+      lastWeek: "最近一周",
+      refresh: "刷新",
+      failedToLoad: "加载追踪失败",
+      failedToLoadMessage: "加载追踪数据时出错。",
+      tryAgain: "重试",
+      noTracesFound: "未找到符合条件的追踪记录。",
+      loadMore: "加载更多",
+      service: "服务",
+      spans: "Spans",
+      duration: "持续时间",
     },
     database: {
       title: "数据库监控",
@@ -1049,6 +1173,35 @@ const zh: Translations = {
     noSlowQueries: "未发现慢查询",
     noSlowQueriesShort: "全部快速",
     noQueries: "尚未捕获任何查询",
+  },
+
+  backgroundTasks: {
+    status: {
+      queued: "排队中",
+      running: "运行中",
+      finished: "已完成",
+      failed: "失败",
+    },
+    fields: {
+      id: "任务 ID",
+      function: "函数",
+      status: "状态",
+      queuedAt: "排队时间",
+      startedAt: "开始时间",
+      finishedAt: "结束时间",
+      duration: "耗时",
+      actions: "操作",
+    },
+    empty: "当前没有后台任务记录",
+    actions: {
+      rerun: "重新运行",
+      clear: "清空任务",
+      refresh: "刷新",
+    },
+    connection: {
+      connected: "实时更新已连接",
+      disconnected: "实时更新已断开",
+    },
   },
 
   detailDrawer: {
