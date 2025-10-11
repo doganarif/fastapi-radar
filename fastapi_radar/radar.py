@@ -14,6 +14,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from .api import create_api_router
+from .background_tasks import (
+    BackgroundTaskTracker,
+    create_tasks_websocket_router,
+    install_background_task_tracker,
+)
 from .capture import QueryCapture
 from .middleware import RadarMiddleware
 from .models import Base
@@ -57,6 +62,8 @@ class Radar:
         exclude_paths: Optional[List[str]] = None,
         theme: str = "auto",
         enable_tracing: bool = True,
+        enable_background_tasks: bool = True,
+        max_background_tasks: int = 1000,
         service_name: str = "fastapi-app",
         include_in_schema: bool = True,
         db_path: Optional[str] = None,
@@ -71,9 +78,12 @@ class Radar:
         self.exclude_paths = exclude_paths or []
         self.theme = theme
         self.enable_tracing = enable_tracing
+        self.enable_background_tasks = enable_background_tasks
+        self.max_background_tasks = max_background_tasks
         self.service_name = service_name
         self.db_path = db_path
         self.query_capture = None
+        self.background_task_tracker: Optional[BackgroundTaskTracker] = None
 
         if dashboard_path not in self.exclude_paths:
             self.exclude_paths.append(dashboard_path)
@@ -155,6 +165,9 @@ class Radar:
 
         self._setup_middleware()
 
+        if self.enable_background_tasks:
+            self._setup_background_tasks()
+
         if self.db_engine:
             self._setup_query_capture()
 
@@ -201,8 +214,24 @@ class Radar:
 
     def _setup_api(self, include_in_schema: bool) -> None:
         """Mount API endpoints."""
-        api_router = create_api_router(self.get_session,self.get_session_factory)
+        api_router = create_api_router(
+            self.get_session,
+            self.get_session_factory,
+            task_tracker=self.background_task_tracker,
+        )
         self.app.include_router(api_router, include_in_schema=include_in_schema)
+
+    def _setup_background_tasks(self) -> None:
+        tracker = BackgroundTaskTracker(max_tasks=self.max_background_tasks)
+        install_background_task_tracker(tracker)
+        self.background_task_tracker = tracker
+
+        websocket_router = create_tasks_websocket_router(tracker)
+        self.app.include_router(
+            websocket_router,
+            prefix=self.dashboard_path,
+            include_in_schema=False,
+        )
 
     def _setup_dashboard(self, include_in_schema: bool) -> None:
         """Mount dashboard static files."""

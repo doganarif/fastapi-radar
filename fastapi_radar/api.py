@@ -1,7 +1,7 @@
 """API endpoints for FastAPI Radar dashboard."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 
 from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span
 from .tracing import TracingManager
+
+if TYPE_CHECKING:
+    from .background_tasks import BackgroundTaskTracker
 
 
 def round_float(value: Optional[float], decimals: int = 2) -> Optional[float]:
@@ -119,14 +122,65 @@ class TraceDetail(BaseModel):
     created_at: datetime
     spans: List[WaterfallSpan]
 
+class BackgroundTaskParams(BaseModel):
+    args: List[Any]
+    kwargs: Dict[str, Any]
 
-def create_api_router(get_session_context,get_session_local_context) -> APIRouter:
+
+class BackgroundTaskInfo(BaseModel):
+    id: str
+    function_key: str
+    function_name: str
+    status: str
+    queued_at: datetime
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]
+    duration_ms: Optional[float]
+    params: BackgroundTaskParams
+    error_message: Optional[str]
+    error_trace: Optional[str]
+
+
+def create_api_router(
+    get_session_context,
+    get_session_local_context,
+    task_tracker: Optional["BackgroundTaskTracker"] = None,
+) -> APIRouter:
     router = APIRouter(prefix="/__radar/api", tags=["radar"])
 
     def get_db():
         """Dependency function for FastAPI to get database session."""
         with get_session_context() as session:
             yield session
+
+    if task_tracker is not None:
+
+        @router.get(
+            "/background-tasks",
+            response_model=List[BackgroundTaskInfo],
+            tags=["radar-tasks"],
+        )
+        async def get_background_tasks() -> List[BackgroundTaskInfo]:
+            return task_tracker.list_tasks()
+
+        @router.delete(
+            "/background-tasks",
+            tags=["radar-tasks"],
+        )
+        async def clear_background_tasks() -> Dict[str, bool]:
+            task_tracker.clear()
+            return {"ok": True}
+
+        @router.post(
+            "/background-tasks/{task_id}/rerun",
+            tags=["radar-tasks"],
+        )
+        async def rerun_background_task(task_id: str) -> Dict[str, bool]:
+            try:
+                task_tracker.rerun(task_id)
+            except KeyError:
+                raise HTTPException(status_code=404, detail="Task not found")
+            return {"ok": True}
     
     @router.get("/requests", response_model=List[RequestSummary])
     async def get_requests(
@@ -304,37 +358,36 @@ def create_api_router(get_session_context,get_session_local_context) -> APIRoute
     ):
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
         SessionLocal = get_session_local_context()  # 获取SessionLocal (sessionmaker)
-        requests_session = SessionLocal()  # 创建实际的session实例
-        queries_session = SessionLocal()  # 创建实际的session实例
-        exceptions_session = SessionLocal()  # 创建实际的session实例
-        requests = (
-            requests_session.query(
-                func.count().label("total_requests"),
-                func.avg(CapturedRequest.duration_ms).label("avg_response_time"),
-            )
-            .filter(CapturedRequest.created_at >= since)
-            .one()
-        )
-        requests_session.close()
-        queries = (
-            queries_session.query(
-                func.count().label("total_queries"),
-                func.avg(CapturedQuery.duration_ms).label("avg_query_time"),
-                func.sum(
-                    case((CapturedQuery.duration_ms >= slow_threshold, 1), else_=0)
-                ).label("slow_queries"),
-            )
-            .filter(CapturedQuery.created_at >= since)
-            .one()
-        )
-        queries_session.close()
-        exceptions = (
-            exceptions_session.query(func.count().label("total_exceptions"))
-            .filter(CapturedException.created_at >= since)
-            .one()
-        )
 
-        exceptions_session.close()
+        with SessionLocal() as requests_session:
+            requests = (
+                requests_session.query(
+                    func.count().label("total_requests"),
+                    func.avg(CapturedRequest.duration_ms).label("avg_response_time"),
+                )
+                .filter(CapturedRequest.created_at >= since)
+                .one()
+            )
+
+        with SessionLocal() as queries_session:
+            queries = (
+                queries_session.query(
+                    func.count().label("total_queries"),
+                    func.avg(CapturedQuery.duration_ms).label("avg_query_time"),
+                    func.sum(
+                        case((CapturedQuery.duration_ms >= slow_threshold, 1), else_=0)
+                    ).label("slow_queries"),
+                )
+                .filter(CapturedQuery.created_at >= since)
+                .one()
+            )
+
+        with SessionLocal() as exceptions_session:
+            exceptions = (
+                exceptions_session.query(func.count().label("total_exceptions"))
+                .filter(CapturedException.created_at >= since)
+                .one()
+            )
         
         total_requests = requests.total_requests
         avg_response_time = requests.avg_response_time

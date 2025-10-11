@@ -8,6 +8,7 @@ export interface Translations {
   nav: {
     dashboard: string;
     requests: string;
+    backgroundTasks: string;
     tracking: string;
     database: string;
     exceptions: string;
@@ -30,6 +31,10 @@ export interface Translations {
       description: string;
     };
     requests: {
+      title: string;
+      description: string;
+    };
+    backgroundTasks: {
       title: string;
       description: string;
     };
@@ -321,6 +326,35 @@ export interface Translations {
     noQueries: string;
   };
 
+  backgroundTasks: {
+    status: {
+      queued: string;
+      running: string;
+      finished: string;
+      failed: string;
+    };
+    fields: {
+      id: string;
+      function: string;
+      status: string;
+      queuedAt: string;
+      startedAt: string;
+      finishedAt: string;
+      duration: string;
+      actions: string;
+    };
+    empty: string;
+    actions: {
+      rerun: string;
+      clear: string;
+      refresh: string;
+    };
+    connection: {
+      connected: string;
+      disconnected: string;
+    };
+  };
+
   detailDrawer: {
     title: {
       request: string;
@@ -406,6 +440,7 @@ const en: Translations = {
   nav: {
     dashboard: "Dashboard",
     requests: "Requests",
+    backgroundTasks: "Background Tasks",
     tracking: "Tracking",
     database: "Database",
     exceptions: "Exceptions",
@@ -428,6 +463,10 @@ const en: Translations = {
     requests: {
       title: "Requests",
       description: "Monitor HTTP requests and responses",
+    },
+    backgroundTasks: {
+      title: "Background Tasks",
+      description: "Monitor FastAPI background tasks and reruns",
     },
     tracing: {
       title: "Tracing",
@@ -713,6 +752,35 @@ const en: Translations = {
     noQueries: "No queries captured yet",
   },
 
+  backgroundTasks: {
+    status: {
+      queued: "Queued",
+      running: "Running",
+      finished: "Finished",
+      failed: "Failed",
+    },
+    fields: {
+      id: "Task ID",
+      function: "Function",
+      status: "Status",
+      queuedAt: "Queued",
+      startedAt: "Started",
+      finishedAt: "Finished",
+      duration: "Duration",
+      actions: "Actions",
+    },
+    empty: "No background tasks captured yet",
+    actions: {
+      rerun: "Run again",
+      clear: "Clear tasks",
+      refresh: "Refresh",
+    },
+    connection: {
+      connected: "Live updates enabled",
+      disconnected: "Live updates disconnected",
+    },
+  },
+
   detailDrawer: {
     title: {
       request: "Request Details",
@@ -798,6 +866,7 @@ const zh: Translations = {
   nav: {
     dashboard: "仪表板",
     requests: "请求监控",
+    backgroundTasks: "后台任务",
     tracking: "链路跟踪",
     database: "数据库",
     exceptions: "异常监控",
@@ -820,6 +889,10 @@ const zh: Translations = {
     requests: {
       title: "请求监控",
       description: "监控 HTTP 请求和响应",
+    },
+    backgroundTasks: {
+      title: "后台任务",
+      description: "监控 FastAPI 后台任务及重新运行情况",
     },
     tracing: {
       title: "链路跟踪",
@@ -1100,6 +1173,35 @@ const zh: Translations = {
     noSlowQueries: "未发现慢查询",
     noSlowQueriesShort: "全部快速",
     noQueries: "尚未捕获任何查询",
+  },
+
+  backgroundTasks: {
+    status: {
+      queued: "排队中",
+      running: "运行中",
+      finished: "已完成",
+      failed: "失败",
+    },
+    fields: {
+      id: "任务 ID",
+      function: "函数",
+      status: "状态",
+      queuedAt: "排队时间",
+      startedAt: "开始时间",
+      finishedAt: "结束时间",
+      duration: "耗时",
+      actions: "操作",
+    },
+    empty: "当前没有后台任务记录",
+    actions: {
+      rerun: "重新运行",
+      clear: "清空任务",
+      refresh: "刷新",
+    },
+    connection: {
+      connected: "实时更新已连接",
+      disconnected: "实时更新已断开",
+    },
   },
 
   detailDrawer: {

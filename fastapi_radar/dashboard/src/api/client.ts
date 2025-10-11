@@ -104,8 +104,8 @@ export interface WaterfallSpan {
 }
 
 export interface TraceDetail {
-  trace_id: string;
-  service_name: string | null;
+    trace_id: string;
+    service_name: string | null;
   operation_name: string | null;
   start_time: string;
   end_time: string | null;
@@ -127,6 +127,25 @@ export interface WaterfallData {
     span_count: number;
     status: string;
   };
+}
+
+export interface BackgroundTaskParamsInfo {
+  args: any[];
+  kwargs: Record<string, any>;
+}
+
+export interface BackgroundTaskInfo {
+  id: string;
+  function_key: string;
+  function_name: string;
+  status: string;
+  queued_at: string;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_ms: number | null;
+  params: BackgroundTaskParamsInfo;
+  error_message: string | null;
+  error_trace: string | null;
 }
 
 class APIClient {
@@ -237,6 +256,25 @@ class APIClient {
 
   async getTraceWaterfall(traceId: string): Promise<WaterfallData> {
     const response = await fetch(`${this.baseUrl}/traces/${traceId}/waterfall`);
+    return response.json();
+  }
+
+  async getBackgroundTasks(): Promise<BackgroundTaskInfo[]> {
+    const response = await fetch(`${this.baseUrl}/background-tasks`);
+    return response.json();
+  }
+
+  async clearBackgroundTasks(): Promise<{ ok: boolean }> {
+    const response = await fetch(`${this.baseUrl}/background-tasks`, {
+      method: "DELETE",
+    });
+    return response.json();
+  }
+
+  async rerunBackgroundTask(taskId: string): Promise<{ ok: boolean }> {
+    const response = await fetch(`${this.baseUrl}/background-tasks/${taskId}/rerun`, {
+      method: "POST",
+    });
     return response.json();
   }
 }
