@@ -1,6 +1,6 @@
 [project]
 name = "fastapi-radar"
-version = "0.2.0"
+version = "0.2.1"
 description = "A debugging dashboard for FastAPI applications with real-time monitoring"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -53,6 +53,12 @@ dev = [
     "mypy",
     "httpx",
 ]
+
+release = [
+    "build",
+    "twine"
+]
+
 
 [build-system]
 requires = ["setuptools", "wheel"]
