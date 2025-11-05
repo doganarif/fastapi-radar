@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +24,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { WaterfallChart } from "./WaterfallChart";
+import { JsonViewer } from "./JsonViewer";
 
 interface DetailDrawerProps {
   open: boolean;
@@ -67,6 +68,27 @@ export function DetailDrawer({
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   };
+
+  const exportAsCurl = async () => {
+    if (!id) return;
+    try {
+      const response = await apiClient.getRequestAsCurl(id);
+      copyToClipboard(response.curl, "curl");
+    } catch (error) {
+      console.error("Failed to export as cURL:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) {
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
 
   const getStatusColor = (statusCode: number | null) => {
     if (!statusCode) return "secondary";
@@ -143,6 +165,11 @@ export function DetailDrawer({
               <p className="font-mono text-xs break-all">{requestDetail.url}</p>
             </div>
           </div>
+
+          <Button onClick={exportAsCurl} variant="outline" size="sm" className="w-full">
+            <Copy className="h-3 w-3 mr-2" />
+            {copiedField === "curl" ? t("common.copied") : "Export as cURL"}
+          </Button>
         </div>
 
         <Separator />
@@ -194,10 +221,10 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[200px] rounded-md border p-3">
-                <pre className="text-xs whitespace-pre-wrap break-all">
-                  {formatJson(requestDetail.headers) ||
-                    t("detailDrawer.request.headers.noRequestHeaders")}
-                </pre>
+                <JsonViewer
+                  data={formatJson(requestDetail.headers)}
+                  fallback={t("detailDrawer.request.headers.noRequestHeaders")}
+                />
               </ScrollArea>
             </div>
 
@@ -224,10 +251,10 @@ export function DetailDrawer({
                   </Button>
                 </div>
                 <ScrollArea className="h-[200px] rounded-md border p-3">
-                  <pre className="text-xs whitespace-pre-wrap break-all">
-                    {formatJson(requestDetail.response_headers) ||
-                      t("detailDrawer.request.headers.noResponseHeaders")}
-                  </pre>
+                  <JsonViewer
+                    data={formatJson(requestDetail.response_headers)}
+                    fallback={t("detailDrawer.request.headers.noResponseHeaders")}
+                  />
                 </ScrollArea>
               </div>
             )}
@@ -241,9 +268,7 @@ export function DetailDrawer({
                     {t("detailDrawer.request.body.queryParameters")}
                   </h4>
                   <ScrollArea className="h-[100px] rounded-md border p-3">
-                    <pre className="text-xs whitespace-pre-wrap break-all">
-                      {formatJson(requestDetail.query_params)}
-                    </pre>
+                    <JsonViewer data={formatJson(requestDetail.query_params)} />
                   </ScrollArea>
                 </div>
               )}
@@ -267,10 +292,10 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[300px] rounded-md border p-3">
-                <pre className="text-xs whitespace-pre-wrap break-all">
-                  {requestDetail.body ||
-                    t("detailDrawer.request.body.noRequestBody")}
-                </pre>
+                <JsonViewer
+                  data={requestDetail.body}
+                  fallback={t("detailDrawer.request.body.noRequestBody")}
+                />
               </ScrollArea>
             </div>
           </TabsContent>
@@ -298,10 +323,10 @@ export function DetailDrawer({
                 </Button>
               </div>
               <ScrollArea className="h-[400px] rounded-md border p-3">
-                <pre className="text-xs whitespace-pre-wrap break-all">
-                  {requestDetail.response_body ||
-                    t("detailDrawer.request.body.noResponseBody")}
-                </pre>
+                <JsonViewer
+                  data={requestDetail.response_body}
+                  fallback={t("detailDrawer.request.body.noResponseBody")}
+                />
               </ScrollArea>
             </div>
           </TabsContent>

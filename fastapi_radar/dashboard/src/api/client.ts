@@ -138,6 +138,8 @@ class APIClient {
     status_code?: number;
     method?: string;
     search?: string;
+    start_time?: string;
+    end_time?: string;
   }): Promise<RequestSummary[]> {
     const queryParams = new URLSearchParams();
     if (params?.limit) queryParams.append("limit", params.limit.toString());
@@ -146,6 +148,8 @@ class APIClient {
       queryParams.append("status_code", params.status_code.toString());
     if (params?.method) queryParams.append("method", params.method);
     if (params?.search) queryParams.append("search", params.search);
+    if (params?.start_time) queryParams.append("start_time", params.start_time);
+    if (params?.end_time) queryParams.append("end_time", params.end_time);
 
     const response = await fetch(`${this.baseUrl}/requests?${queryParams}`);
     return response.json();
@@ -153,6 +157,11 @@ class APIClient {
 
   async getRequestDetail(requestId: string): Promise<RequestDetail> {
     const response = await fetch(`${this.baseUrl}/requests/${requestId}`);
+    return response.json();
+  }
+
+  async getRequestAsCurl(requestId: string): Promise<{ curl: string }> {
+    const response = await fetch(`${this.baseUrl}/requests/${requestId}/curl`);
     return response.json();
   }
 

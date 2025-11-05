@@ -1,5 +1,6 @@
 """Utility functions for FastAPI Radar."""
 
+import re
 from typing import Dict, Optional
 
 from starlette.datastructures import Headers
@@ -58,3 +59,26 @@ def format_sql(sql: str, max_length: int = 5000) -> str:
         sql = sql[:max_length] + "... [truncated]"
 
     return sql
+
+
+def redact_sensitive_data(text: Optional[str]) -> Optional[str]:
+    """Redact sensitive data from text (body content)."""
+    if not text:
+        return text
+
+    # Patterns for sensitive data
+    patterns = [
+        (r'"(password|passwd|pwd)"\s*:\s*"[^"]*"', r'"\1": "***REDACTED***"'),
+        (
+            r'"(token|api_key|apikey|secret|auth)"\s*:\s*"[^"]*"',
+            r'"\1": "***REDACTED***"',
+        ),
+        (r'"(credit_card|card_number|cvv)"\s*:\s*"[^"]*"', r'"\1": "***REDACTED***"'),
+        (r"Bearer\s+[A-Za-z0-9\-_\.]+", "Bearer ***REDACTED***"),
+    ]
+
+    result = text
+    for pattern, replacement in patterns:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+    return result
