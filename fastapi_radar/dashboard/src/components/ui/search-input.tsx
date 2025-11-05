@@ -20,11 +20,28 @@ export function SearchInput({
 }: SearchInputProps) {
   const [localValue, setLocalValue] = React.useState(value);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   // Update local value when prop changes (for external updates)
   React.useEffect(() => {
     setLocalValue(value);
   }, [value]);
+
+  // Keyboard shortcut: "/" to focus search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +75,7 @@ export function SearchInput({
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 pointer-events-none" />
       <Input
         {...props}
+        ref={inputRef}
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}

@@ -135,10 +135,16 @@ def create_api_router(get_session_context) -> APIRouter:
         status_code: Optional[int] = None,
         method: Optional[str] = None,
         search: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         session: Session = Depends(get_db),
     ):
         query = session.query(CapturedRequest)
 
+        if start_time:
+            query = query.filter(CapturedRequest.created_at >= start_time)
+        if end_time:
+            query = query.filter(CapturedRequest.created_at <= end_time)
         if status_code:
             if status_code in [200, 300, 400, 500]:
                 # Filter by status code range
@@ -227,6 +233,36 @@ def create_api_router(get_session_context) -> APIRouter:
                 for e in request.exceptions
             ],
         )
+
+    @router.get("/requests/{request_id}/curl")
+    async def get_request_as_curl(request_id: str, session: Session = Depends(get_db)):
+        request = (
+            session.query(CapturedRequest)
+            .filter(CapturedRequest.request_id == request_id)
+            .first()
+        )
+
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+
+        # Build cURL command
+        parts = [f"curl -X {request.method}"]
+
+        # Add headers
+        if request.headers:
+            for key, value in request.headers.items():
+                if key.lower() not in ['host', 'content-length']:
+                    parts.append(f"-H '{key}: {value}'")
+
+        # Add body
+        if request.body:
+            parts.append(f"-d '{request.body}'")
+
+        # Add URL (use full URL if available, otherwise construct from path)
+        url = request.url if request.url else request.path
+        parts.append(f"'{url}'")
+
+        return {"curl": " ".join(parts)}
 
     @router.get("/queries", response_model=List[QueryDetail])
     async def get_queries(

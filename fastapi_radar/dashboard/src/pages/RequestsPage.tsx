@@ -31,6 +31,7 @@ export function RequestsPage() {
   const [methodFilter, setMethodFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [timeRange, setTimeRange] = useState<number | null>(null); // hours
   const { openDetail } = useDetailDrawer();
   const t = useT();
 
@@ -38,15 +39,22 @@ export function RequestsPage() {
 
   // Get all requests
   const { data: allRequests, refetch } = useQuery({
-    queryKey: ["all-requests", statusFilter, methodFilter, debouncedSearchTerm],
-    queryFn: () =>
-      apiClient.getRequests({
+    queryKey: ["all-requests", statusFilter, methodFilter, debouncedSearchTerm, timeRange],
+    queryFn: () => {
+      const params: any = {
         limit: 200,
         status_code:
           statusFilter !== "all" ? getStatusCode(statusFilter) : undefined,
         method: methodFilter !== "all" ? methodFilter : undefined,
         search: debouncedSearchTerm || undefined,
-      }),
+      };
+
+      if (timeRange) {
+        params.start_time = new Date(Date.now() - timeRange * 60 * 60 * 1000).toISOString();
+      }
+
+      return apiClient.getRequests(params);
+    },
     refetchInterval: 5000,
   });
 
@@ -125,62 +133,98 @@ export function RequestsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">{t('common.search')}</Label>
-              <SearchInput
-                id="search"
-                placeholder={t('requests.filters.searchPlaceholder')}
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="search">{t('common.search')}</Label>
+                <SearchInput
+                  id="search"
+                  placeholder={t('requests.filters.searchPlaceholder')}
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">{t('requests.filters.status')}</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder={t('requests.statusFilters.all')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('requests.statusFilters.all')}</SelectItem>
+                    <SelectItem value="2xx">{t('requests.statusFilters.success')}</SelectItem>
+                    <SelectItem value="3xx">{t('requests.statusFilters.redirect')}</SelectItem>
+                    <SelectItem value="4xx">{t('requests.statusFilters.clientErrors')}</SelectItem>
+                    <SelectItem value="5xx">{t('requests.statusFilters.serverErrors')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="method">{t('requests.filters.method')}</Label>
+                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                  <SelectTrigger id="method">
+                    <SelectValue placeholder={t('requests.methodFilters.all')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('requests.methodFilters.all')}</SelectItem>
+                    <SelectItem value="GET">{t('requests.methodFilters.get')}</SelectItem>
+                    <SelectItem value="POST">{t('requests.methodFilters.post')}</SelectItem>
+                    <SelectItem value="PUT">{t('requests.methodFilters.put')}</SelectItem>
+                    <SelectItem value="PATCH">{t('requests.methodFilters.patch')}</SelectItem>
+                    <SelectItem value="DELETE">{t('requests.methodFilters.delete')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>&nbsp;</Label>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={() => refetch()}>
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={exportData}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={applyFilters}>
+                    <Filter className="mr-2 h-4 w-4" />
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">{t('requests.filters.status')}</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder={t('requests.statusFilters.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('requests.statusFilters.all')}</SelectItem>
-                  <SelectItem value="2xx">{t('requests.statusFilters.success')}</SelectItem>
-                  <SelectItem value="3xx">{t('requests.statusFilters.redirect')}</SelectItem>
-                  <SelectItem value="4xx">{t('requests.statusFilters.clientErrors')}</SelectItem>
-                  <SelectItem value="5xx">{t('requests.statusFilters.serverErrors')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="method">{t('requests.filters.method')}</Label>
-              <Select value={methodFilter} onValueChange={setMethodFilter}>
-                <SelectTrigger id="method">
-                  <SelectValue placeholder={t('requests.methodFilters.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('requests.methodFilters.all')}</SelectItem>
-                  <SelectItem value="GET">{t('requests.methodFilters.get')}</SelectItem>
-                  <SelectItem value="POST">{t('requests.methodFilters.post')}</SelectItem>
-                  <SelectItem value="PUT">{t('requests.methodFilters.put')}</SelectItem>
-                  <SelectItem value="PATCH">{t('requests.methodFilters.patch')}</SelectItem>
-                  <SelectItem value="DELETE">{t('requests.methodFilters.delete')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>&nbsp;</Label>
+              <Label>Time Range</Label>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => refetch()}>
-                  <RefreshCw className="h-4 w-4" />
+                <Button
+                  variant={timeRange === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(null)}
+                >
+                  All Time
                 </Button>
-                <Button variant="outline" size="icon" onClick={exportData}>
-                  <Download className="h-4 w-4" />
+                <Button
+                  variant={timeRange === 1 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(1)}
+                >
+                  Last Hour
                 </Button>
-                <Button onClick={applyFilters}>
-                  <Filter className="mr-2 h-4 w-4" />
-                  Apply Filters
+                <Button
+                  variant={timeRange === 24 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(24)}
+                >
+                  Last 24h
+                </Button>
+                <Button
+                  variant={timeRange === 168 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(168)}
+                >
+                  Last 7d
                 </Button>
               </div>
             </div>
