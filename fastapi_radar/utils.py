@@ -69,9 +69,12 @@ def redact_sensitive_data(text: Optional[str]) -> Optional[str]:
     # Patterns for sensitive data
     patterns = [
         (r'"(password|passwd|pwd)"\s*:\s*"[^"]*"', r'"\1": "***REDACTED***"'),
-        (r'"(token|api_key|apikey|secret|auth)"\s*:\s*"[^"]*"', r'"\1": "***REDACTED***"'),
+        (
+            r'"(token|api_key|apikey|secret|auth)"\s*:\s*"[^"]*"',
+            r'"\1": "***REDACTED***"',
+        ),
         (r'"(credit_card|card_number|cvv)"\s*:\s*"[^"]*"', r'"\1": "***REDACTED***"'),
-        (r'Bearer\s+[A-Za-z0-9\-_\.]+', 'Bearer ***REDACTED***'),
+        (r"Bearer\s+[A-Za-z0-9\-_\.]+", "Bearer ***REDACTED***"),
     ]
 
     result = text

@@ -165,7 +165,8 @@ async def create_user(user: UserCreate):
             or existing_user["email"] == user.email
         ):
             raise HTTPException(
-                status_code=400, detail="User with this username or email already exists"
+                status_code=400,
+                detail="User with this username or email already exists",
             )
 
     user_data = {

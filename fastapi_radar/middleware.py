@@ -13,7 +13,12 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 
 from .models import CapturedRequest, CapturedException
-from .utils import serialize_headers, get_client_ip, truncate_body, redact_sensitive_data
+from .utils import (
+    serialize_headers,
+    get_client_ip,
+    truncate_body,
+    redact_sensitive_data,
+)
 from .tracing import (
     TraceContext,
     TracingManager,
@@ -126,8 +131,12 @@ class RadarMiddleware(BaseHTTPMiddleware):
                             response_body += chunk.decode("utf-8", errors="ignore")
                             try:
                                 with self.get_session() as session:
-                                    captured_request.response_body = redact_sensitive_data(
-                                        truncate_body(response_body, self.max_body_size)
+                                    captured_request.response_body = (
+                                        redact_sensitive_data(
+                                            truncate_body(
+                                                response_body, self.max_body_size
+                                            )
+                                        )
                                     )
                                     session.add(captured_request)
                                     session.commit()

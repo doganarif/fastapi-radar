@@ -251,7 +251,7 @@ def create_api_router(get_session_context) -> APIRouter:
         # Add headers
         if request.headers:
             for key, value in request.headers.items():
-                if key.lower() not in ['host', 'content-length']:
+                if key.lower() not in ["host", "content-length"]:
                     parts.append(f"-H '{key}: {value}'")
 
         # Add body
