@@ -311,12 +311,10 @@ def create_api_router(get_session_context) -> APIRouter:
         # 1. Whitelist allowed domains
         # 2. Add authentication to this endpoint
         # 3. Add rate limiting
-        from urllib.parse import urlparse
-
-        parsed = urlparse(request.url)
-
         # For dev/testing, allow localhost. For production, consider blocking.
-        # Uncomment below to block all internal IPs:
+        # Example: Uncomment below to block all internal IPs:
+        # from urllib.parse import urlparse
+        # parsed = urlparse(request.url)
         # if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0", "::1", "::ffff:127.0.0.1"]:
         #     raise HTTPException(status_code=403, detail="Replay to localhost is disabled")
 
