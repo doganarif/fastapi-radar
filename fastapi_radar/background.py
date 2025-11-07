@@ -16,6 +16,7 @@ def track_background_task(get_session: Callable):
     Can optionally accept request_id as kwarg:
     background_tasks.add_task(my_task, arg1, request_id="abc123")
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -52,9 +53,11 @@ def track_background_task(get_session: Callable):
                 duration_ms = (time.time() - start_time) * 1000
 
                 with get_session() as session:
-                    task = session.query(BackgroundTask).filter(
-                        BackgroundTask.task_id == task_id
-                    ).first()
+                    task = (
+                        session.query(BackgroundTask)
+                        .filter(BackgroundTask.task_id == task_id)
+                        .first()
+                    )
                     if task:
                         task.status = status
                         task.end_time = datetime.now(timezone.utc)
@@ -97,9 +100,11 @@ def track_background_task(get_session: Callable):
                 duration_ms = (time.time() - start_time) * 1000
 
                 with get_session() as session:
-                    task = session.query(BackgroundTask).filter(
-                        BackgroundTask.task_id == task_id
-                    ).first()
+                    task = (
+                        session.query(BackgroundTask)
+                        .filter(BackgroundTask.task_id == task_id)
+                        .first()
+                    )
                     if task:
                         task.status = status
                         task.end_time = datetime.now(timezone.utc)

@@ -10,7 +10,14 @@ from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
 import httpx
 
-from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span, BackgroundTask
+from .models import (
+    CapturedRequest,
+    CapturedQuery,
+    CapturedException,
+    Trace,
+    Span,
+    BackgroundTask,
+)
 from .tracing import TracingManager
 
 
@@ -283,7 +290,7 @@ def create_api_router(get_session_context) -> APIRouter:
     async def replay_request(
         request_id: str,
         body: Optional[Dict[str, Any]] = None,
-        session: Session = Depends(get_db)
+        session: Session = Depends(get_db),
     ):
         """Replay a captured request with optional body override.
 
@@ -305,6 +312,7 @@ def create_api_router(get_session_context) -> APIRouter:
         # 2. Add authentication to this endpoint
         # 3. Add rate limiting
         from urllib.parse import urlparse
+
         parsed = urlparse(request.url)
 
         # For dev/testing, allow localhost. For production, consider blocking.
@@ -324,12 +332,16 @@ def create_api_router(get_session_context) -> APIRouter:
         request_body = body if body is not None else request.body
 
         try:
-            async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
+            async with httpx.AsyncClient(
+                timeout=30.0, follow_redirects=False
+            ) as client:
                 response = await client.request(
                     method=request.method,
                     url=request.url,
                     headers=headers,
-                    content=request_body if isinstance(request_body, (str, bytes)) else None,
+                    content=(
+                        request_body if isinstance(request_body, (str, bytes)) else None
+                    ),
                     json=request_body if isinstance(request_body, dict) else None,
                 )
 
