@@ -9,6 +9,7 @@ import {
   Settings,
   Home,
   GitBranch,
+  Zap,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +58,12 @@ const mainNavItemsConfig = [
     titleKey: "nav.performance",
     icon: TrendingUp,
     href: "/performance",
+    badge: null,
+  },
+  {
+    titleKey: "nav.backgroundTasks",
+    icon: Zap,
+    href: "/background-tasks",
     badge: null,
   },
 ];

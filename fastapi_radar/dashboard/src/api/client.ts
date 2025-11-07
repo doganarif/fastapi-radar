@@ -129,6 +129,19 @@ export interface WaterfallData {
   };
 }
 
+export interface BackgroundTaskSummary {
+  id: number;
+  task_id: string;
+  request_id: string | null;
+  name: string;
+  status: string;
+  start_time: string | null;
+  end_time: string | null;
+  duration_ms: number | null;
+  error: string | null;
+  created_at: string;
+}
+
 class APIClient {
   private baseUrl = "/__radar/api";
 
@@ -162,6 +175,33 @@ class APIClient {
 
   async getRequestAsCurl(requestId: string): Promise<{ curl: string }> {
     const response = await fetch(`${this.baseUrl}/requests/${requestId}/curl`);
+    return response.json();
+  }
+
+  async replayRequest(
+    requestId: string,
+    body?: any
+  ): Promise<{
+    status_code: number;
+    headers: Record<string, string>;
+    body: string;
+    elapsed_ms: number;
+    original_status: number | null;
+    original_duration_ms: number | null;
+    new_request_id: string;
+  }> {
+    const response = await fetch(
+      `${this.baseUrl}/requests/${requestId}/replay`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : null,
+      }
+    );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || "Replay failed");
+    }
     return response.json();
   }
 
@@ -244,6 +284,25 @@ class APIClient {
 
   async getTraceWaterfall(traceId: string): Promise<WaterfallData> {
     const response = await fetch(`${this.baseUrl}/traces/${traceId}/waterfall`);
+    return response.json();
+  }
+
+  async getBackgroundTasks(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    request_id?: string;
+  }): Promise<BackgroundTaskSummary[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.offset) queryParams.append("offset", params.offset.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.request_id) queryParams.append("request_id", params.request_id);
+
+    const response = await fetch(`${this.baseUrl}/background-tasks?${queryParams}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch background tasks: ${response.statusText}`);
+    }
     return response.json();
   }
 }

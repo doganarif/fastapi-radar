@@ -167,3 +167,24 @@ class SpanRelation(Base):
     child_span_id = Column(String(16), index=True)
     depth = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class BackgroundTask(Base):
+    __tablename__ = "radar_background_tasks"
+
+    id = Column(
+        Integer, Sequence("radar_background_tasks_id_seq"), primary_key=True, index=True
+    )
+    task_id = Column(String(36), unique=True, index=True, nullable=False)
+    request_id = Column(String(36), index=True, nullable=True)
+    name = Column(String(200), nullable=False)
+    status = Column(
+        String(20), default="pending", index=True
+    )  # pending, running, completed, failed
+    start_time = Column(DateTime, index=True)
+    end_time = Column(DateTime)
+    duration_ms = Column(Float)
+    error = Column(Text)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )

@@ -49,14 +49,14 @@ export function DetailDrawer({
     enabled: !!id && type === "request",
   });
 
-  const { data: traceDetail } = useQuery({
+  const { data: traceDetail, isLoading: isTraceLoading } = useQuery({
     queryKey: ["trace-detail", id],
     queryFn: () =>
       id && type === "trace" ? apiClient.getTraceDetail(id) : null,
     enabled: !!id && type === "trace",
   });
 
-  const { data: waterfallData } = useQuery({
+  const { data: waterfallData, isLoading: isWaterfallLoading } = useQuery({
     queryKey: ["trace-waterfall", id],
     queryFn: () =>
       id && type === "trace" ? apiClient.getTraceWaterfall(id) : null,
@@ -450,7 +450,21 @@ export function DetailDrawer({
   };
 
   const renderTraceDetail = () => {
-    if (!traceDetail || !waterfallData) return null;
+    if (isTraceLoading || isWaterfallLoading) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          Loading trace data...
+        </div>
+      );
+    }
+
+    if (!traceDetail || !waterfallData) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          No trace data available
+        </div>
+      );
+    }
 
     const formatDuration = (ms: number | null) => {
       if (!ms) return "0ms";
