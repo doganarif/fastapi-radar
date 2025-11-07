@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { RequestsPage } from "@/pages/RequestsPage";
+import { RequestDetailPage } from "@/pages/RequestDetailPage";
 import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { BackgroundTasksPage } from "@/pages/BackgroundTasksPage";
 
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
@@ -34,17 +36,19 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="requests" element={<RequestsPage />} />
+                <Route path="requests/:requestId" element={<RequestDetailPage />} />
                 <Route path="tracing" element={<TracingPage />} />
                 <Route path="performance" element={<PerformancePage />} />
                 <Route path="database" element={<DatabasePageWrapped />} />
                 <Route path="exceptions" element={<ExceptionsPageWrapped />} />
+                <Route path="background-tasks" element={<BackgroundTasksPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Fallback to dashboard for unmatched routes */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
+            <DetailDrawerWrapper />
           </BrowserRouter>
-          <DetailDrawerWrapper />
         </DetailDrawerProvider>
       </QueryClientProvider>
     </LanguageProvider>

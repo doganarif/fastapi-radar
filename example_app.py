@@ -12,7 +12,8 @@ except ImportError:
     from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
-from fastapi_radar import Radar
+from fastapi_radar import Radar, track_background_task
+from fastapi import BackgroundTasks
 
 # Database setup
 engine = create_engine(
@@ -267,6 +268,91 @@ async def trigger_error():
     raise ValueError("This is an example error for demonstration purposes")
 
 
+@track_background_task(radar.get_session)
+async def send_email_task(email: str, subject: str):
+    """Simulated background task for sending emails."""
+    import asyncio
+    await asyncio.sleep(2)  # Simulate email sending
+    return f"Email sent to {email}"
+
+
+@track_background_task(radar.get_session)
+async def process_report(user_id: int):
+    """Simulated background task for processing reports."""
+    import asyncio
+    await asyncio.sleep(3)  # Simulate report processing
+    return f"Report processed for user {user_id}"
+
+
+@track_background_task(radar.get_session)
+async def generate_analytics(days: int = 7):
+    """Simulated background task for generating analytics."""
+    import asyncio
+    await asyncio.sleep(1.5)
+    return f"Analytics generated for last {days} days"
+
+
+@track_background_task(radar.get_session)
+def sync_inventory_task():
+    """Simulated synchronous background task."""
+    import time
+    time.sleep(1)
+    return "Inventory synchronized"
+
+
+@track_background_task(radar.get_session)
+async def failing_task():
+    """Example task that fails."""
+    import asyncio
+    await asyncio.sleep(0.5)
+    raise Exception("Simulated task failure for testing")
+
+
+@app.post("/send-email")
+async def send_email(
+    email: str,
+    subject: str,
+    background_tasks: BackgroundTasks
+):
+    """Example endpoint that triggers a background task."""
+    background_tasks.add_task(send_email_task, email, subject)
+    return {"message": "Email will be sent in the background"}
+
+
+@app.post("/process-report/{user_id}")
+async def process_user_report(
+    user_id: int,
+    background_tasks: BackgroundTasks
+):
+    """Example endpoint that triggers a long-running background task."""
+    background_tasks.add_task(process_report, user_id)
+    return {"message": "Report processing started"}
+
+
+@app.post("/generate-analytics")
+async def generate_analytics_endpoint(
+    background_tasks: BackgroundTasks,
+    days: int = Query(7, ge=1, le=365)
+):
+    """Generate analytics for the specified number of days."""
+    background_tasks.add_task(generate_analytics, days)
+    return {"message": f"Analytics generation started for last {days} days"}
+
+
+@app.post("/sync-inventory")
+async def sync_inventory(background_tasks: BackgroundTasks):
+    """Synchronize inventory (sync task example)."""
+    background_tasks.add_task(sync_inventory_task)
+    return {"message": "Inventory sync started"}
+
+
+@app.post("/test-failure")
+async def test_task_failure(background_tasks: BackgroundTasks):
+    """Test a failing background task."""
+    background_tasks.add_task(failing_task)
+    return {"message": "Failing task started (check background tasks page)"}
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint (excluded from Radar by default)."""
@@ -352,6 +438,12 @@ if __name__ == "__main__":
     print("  1. Visit http://localhost:8000/products")
     print("  2. Visit http://localhost:8000/slow-query")
     print("  3. Visit http://localhost:8000/error")
+    print("\n  Background Tasks (POST requests):")
+    print("  4. curl -X POST http://localhost:8000/send-email?email=test@example.com&subject=Hello")
+    print("  5. curl -X POST http://localhost:8000/process-report/1")
+    print("  6. curl -X POST http://localhost:8000/generate-analytics?days=30")
+    print("  7. curl -X POST http://localhost:8000/sync-inventory")
+    print("  8. curl -X POST http://localhost:8000/test-failure")
     print("=" * 60 + "\n")
 
     uvicorn.run(app, host="0.0.0.0", port=8000)

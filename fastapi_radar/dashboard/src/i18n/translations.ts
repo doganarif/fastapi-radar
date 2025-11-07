@@ -12,6 +12,7 @@ export interface Translations {
     database: string;
     exceptions: string;
     performance: string;
+    backgroundTasks: string;
     settings: string;
   };
 
@@ -393,6 +394,7 @@ const en: Translations = {
     database: "Database",
     exceptions: "Exceptions",
     performance: "Performance",
+    backgroundTasks: "Background Tasks",
     settings: "Settings",
   },
 
@@ -768,6 +770,7 @@ const zh: Translations = {
     database: "数据库",
     exceptions: "异常监控",
     performance: "性能分析",
+    backgroundTasks: "后台任务",
     settings: "设置",
   },
 

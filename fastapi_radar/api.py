@@ -2,13 +2,15 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
+import httpx
 
-from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span
+from .models import CapturedRequest, CapturedQuery, CapturedException, Trace, Span, BackgroundTask
 from .tracing import TracingManager
 
 
@@ -89,6 +91,19 @@ class TraceSummary(BaseModel):
     duration_ms: Optional[float]
     span_count: int
     status: str
+    created_at: datetime
+
+
+class BackgroundTaskSummary(BaseModel):
+    id: int
+    task_id: str
+    request_id: Optional[str]
+    name: str
+    status: str
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    duration_ms: Optional[float]
+    error: Optional[str]
     created_at: datetime
 
 
@@ -263,6 +278,91 @@ def create_api_router(get_session_context) -> APIRouter:
         parts.append(f"'{url}'")
 
         return {"curl": " ".join(parts)}
+
+    @router.post("/requests/{request_id}/replay")
+    async def replay_request(
+        request_id: str,
+        body: Optional[Dict[str, Any]] = None,
+        session: Session = Depends(get_db)
+    ):
+        """Replay a captured request with optional body override.
+
+        WARNING: This endpoint replays HTTP requests. Use with caution in production.
+        Consider adding authentication and rate limiting.
+        """
+        request = (
+            session.query(CapturedRequest)
+            .filter(CapturedRequest.request_id == request_id)
+            .first()
+        )
+
+        if not request:
+            raise HTTPException(status_code=404, detail="Request not found")
+
+        # Security: Validate URL to prevent SSRF attacks
+        # Note: This is basic protection. For production, consider:
+        # 1. Whitelist allowed domains
+        # 2. Add authentication to this endpoint
+        # 3. Add rate limiting
+        from urllib.parse import urlparse
+        parsed = urlparse(request.url)
+
+        # For dev/testing, allow localhost. For production, consider blocking.
+        # Uncomment below to block all internal IPs:
+        # if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0", "::1", "::ffff:127.0.0.1"]:
+        #     raise HTTPException(status_code=403, detail="Replay to localhost is disabled")
+
+        # Build replay request
+        headers = dict(request.headers) if request.headers else {}
+        # Remove hop-by-hop headers
+        headers.pop("host", None)
+        headers.pop("content-length", None)
+        headers.pop("connection", None)
+        headers.pop("keep-alive", None)
+        headers.pop("transfer-encoding", None)
+
+        request_body = body if body is not None else request.body
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
+                response = await client.request(
+                    method=request.method,
+                    url=request.url,
+                    headers=headers,
+                    content=request_body if isinstance(request_body, (str, bytes)) else None,
+                    json=request_body if isinstance(request_body, dict) else None,
+                )
+
+                # Store the replayed request
+                replayed_request = CapturedRequest(
+                    request_id=str(uuid.uuid4()),
+                    method=request.method,
+                    url=request.url,
+                    path=request.path,
+                    query_params=request.query_params,
+                    headers=dict(response.request.headers),
+                    body=request_body if isinstance(request_body, str) else None,
+                    status_code=response.status_code,
+                    response_body=response.text[:10000] if response.text else None,
+                    response_headers=dict(response.headers),
+                    duration_ms=response.elapsed.total_seconds() * 1000,
+                    client_ip="replay",
+                )
+                session.add(replayed_request)
+                session.commit()
+                session.refresh(replayed_request)
+
+                return {
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "body": response.text,
+                    "elapsed_ms": response.elapsed.total_seconds() * 1000,
+                    "original_status": request.status_code,
+                    "original_duration_ms": request.duration_ms,
+                    "new_request_id": replayed_request.request_id,
+                }
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Replay failed: {str(e)}")
 
     @router.get("/queries", response_model=List[QueryDetail])
     async def get_queries(
@@ -524,5 +624,44 @@ def create_api_router(get_session_context) -> APIRouter:
             "logs": span.logs,
             "created_at": span.created_at.isoformat(),
         }
+
+    @router.get("/background-tasks", response_model=List[BackgroundTaskSummary])
+    async def get_background_tasks(
+        limit: int = Query(100, ge=1, le=1000),
+        offset: int = Query(0, ge=0),
+        status: Optional[str] = None,
+        request_id: Optional[str] = None,
+        session: Session = Depends(get_db),
+    ):
+        """Get background tasks with optional filters."""
+        query = session.query(BackgroundTask)
+
+        if status:
+            query = query.filter(BackgroundTask.status == status)
+        if request_id:
+            query = query.filter(BackgroundTask.request_id == request_id)
+
+        tasks = (
+            query.order_by(desc(BackgroundTask.created_at))
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            BackgroundTaskSummary(
+                id=task.id,
+                task_id=task.task_id,
+                request_id=task.request_id,
+                name=task.name,
+                status=task.status,
+                start_time=task.start_time,
+                end_time=task.end_time,
+                duration_ms=round_float(task.duration_ms),
+                error=task.error,
+                created_at=task.created_at,
+            )
+            for task in tasks
+        ]
 
     return router
