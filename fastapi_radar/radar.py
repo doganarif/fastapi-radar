@@ -406,6 +406,7 @@ class Radar:
                 else:
                     # Event loop is running, we need to run in a thread
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(asyncio.run, _create_tables())
                         future.result()
@@ -436,6 +437,7 @@ class Radar:
             else:
                 # Event loop is running, we need to run in a thread
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(asyncio.run, _drop_tables())
                     future.result()
