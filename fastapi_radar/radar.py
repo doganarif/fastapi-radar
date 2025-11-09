@@ -11,7 +11,7 @@ import asyncio
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -148,17 +148,22 @@ class Radar:
                         poolclass=StaticPool,
                     )
 
-        # Check if storage_engine is async or sync and create appropriate sessionmaker
+        # Check if storage_engine is async or sync
+        # If async, we'll use it for DDL operations but keep sessions sync
+        # by accessing the sync engine from the async engine
         if isinstance(self.storage_engine, AsyncEngine):
-            self.SessionLocal = async_sessionmaker(
-                autocommit=False, autoflush=False, bind=self.storage_engine
-            )
+            # For async engines, get the underlying sync engine for session operations
+            # The middleware and other components use sessions synchronously
             self._is_async_storage = True
+            sync_engine = self.storage_engine.sync_engine
+            self.SessionLocal = sessionmaker(
+                autocommit=False, autoflush=False, bind=sync_engine
+            )
         else:
+            self._is_async_storage = False
             self.SessionLocal = sessionmaker(
                 autocommit=False, autoflush=False, bind=self.storage_engine
             )
-            self._is_async_storage = False
 
         self._setup_middleware()
 
