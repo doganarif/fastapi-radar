@@ -397,7 +397,18 @@ class Radar:
                     async with self.storage_engine.begin() as conn:
                         await conn.run_sync(Base.metadata.create_all)
 
-                asyncio.run(_create_tables())
+                # Check if there's already an event loop running
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    # No event loop running, safe to use asyncio.run()
+                    asyncio.run(_create_tables())
+                else:
+                    # Event loop is running, we need to run in a thread
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, _create_tables())
+                        future.result()
             else:
                 Base.metadata.create_all(bind=self.storage_engine)
         except Exception as e:
@@ -416,7 +427,18 @@ class Radar:
                 async with self.storage_engine.begin() as conn:
                     await conn.run_sync(Base.metadata.drop_all)
 
-            asyncio.run(_drop_tables())
+            # Check if there's already an event loop running
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                asyncio.run(_drop_tables())
+            else:
+                # Event loop is running, we need to run in a thread
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, _drop_tables())
+                    future.result()
         else:
             Base.metadata.drop_all(bind=self.storage_engine)
 
