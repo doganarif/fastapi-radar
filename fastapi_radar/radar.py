@@ -5,11 +5,13 @@ import os
 import sys
 import multiprocessing
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
+import asyncio
 
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -47,7 +49,7 @@ class Radar:
         self,
         app: FastAPI,
         db_engine: Optional[Engine] = None,
-        storage_engine: Optional[Engine] = None,
+        storage_engine: Optional[Union[Engine, AsyncEngine]] = None,
         dashboard_path: str = "/__radar",
         max_requests: int = 1000,
         retention_hours: int = 24,
@@ -146,9 +148,17 @@ class Radar:
                         poolclass=StaticPool,
                     )
 
-        self.SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.storage_engine
-        )
+        # Check if storage_engine is async or sync and create appropriate sessionmaker
+        if isinstance(self.storage_engine, AsyncEngine):
+            self.SessionLocal = async_sessionmaker(
+                autocommit=False, autoflush=False, bind=self.storage_engine
+            )
+            self._is_async_storage = True
+        else:
+            self.SessionLocal = sessionmaker(
+                autocommit=False, autoflush=False, bind=self.storage_engine
+            )
+            self._is_async_storage = False
 
         self._setup_middleware()
 
@@ -372,16 +382,38 @@ class Radar:
 
         With dev mode (fastapi dev), this safely handles
         multiple process attempts to create tables.
+
+        Supports both sync and async storage engines.
         """
         try:
-            Base.metadata.create_all(bind=self.storage_engine)
+            if isinstance(self.storage_engine, AsyncEngine):
+                # For async engines, we need to run the DDL in a sync context
+                async def _create_tables():
+                    async with self.storage_engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+
+                asyncio.run(_create_tables())
+            else:
+                Base.metadata.create_all(bind=self.storage_engine)
         except Exception as e:
             error_msg = str(e).lower()
             if "already exists" not in error_msg and "lock" not in error_msg:
                 raise
 
     def drop_tables(self) -> None:
-        Base.metadata.drop_all(bind=self.storage_engine)
+        """Drop all Radar tables.
+
+        Supports both sync and async storage engines.
+        """
+        if isinstance(self.storage_engine, AsyncEngine):
+            # For async engines, we need to run the DDL in a sync context
+            async def _drop_tables():
+                async with self.storage_engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.drop_all)
+
+            asyncio.run(_drop_tables())
+        else:
+            Base.metadata.drop_all(bind=self.storage_engine)
 
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
         from datetime import datetime, timedelta, timezone
