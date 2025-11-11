@@ -12,18 +12,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 
-from .models import CapturedRequest, CapturedException
-from .utils import (
-    serialize_headers,
-    get_client_ip,
-    truncate_body,
-    redact_sensitive_data,
-)
+from .models import CapturedException, CapturedRequest
 from .tracing import (
     TraceContext,
     TracingManager,
     create_trace_context,
     set_trace_context,
+)
+from .utils import (
+    get_client_ip,
+    redact_sensitive_data,
+    serialize_headers,
+    truncate_body,
 )
 
 request_context: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
@@ -84,9 +84,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
                     "http.method": request.method,
                     "http.url": str(request.url),
                     "http.path": request.url.path,
-                    "http.query": (
-                        str(request.query_params) if request.query_params else None
-                    ),
+                    "http.query": (str(request.query_params) if request.query_params else None),
                     "user_agent": request.headers.get("user-agent"),
                     "request_id": request_id,
                 },
@@ -131,12 +129,8 @@ class RadarMiddleware(BaseHTTPMiddleware):
                             response_body += chunk.decode("utf-8", errors="ignore")
                             try:
                                 with self.get_session() as session:
-                                    captured_request.response_body = (
-                                        redact_sensitive_data(
-                                            truncate_body(
-                                                response_body, self.max_body_size
-                                            )
-                                        )
+                                    captured_request.response_body = redact_sensitive_data(
+                                        truncate_body(response_body, self.max_body_size)
                                     )
                                     session.add(captured_request)
                                     session.commit()

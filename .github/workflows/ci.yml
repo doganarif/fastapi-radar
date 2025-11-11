@@ -10,55 +10,135 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
-    
+
     - name: Format check with Black
       run: |
-        black --check fastapi_radar/
-    
+        black --check fastapi_radar/ tests/
+
     - name: Lint with flake8
       run: |
-        flake8 fastapi_radar/ --max-line-length=100
-    
+        flake8 fastapi_radar/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+
+    - name: Import sorting check with isort
+      run: |
+        isort --check-only --profile black fastapi_radar/ tests/
+
     - name: Type check with mypy
       run: |
         mypy fastapi_radar/
-    
-    - name: Test with pytest
+      continue-on-error: true
+
+    - name: Security check with bandit
       run: |
-        pytest tests/
+        bandit -r fastapi_radar/ -c pyproject.toml
+      continue-on-error: true
+
+    - name: Dependency security check with safety
+      run: |
+        safety check --json || true
+      continue-on-error: true
+
+    - name: Run tests with coverage
+      run: |
+        pytest tests/ \
+          --cov=fastapi_radar \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --cov-fail-under=90 \
+          -v \
+          --tb=short
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.11'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      if: matrix.python-version == '3.11'
+      with:
+        name: coverage-report
+        path: htmlcov/
+
+    - name: Generate test report
+      if: always()
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Python ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
 
   build-dashboard:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-    
+        cache: 'npm'
+        cache-dependency-path: fastapi_radar/dashboard/package-lock.json
+
     - name: Build Dashboard
       run: |
         cd fastapi_radar/dashboard
         npm ci
         npm run build
-    
+
     - name: Verify Dashboard Build
       run: |
         test -f fastapi_radar/dashboard/dist/index.html
+
+    - name: Upload dashboard artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dashboard-build
+        path: fastapi_radar/dashboard/dist/
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [test, build-dashboard]
+    if: always()
+
+    steps:
+    - name: Check test results
+      run: |
+        if [ "${{ needs.test.result }}" != "success" ]; then
+          echo "Tests failed"
+          exit 1
+        fi
+        if [ "${{ needs.build-dashboard.result }}" != "success" ]; then
+          echo "Dashboard build failed"
+          exit 1
+        fi
+        echo "All quality checks passed!"

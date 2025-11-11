@@ -3,21 +3,22 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Float,
-    Text,
-    DateTime,
     JSON,
+    Column,
+    DateTime,
+    Float,
+    Integer,
     Sequence,
+    String,
+    Text,
 )
 
 try:
     from sqlalchemy.orm import declarative_base
 except ImportError:
     from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, foreign  # noqa: F401
+
+from sqlalchemy.orm import foreign, relationship  # noqa: F401
 
 Base = declarative_base()
 
@@ -25,9 +26,7 @@ Base = declarative_base()
 class CapturedRequest(Base):
     __tablename__ = "radar_requests"
 
-    id = Column(
-        Integer, Sequence("radar_requests_id_seq"), primary_key=True, index=True
-    )
+    id = Column(Integer, Sequence("radar_requests_id_seq"), primary_key=True, index=True)
     request_id = Column(String(36), unique=True, index=True, nullable=False)
     method = Column(String(10), nullable=False)
     url = Column(String(500), nullable=False)
@@ -53,9 +52,7 @@ class CapturedRequest(Base):
     exceptions = relationship(
         "CapturedException",
         back_populates="request",
-        primaryjoin=(
-            "CapturedRequest.request_id == foreign(CapturedException.request_id)"
-        ),
+        primaryjoin=("CapturedRequest.request_id == foreign(CapturedException.request_id)"),
         cascade="all, delete-orphan",
     )
 
@@ -84,9 +81,7 @@ class CapturedQuery(Base):
 class CapturedException(Base):
     __tablename__ = "radar_exceptions"
 
-    id = Column(
-        Integer, Sequence("radar_exceptions_id_seq"), primary_key=True, index=True
-    )
+    id = Column(Integer, Sequence("radar_exceptions_id_seq"), primary_key=True, index=True)
     request_id = Column(String(36), index=True)
     exception_type = Column(String(100), nullable=False)
     exception_value = Column(Text)
@@ -98,9 +93,7 @@ class CapturedException(Base):
     request = relationship(
         "CapturedRequest",
         back_populates="exceptions",
-        primaryjoin=(
-            "foreign(CapturedException.request_id) == CapturedRequest.request_id"
-        ),
+        primaryjoin=("foreign(CapturedException.request_id) == CapturedRequest.request_id"),
     )
 
 
@@ -159,24 +152,18 @@ class Span(Base):
 class SpanRelation(Base):
     __tablename__ = "radar_span_relations"
 
-    id = Column(
-        Integer, Sequence("radar_span_relations_id_seq"), primary_key=True, index=True
-    )
+    id = Column(Integer, Sequence("radar_span_relations_id_seq"), primary_key=True, index=True)
     trace_id = Column(String(32), index=True)
     parent_span_id = Column(String(16), index=True)
     child_span_id = Column(String(16), index=True)
     depth = Column(Integer, default=0)
-    created_at = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
-    )
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class BackgroundTask(Base):
     __tablename__ = "radar_background_tasks"
 
-    id = Column(
-        Integer, Sequence("radar_background_tasks_id_seq"), primary_key=True, index=True
-    )
+    id = Column(Integer, Sequence("radar_background_tasks_id_seq"), primary_key=True, index=True)
     task_id = Column(String(36), unique=True, index=True, nullable=False)
     request_id = Column(String(36), index=True, nullable=True)
     name = Column(String(200), nullable=False)

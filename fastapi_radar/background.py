@@ -5,7 +5,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Callable, Any
+from typing import Any, Callable
 
 from .models import BackgroundTask
 

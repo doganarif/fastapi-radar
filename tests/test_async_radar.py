@@ -1,13 +1,12 @@
 from fastapi import FastAPI
-from fastapi_radar import Radar
 from sqlalchemy import Column, Integer, MetaData, String, Table, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from fastapi_radar import Radar
+
 app = FastAPI()
 engine = create_async_engine("sqlite+aiosqlite:///./app.db")
-async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
-    engine, expire_on_commit=False
-)
+async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(engine, expire_on_commit=False)
 
 # 定义一个简单的测试表
 metadata = MetaData()
