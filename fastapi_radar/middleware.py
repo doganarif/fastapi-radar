@@ -213,7 +213,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         pass
                 return body.decode("utf-8", errors="ignore")
-        except Exception:
+        except Exception:  # nosec B110 - Intentionally silent for body parsing failures
             pass
         return None
 

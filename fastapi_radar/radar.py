@@ -62,6 +62,7 @@ class Radar:
         include_in_schema: bool = True,
         db_path: Optional[str] = None,
         auth_dependency: Optional[Callable] = None,
+        max_body_size: int = 10000,
     ):
         self.app = app
         self.db_engine = db_engine
@@ -76,6 +77,7 @@ class Radar:
         self.service_name = service_name
         self.db_path = db_path
         self.auth_dependency = auth_dependency
+        self.max_body_size = max_body_size
         self.query_capture = None
 
         if dashboard_path not in self.exclude_paths:
@@ -186,7 +188,7 @@ class Radar:
             RadarMiddleware,
             get_session=self.get_session,
             exclude_paths=self.exclude_paths,
-            max_body_size=10000,
+            max_body_size=self.max_body_size,
             capture_response_body=True,
             enable_tracing=self.enable_tracing,
             service_name=self.service_name,
