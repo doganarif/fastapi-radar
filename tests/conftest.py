@@ -97,11 +97,10 @@ def radar_app(app, test_engine, storage_engine):
 
 
 @pytest.fixture(scope="function")
-def client(radar_app, storage_session):
+def client(radar_app):
     """Create a test client for the Radar-enabled app."""
     app, radar = radar_app
-    # Pass session for testing access
-    return TestClient(app), storage_session
+    return TestClient(app)
 
 
 @pytest.fixture(scope="function")
