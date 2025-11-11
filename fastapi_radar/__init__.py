@@ -3,5 +3,5 @@
 from .radar import Radar
 from .background import track_background_task
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 __all__ = ["Radar", "track_background_task"]

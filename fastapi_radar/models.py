@@ -41,7 +41,7 @@ class CapturedRequest(Base):
     duration_ms = Column(Float)
     client_ip = Column(String(50))
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
 
     queries = relationship(
@@ -71,7 +71,7 @@ class CapturedQuery(Base):
     rows_affected = Column(Integer)
     connection_name = Column(String(100))
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
 
     request = relationship(
@@ -92,7 +92,7 @@ class CapturedException(Base):
     exception_value = Column(Text)
     traceback = Column(Text, nullable=False)
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
 
     request = relationship(
@@ -111,15 +111,15 @@ class Trace(Base):
     service_name = Column(String(100), index=True)
     operation_name = Column(String(200))
     start_time = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
-    end_time = Column(DateTime)
+    end_time = Column(DateTime(timezone=True))
     duration_ms = Column(Float)
     span_count = Column(Integer, default=0)
     status = Column(String(20), default="ok")
     tags = Column(JSON)
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
 
     spans = relationship(
@@ -139,14 +139,14 @@ class Span(Base):
     operation_name = Column(String(200), nullable=False)
     service_name = Column(String(100), index=True)
     span_kind = Column(String(20), default="server")
-    start_time = Column(DateTime, nullable=False, index=True)
-    end_time = Column(DateTime)
+    start_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_time = Column(DateTime(timezone=True))
     duration_ms = Column(Float)
     status = Column(String(20), default="ok")
     tags = Column(JSON)
     logs = Column(JSON)
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
 
     trace = relationship(
@@ -166,7 +166,9 @@ class SpanRelation(Base):
     parent_span_id = Column(String(16), index=True)
     child_span_id = Column(String(16), index=True)
     depth = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class BackgroundTask(Base):
@@ -181,10 +183,10 @@ class BackgroundTask(Base):
     status = Column(
         String(20), default="pending", index=True
     )  # pending, running, completed, failed
-    start_time = Column(DateTime, index=True)
-    end_time = Column(DateTime)
+    start_time = Column(DateTime(timezone=True), index=True)
+    end_time = Column(DateTime(timezone=True))
     duration_ms = Column(Float)
     error = Column(Text)
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
