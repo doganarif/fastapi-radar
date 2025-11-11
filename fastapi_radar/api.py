@@ -142,7 +142,9 @@ class TraceDetail(BaseModel):
     spans: List[WaterfallSpan]
 
 
-def create_api_router(get_session_context, auth_dependency: Optional[Callable] = None) -> APIRouter:
+def create_api_router(
+    get_session_context, auth_dependency: Optional[Callable] = None
+) -> APIRouter:
     # Build dependencies list for the router
     dependencies = []
     if auth_dependency:
