@@ -110,8 +110,9 @@ class TestTraceContext:
         """Test setting the current span."""
         ctx = TraceContext("trace-123", "test-service")
         span_id = ctx.create_span("test operation")
+        ctx.set_current_span(span_id)
 
-        assert ctx.current_span_id == span_id  # Set by create_span as root
+        assert ctx.current_span_id == span_id
 
         span_id2 = ctx.create_span("another operation")
         ctx.set_current_span(span_id2)

@@ -50,12 +50,10 @@ jobs:
     - name: Type check with mypy
       run: |
         mypy fastapi_radar/
-      continue-on-error: true
 
     - name: Security check with bandit
       run: |
         bandit -r fastapi_radar/ -c pyproject.toml
-      continue-on-error: true
 
     - name: Dependency security check with safety
       run: |

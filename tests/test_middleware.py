@@ -164,9 +164,16 @@ class TestMiddlewareIntegration:
         assert captured.exception_type == "ValueError"
         assert "Test error" in captured.exception_value
 
-    def test_middleware_excludes_paths(self, radar_app, storage_session):
+    def test_middleware_excludes_paths(self, test_engine, storage_engine, storage_session):
         """Test that excluded paths are not captured."""
-        app, radar = radar_app
+        app = FastAPI()
+        radar = Radar(
+            app,
+            db_engine=test_engine,
+            storage_engine=storage_engine,
+            exclude_paths=["/health"],
+        )
+        radar.create_tables()
 
         @app.get("/health")
         async def health():
