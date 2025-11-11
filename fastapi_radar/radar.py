@@ -399,7 +399,7 @@ class Radar:
 
                 # Check if there's already an event loop running
                 try:
-                    loop = asyncio.get_running_loop()
+                    asyncio.get_running_loop()
                 except RuntimeError:
                     # No event loop running, safe to use asyncio.run()
                     asyncio.run(_create_tables())
@@ -430,7 +430,7 @@ class Radar:
 
             # Check if there's already an event loop running
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
             except RuntimeError:
                 # No event loop running, safe to use asyncio.run()
                 asyncio.run(_drop_tables())
