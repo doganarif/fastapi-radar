@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="fastapi-radar",
-    version="0.3.1",
+    version="0.3.2",
     author="Arif Dogan",
     author_email="me@arif.sh",
     description=(
