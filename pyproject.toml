@@ -1,10 +1,10 @@
 [project]
 name = "fastapi-radar"
-version = "0.3.0"
+version = "0.3.1"
 description = "A debugging dashboard for FastAPI applications with real-time monitoring"
 readme = "README.md"
 requires-python = ">=3.9"
-license = "MIT"
+license = {text = "MIT"}
 authors = [{ name = "Arif Dogan", email = "me@arif.sh" }]
 keywords = [
     "fastapi",
@@ -63,3 +63,13 @@ release = [
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fastapi_radar*"]
+
+[tool.setuptools.package-data]
+fastapi_radar = ["dashboard/dist/**/*"]
