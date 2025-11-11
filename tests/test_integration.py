@@ -141,7 +141,11 @@ class TestEndToEndScenarios:
     def test_error_handling_and_exception_tracking(self):
         """Test error handling with exception tracking."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
@@ -184,7 +188,11 @@ class TestEndToEndScenarios:
     def test_background_tasks_integration(self):
         """Test background tasks with monitoring."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
@@ -220,7 +228,11 @@ class TestEndToEndScenarios:
     def test_concurrent_requests(self):
         """Test handling concurrent requests."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
@@ -254,7 +266,11 @@ class TestEndToEndScenarios:
     def test_large_payloads(self):
         """Test handling large request/response payloads."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine, max_body_size=1000)
         radar.create_tables()
@@ -282,7 +298,11 @@ class TestEndToEndScenarios:
     def test_performance_with_many_requests(self):
         """Test performance with many requests."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
@@ -320,7 +340,11 @@ class TestDashboardIntegration:
     def test_dashboard_serves_stats(self):
         """Test that dashboard can retrieve and display stats."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
@@ -345,7 +369,11 @@ class TestDashboardIntegration:
     def test_dashboard_displays_request_details(self):
         """Test that dashboard can display request details."""
         app = FastAPI()
-        storage_engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+        storage_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
         radar = Radar(app, storage_engine=storage_engine)
         radar.create_tables()
