@@ -5,11 +5,13 @@ import os
 import sys
 import multiprocessing
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
+import asyncio
 
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -47,7 +49,7 @@ class Radar:
         self,
         app: FastAPI,
         db_engine: Optional[Engine] = None,
-        storage_engine: Optional[Engine] = None,
+        storage_engine: Optional[Union[Engine, AsyncEngine]] = None,
         dashboard_path: str = "/__radar",
         max_requests: int = 1000,
         retention_hours: int = 24,
@@ -146,9 +148,22 @@ class Radar:
                         poolclass=StaticPool,
                     )
 
-        self.SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.storage_engine
-        )
+        # Check if storage_engine is async or sync
+        # If async, we'll use it for DDL operations but keep sessions sync
+        # by accessing the sync engine from the async engine
+        if isinstance(self.storage_engine, AsyncEngine):
+            # For async engines, get the underlying sync engine for session operations
+            # The middleware and other components use sessions synchronously
+            self._is_async_storage = True
+            sync_engine = self.storage_engine.sync_engine
+            self.SessionLocal = sessionmaker(
+                autocommit=False, autoflush=False, bind=sync_engine
+            )
+        else:
+            self._is_async_storage = False
+            self.SessionLocal = sessionmaker(
+                autocommit=False, autoflush=False, bind=self.storage_engine
+            )
 
         self._setup_middleware()
 
@@ -372,16 +387,62 @@ class Radar:
 
         With dev mode (fastapi dev), this safely handles
         multiple process attempts to create tables.
+
+        Supports both sync and async storage engines.
         """
         try:
-            Base.metadata.create_all(bind=self.storage_engine)
+            if isinstance(self.storage_engine, AsyncEngine):
+                # For async engines, we need to run the DDL in a sync context
+                async def _create_tables():
+                    async with self.storage_engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+
+                # Check if there's already an event loop running
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    # No event loop running, safe to use asyncio.run()
+                    asyncio.run(_create_tables())
+                else:
+                    # Event loop is running, we need to run in a thread
+                    import concurrent.futures
+
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, _create_tables())
+                        future.result()
+            else:
+                Base.metadata.create_all(bind=self.storage_engine)
         except Exception as e:
             error_msg = str(e).lower()
             if "already exists" not in error_msg and "lock" not in error_msg:
                 raise
 
     def drop_tables(self) -> None:
-        Base.metadata.drop_all(bind=self.storage_engine)
+        """Drop all Radar tables.
+
+        Supports both sync and async storage engines.
+        """
+        if isinstance(self.storage_engine, AsyncEngine):
+            # For async engines, we need to run the DDL in a sync context
+            async def _drop_tables():
+                async with self.storage_engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.drop_all)
+
+            # Check if there's already an event loop running
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                asyncio.run(_drop_tables())
+            else:
+                # Event loop is running, we need to run in a thread
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, _drop_tables())
+                    future.result()
+        else:
+            Base.metadata.drop_all(bind=self.storage_engine)
 
     def cleanup(self, older_than_hours: Optional[int] = None) -> None:
         from datetime import datetime, timedelta, timezone
