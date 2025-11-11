@@ -5,7 +5,7 @@ import os
 import sys
 import multiprocessing
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 import asyncio
 
 from fastapi import FastAPI
@@ -61,6 +61,7 @@ class Radar:
         service_name: str = "fastapi-app",
         include_in_schema: bool = True,
         db_path: Optional[str] = None,
+        auth_dependency: Optional[Callable] = None,
     ):
         self.app = app
         self.db_engine = db_engine
@@ -74,6 +75,7 @@ class Radar:
         self.enable_tracing = enable_tracing
         self.service_name = service_name
         self.db_path = db_path
+        self.auth_dependency = auth_dependency
         self.query_capture = None
 
         if dashboard_path not in self.exclude_paths:
@@ -209,12 +211,12 @@ class Radar:
 
     def _setup_api(self, include_in_schema: bool) -> None:
         """Mount API endpoints."""
-        api_router = create_api_router(self.get_session)
+        api_router = create_api_router(self.get_session, self.auth_dependency)
         self.app.include_router(api_router, include_in_schema=include_in_schema)
 
     def _setup_dashboard(self, include_in_schema: bool) -> None:
         """Mount dashboard static files."""
-        from fastapi import Request
+        from fastapi import Depends, Request
         from fastapi.responses import FileResponse
 
         dashboard_dir = Path(__file__).parent / "dashboard" / "dist"
@@ -231,9 +233,15 @@ class Radar:
             print("  npm run build")
             print("=" * 60 + "\n")
 
+        # Prepare dependencies list for the route
+        dependencies = []
+        if self.auth_dependency:
+            dependencies.append(Depends(self.auth_dependency))
+
         @self.app.get(
             f"{self.dashboard_path}/{{full_path:path}}",
             include_in_schema=include_in_schema,
+            dependencies=dependencies,
         )
         async def serve_dashboard(request: Request, full_path: str = ""):
             if full_path and any(

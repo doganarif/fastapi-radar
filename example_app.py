@@ -95,6 +95,24 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Optional: Setup authentication for Radar dashboard
+# Uncomment the following lines to secure the dashboard with HTTP Basic Auth
+# from fastapi.security import HTTPBasic, HTTPBasicCredentials
+# import secrets
+#
+# security = HTTPBasic()
+#
+# def verify_radar_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+#     correct_username = secrets.compare_digest(credentials.username, "admin")
+#     correct_password = secrets.compare_digest(credentials.password, "secret")
+#     if not (correct_username and correct_password):
+#         raise HTTPException(
+#             status_code=401,
+#             detail="Invalid credentials",
+#             headers={"WWW-Authenticate": "Basic"},
+#         )
+#     return credentials
+
 # Initialize Radar - automatically adds middleware and mounts dashboard
 radar = Radar(
     app,
@@ -102,6 +120,7 @@ radar = Radar(
     dashboard_path="/__radar",
     slow_query_threshold=50,
     theme="auto",
+    # auth_dependency=verify_radar_credentials,  # Uncomment to enable authentication
 )
 radar.create_tables()
 

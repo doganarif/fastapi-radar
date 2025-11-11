@@ -95,8 +95,84 @@ radar = Radar(
     exclude_paths=["/health"],   # Paths to exclude from monitoring
     theme="auto",                # Dashboard theme: "light", "dark", or "auto"
     db_path="/path/to/db",       # Custom path for radar.duckdb file (default: current directory)
+    auth_dependency=None,        # Optional: Authentication dependency for dashboard and API access
 )
 ```
+
+## Securing the Dashboard
+
+By default, FastAPI Radar is accessible without authentication. For production environments, you should add authentication to protect your monitoring dashboard:
+
+### HTTP Basic Authentication
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi_radar import Radar
+import secrets
+
+app = FastAPI()
+security = HTTPBasic()
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, "admin")
+    correct_password = secrets.compare_digest(credentials.password, "secret")
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials
+
+radar = Radar(app, auth_dependency=verify_credentials)
+radar.create_tables()
+```
+
+### Bearer Token Authentication
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi_radar import Radar
+
+app = FastAPI()
+security = HTTPBearer()
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials.credentials != "your-secret-token":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    return credentials
+
+radar = Radar(app, auth_dependency=verify_token)
+radar.create_tables()
+```
+
+### Custom Authentication
+
+You can use any FastAPI dependency for authentication:
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi_radar import Radar
+
+app = FastAPI()
+
+async def custom_auth(request: Request):
+    # Your custom authentication logic
+    api_key = request.headers.get("X-API-Key")
+    if api_key != "your-api-key":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
+
+radar = Radar(app, auth_dependency=custom_auth)
+radar.create_tables()
+```
+
+The `auth_dependency` parameter accepts any FastAPI dependency function, giving you full flexibility to implement OAuth2, JWT, API keys, or any other authentication mechanism.
 
 ### Custom Database Location
 

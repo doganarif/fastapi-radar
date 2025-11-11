@@ -1,7 +1,7 @@
 """API endpoints for FastAPI Radar dashboard."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -142,8 +142,15 @@ class TraceDetail(BaseModel):
     spans: List[WaterfallSpan]
 
 
-def create_api_router(get_session_context) -> APIRouter:
-    router = APIRouter(prefix="/__radar/api", tags=["radar"])
+def create_api_router(
+    get_session_context, auth_dependency: Optional[Callable] = None
+) -> APIRouter:
+    # Build dependencies list for the router
+    dependencies = []
+    if auth_dependency:
+        dependencies.append(Depends(auth_dependency))
+
+    router = APIRouter(prefix="/__radar/api", tags=["radar"], dependencies=dependencies)
 
     def get_db():
         """Dependency function for FastAPI to get database session."""
