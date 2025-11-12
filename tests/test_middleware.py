@@ -3,8 +3,10 @@
 from unittest.mock import Mock
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from fastapi_radar import Radar
 from fastapi_radar.middleware import RadarMiddleware
 from fastapi_radar.models import CapturedException, CapturedRequest
 
