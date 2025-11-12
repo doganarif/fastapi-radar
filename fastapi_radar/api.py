@@ -1,22 +1,22 @@
 """API endpoints for FastAPI Radar dashboard."""
 
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Union
-import uuid
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
-import httpx
 
 from .models import (
-    CapturedRequest,
-    CapturedQuery,
-    CapturedException,
-    Trace,
-    Span,
     BackgroundTask,
+    CapturedException,
+    CapturedQuery,
+    CapturedRequest,
+    Span,
+    Trace,
 )
 from .tracing import TracingManager
 
@@ -142,9 +142,7 @@ class TraceDetail(BaseModel):
     spans: List[WaterfallSpan]
 
 
-def create_api_router(
-    get_session_context, auth_dependency: Optional[Callable] = None
-) -> APIRouter:
+def create_api_router(get_session_context, auth_dependency: Optional[Callable] = None) -> APIRouter:
     # Build dependencies list for the router
     dependencies = []
     if auth_dependency:
@@ -192,10 +190,7 @@ def create_api_router(
             query = query.filter(CapturedRequest.path.ilike(f"%{search}%"))
 
         requests = (
-            query.order_by(desc(CapturedRequest.created_at))
-            .offset(offset)
-            .limit(limit)
-            .all()
+            query.order_by(desc(CapturedRequest.created_at)).offset(offset).limit(limit).all()
         )
 
         return [
@@ -216,9 +211,7 @@ def create_api_router(
     @router.get("/requests/{request_id}", response_model=RequestDetail)
     async def get_request_detail(request_id: str, session: Session = Depends(get_db)):
         request = (
-            session.query(CapturedRequest)
-            .filter(CapturedRequest.request_id == request_id)
-            .first()
+            session.query(CapturedRequest).filter(CapturedRequest.request_id == request_id).first()
         )
 
         if not request:
@@ -266,9 +259,7 @@ def create_api_router(
     @router.get("/requests/{request_id}/curl")
     async def get_request_as_curl(request_id: str, session: Session = Depends(get_db)):
         request = (
-            session.query(CapturedRequest)
-            .filter(CapturedRequest.request_id == request_id)
-            .first()
+            session.query(CapturedRequest).filter(CapturedRequest.request_id == request_id).first()
         )
 
         if not request:
@@ -305,9 +296,7 @@ def create_api_router(
         Consider adding authentication and rate limiting.
         """
         request = (
-            session.query(CapturedRequest)
-            .filter(CapturedRequest.request_id == request_id)
-            .first()
+            session.query(CapturedRequest).filter(CapturedRequest.request_id == request_id).first()
         )
 
         if not request:
@@ -337,16 +326,12 @@ def create_api_router(
         request_body = body if body is not None else request.body
 
         try:
-            async with httpx.AsyncClient(
-                timeout=30.0, follow_redirects=False
-            ) as client:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
                 response = await client.request(
                     method=request.method,
                     url=request.url,
                     headers=headers,
-                    content=(
-                        request_body if isinstance(request_body, (str, bytes)) else None
-                    ),
+                    content=(request_body if isinstance(request_body, (str, bytes)) else None),
                     json=request_body if isinstance(request_body, dict) else None,
                 )
 
@@ -397,12 +382,7 @@ def create_api_router(
         if search:
             query = query.filter(CapturedQuery.sql.ilike(f"%{search}%"))
 
-        queries = (
-            query.order_by(desc(CapturedQuery.created_at))
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        queries = query.order_by(desc(CapturedQuery.created_at)).offset(offset).limit(limit).all()
 
         return [
             QueryDetail(
@@ -431,10 +411,7 @@ def create_api_router(
             query = query.filter(CapturedException.exception_type == exception_type)
 
         exceptions = (
-            query.order_by(desc(CapturedException.created_at))
-            .offset(offset)
-            .limit(limit)
-            .all()
+            query.order_by(desc(CapturedException.created_at)).offset(offset).limit(limit).all()
         )
 
         return [
@@ -470,9 +447,9 @@ def create_api_router(
             session.query(
                 func.count().label("total_queries"),
                 func.avg(CapturedQuery.duration_ms).label("avg_query_time"),
-                func.sum(
-                    case((CapturedQuery.duration_ms >= slow_threshold, 1), else_=0)
-                ).label("slow_queries"),
+                func.sum(case((CapturedQuery.duration_ms >= slow_threshold, 1), else_=0)).label(
+                    "slow_queries"
+                ),
             )
             .filter(CapturedQuery.created_at >= since)
             .one()
@@ -511,9 +488,7 @@ def create_api_router(
     ):
         if older_than_hours:
             cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
-            session.query(CapturedRequest).filter(
-                CapturedRequest.created_at < cutoff
-            ).delete()
+            session.query(CapturedRequest).filter(CapturedRequest.created_at < cutoff).delete()
         else:
             session.query(CapturedRequest).delete()
 
@@ -543,9 +518,7 @@ def create_api_router(
         if min_duration_ms:
             query = query.filter(Trace.duration_ms >= min_duration_ms)
 
-        traces = (
-            query.order_by(desc(Trace.start_time)).offset(offset).limit(limit).all()
-        )
+        traces = query.order_by(desc(Trace.start_time)).offset(offset).limit(limit).all()
 
         return [
             TraceSummary(
@@ -658,12 +631,7 @@ def create_api_router(
         if request_id:
             query = query.filter(BackgroundTask.request_id == request_id)
 
-        tasks = (
-            query.order_by(desc(BackgroundTask.created_at))
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        tasks = query.order_by(desc(BackgroundTask.created_at)).offset(offset).limit(limit).all()
 
         return [
             BackgroundTaskSummary(

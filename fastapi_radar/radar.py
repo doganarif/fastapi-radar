@@ -1,12 +1,12 @@
 """Main Radar class for FastAPI Radar."""
 
-from contextlib import contextmanager
+import asyncio
+import multiprocessing
 import os
 import sys
-import multiprocessing
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, List, Optional, Union
-import asyncio
 
 from fastapi import FastAPI
 from sqlalchemy import create_engine
@@ -62,6 +62,7 @@ class Radar:
         include_in_schema: bool = True,
         db_path: Optional[str] = None,
         auth_dependency: Optional[Callable] = None,
+        max_body_size: int = 10000,
     ):
         self.app = app
         self.db_engine = db_engine
@@ -76,6 +77,7 @@ class Radar:
         self.service_name = service_name
         self.db_path = db_path
         self.auth_dependency = auth_dependency
+        self.max_body_size = max_body_size
         self.query_capture = None
 
         if dashboard_path not in self.exclude_paths:
@@ -88,9 +90,7 @@ class Radar:
             storage_url = os.environ.get("RADAR_STORAGE_URL")
             if storage_url:
                 if "duckdb" in storage_url:
-                    self.storage_engine = create_engine(
-                        storage_url, poolclass=StaticPool
-                    )
+                    self.storage_engine = create_engine(storage_url, poolclass=StaticPool)
                 else:
                     self.storage_engine = create_engine(storage_url)
             else:
@@ -158,9 +158,7 @@ class Radar:
             # The middleware and other components use sessions synchronously
             self._is_async_storage = True
             sync_engine = self.storage_engine.sync_engine
-            self.SessionLocal = sessionmaker(
-                autocommit=False, autoflush=False, bind=sync_engine
-            )
+            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
         else:
             self._is_async_storage = False
             self.SessionLocal = sessionmaker(
@@ -190,7 +188,7 @@ class Radar:
             RadarMiddleware,
             get_session=self.get_session,
             exclude_paths=self.exclude_paths,
-            max_body_size=10000,
+            max_body_size=self.max_body_size,
             capture_response_body=True,
             enable_tracing=self.enable_tracing,
             service_name=self.service_name,
@@ -462,9 +460,7 @@ class Radar:
             cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
 
             deleted = (
-                session.query(CapturedRequest)
-                .filter(CapturedRequest.created_at < cutoff)
-                .delete()
+                session.query(CapturedRequest).filter(CapturedRequest.created_at < cutoff).delete()
             )
 
             session.commit()

@@ -1,17 +1,16 @@
 """Tracing core functionality module."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
 from contextvars import ContextVar
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy.orm import Session
 
-from .models import Trace, Span, SpanRelation
+from .models import Span, SpanRelation, Trace
 
 # Trace context for the current request
-trace_context: ContextVar[Optional["TraceContext"]] = ContextVar(
-    "trace_context", default=None
-)
+trace_context: ContextVar[Optional["TraceContext"]] = ContextVar("trace_context", default=None)
 
 
 class TraceContext:
@@ -56,9 +55,7 @@ class TraceContext:
 
         return span_id
 
-    def finish_span(
-        self, span_id: str, status: str = "ok", tags: Optional[Dict[str, Any]] = None
-    ):
+    def finish_span(self, span_id: str, status: str = "ok", tags: Optional[Dict[str, Any]] = None):
         """Finish a span."""
         if span_id not in self.spans:
             return
@@ -156,9 +153,7 @@ class TracingManager:
     def _save_span_relations(self, session: Session, trace_ctx: TraceContext):
         """Store parent-child span relations for optimized querying."""
 
-        def calculate_depth(
-            span_id: str, spans: Dict[str, Dict], depth: int = 0
-        ) -> List[tuple]:
+        def calculate_depth(span_id: str, spans: Dict[str, Dict], depth: int = 0) -> List[tuple]:
             """Recursively compute span depth."""
             relations = []
             span = spans.get(span_id)
@@ -206,11 +201,9 @@ class TracingManager:
                         s.status,
                         s.tags,
                         COALESCE(r.depth, 0) as depth,
-                        -- Offset relative to trace start
-                        EXTRACT(EPOCH FROM (
-                            s.start_time - MIN(s.start_time)
-                                OVER (PARTITION BY s.trace_id)
-                        )) * 1000 as offset_ms
+                        -- Offset relative to trace start (SQLite compatible)
+                        (julianday(s.start_time) - MIN(julianday(s.start_time))
+                            OVER (PARTITION BY s.trace_id)) * 86400000 as offset_ms
                     FROM radar_spans s
                     LEFT JOIN radar_span_relations r ON s.span_id = r.child_span_id
                     WHERE s.trace_id = :trace_id
@@ -229,9 +222,15 @@ class TracingManager:
                     "operation_name": row.operation_name,
                     "service_name": row.service_name,
                     "start_time": (
-                        row.start_time.isoformat() if row.start_time else None
+                        row.start_time.isoformat()
+                        if row.start_time and hasattr(row.start_time, "isoformat")
+                        else row.start_time
                     ),
-                    "end_time": row.end_time.isoformat() if row.end_time else None,
+                    "end_time": (
+                        row.end_time.isoformat()
+                        if row.end_time and hasattr(row.end_time, "isoformat")
+                        else row.end_time
+                    ),
                     "duration_ms": row.duration_ms,
                     "status": row.status,
                     "tags": row.tags,

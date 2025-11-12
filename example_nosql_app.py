@@ -160,10 +160,7 @@ async def create_user(user: UserCreate):
 
     # Check for existing user
     for existing_user in users_db.values():
-        if (
-            existing_user["username"] == user.username
-            or existing_user["email"] == user.email
-        ):
+        if existing_user["username"] == user.username or existing_user["email"] == user.email:
             raise HTTPException(
                 status_code=400,
                 detail="User with this username or email already exists",

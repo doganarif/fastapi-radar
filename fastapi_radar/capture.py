@@ -2,6 +2,7 @@
 
 import time
 from typing import Any, Callable, Dict, List, Optional, Union
+
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -11,10 +12,8 @@ except Exception:  # pragma: no cover - module might not exist in older SQLAlche
     AsyncEngine = None  # type: ignore[assignment]
 from .middleware import request_context
 from .models import CapturedQuery
-
-
-from .utils import format_sql
 from .tracing import get_current_trace_context
+from .utils import format_sql
 
 
 class QueryCapture:
@@ -100,9 +99,7 @@ class QueryCapture:
             span_id = getattr(context, "_radar_span_id")
             additional_tags = {
                 "db.duration_ms": duration_ms,
-                "db.rows_affected": (
-                    cursor.rowcount if hasattr(cursor, "rowcount") else None
-                ),
+                "db.rows_affected": (cursor.rowcount if hasattr(cursor, "rowcount") else None),
             }
 
             status = "ok"
@@ -118,11 +115,7 @@ class QueryCapture:
         captured_query = CapturedQuery(
             request_id=request_id,
             sql=format_sql(statement),
-            parameters=(
-                self._serialize_parameters(parameters)
-                if self.capture_bindings
-                else None
-            ),
+            parameters=(self._serialize_parameters(parameters) if self.capture_bindings else None),
             duration_ms=duration_ms,
             rows_affected=cursor.rowcount if hasattr(cursor, "rowcount") else None,
             connection_name=(
@@ -134,7 +127,9 @@ class QueryCapture:
             with self.get_session() as session:
                 session.add(captured_query)
                 session.commit()
-        except Exception:
+        except (
+            Exception
+        ):  # nosec B110 - Intentionally silent to prevent monitoring from breaking app
             pass
 
     def _get_operation_type(self, statement: str) -> str:
@@ -160,9 +155,7 @@ class QueryCapture:
         else:
             return "OTHER"
 
-    def _serialize_parameters(
-        self, parameters: Any
-    ) -> Union[Dict[str, str], List[str], None]:
+    def _serialize_parameters(self, parameters: Any) -> Union[Dict[str, str], List[str], None]:
         """Serialize query parameters for storage."""
         if not parameters:
             return None
