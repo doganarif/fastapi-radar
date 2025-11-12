@@ -127,7 +127,9 @@ class QueryCapture:
             with self.get_session() as session:
                 session.add(captured_query)
                 session.commit()
-        except Exception:  # nosec B110 - Intentionally silent to prevent monitoring from breaking app
+        except (
+            Exception
+        ):  # nosec B110 - Intentionally silent to prevent monitoring from breaking app
             pass
 
     def _get_operation_type(self, statement: str) -> str:

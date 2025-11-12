@@ -16,9 +16,7 @@ from fastapi_radar import Radar, track_background_task
 from fastapi import BackgroundTasks
 
 # Database setup
-engine = create_engine(
-    "sqlite:///./example.db", connect_args={"check_same_thread": False}
-)
+engine = create_engine("sqlite:///./example.db", connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -186,9 +184,7 @@ async def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 
 
 @app.put("/products/{product_id}", response_model=ProductResponse)
-async def update_product(
-    product_id: int, product: ProductCreate, db: Session = Depends(get_db)
-):
+async def update_product(product_id: int, product: ProductCreate, db: Session = Depends(get_db)):
     """Update an existing product."""
     db_product = db.query(Product).filter(Product.id == product_id).first()
 
@@ -243,9 +239,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Create a new user."""
     # Check for existing user
     existing_user = (
-        db.query(User)
-        .filter((User.username == user.username) | (User.email == user.email))
-        .first()
+        db.query(User).filter((User.username == user.username) | (User.email == user.email)).first()
     )
 
     if existing_user:
@@ -429,15 +423,9 @@ if __name__ == "__main__":
             db.bulk_save_objects(sample_products)
 
             sample_users = [
-                User(
-                    username="johndoe", email="john@example.com", full_name="John Doe"
-                ),
-                User(
-                    username="janedoe", email="jane@example.com", full_name="Jane Doe"
-                ),
-                User(
-                    username="admin", email="admin@example.com", full_name="Admin User"
-                ),
+                User(username="johndoe", email="john@example.com", full_name="John Doe"),
+                User(username="janedoe", email="jane@example.com", full_name="Jane Doe"),
+                User(username="admin", email="admin@example.com", full_name="Admin User"),
             ]
             db.bulk_save_objects(sample_users)
             db.commit()
@@ -455,9 +443,7 @@ if __name__ == "__main__":
     print("  2. Visit http://localhost:8000/slow-query")
     print("  3. Visit http://localhost:8000/error")
     print("\n  Background Tasks (POST requests):")
-    print(
-        "  4. curl -X POST http://localhost:8000/send-email?email=test@example.com&subject=Hello"
-    )
+    print("  4. curl -X POST http://localhost:8000/send-email?email=test@example.com&subject=Hello")
     print("  5. curl -X POST http://localhost:8000/process-report/1")
     print("  6. curl -X POST http://localhost:8000/generate-analytics?days=30")
     print("  7. curl -X POST http://localhost:8000/sync-inventory")
