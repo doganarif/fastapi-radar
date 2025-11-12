@@ -221,8 +221,16 @@ class TracingManager:
                     "parent_span_id": row.parent_span_id,
                     "operation_name": row.operation_name,
                     "service_name": row.service_name,
-                    "start_time": (row.start_time.isoformat() if row.start_time else None),
-                    "end_time": row.end_time.isoformat() if row.end_time else None,
+                    "start_time": (
+                        row.start_time.isoformat()
+                        if row.start_time and hasattr(row.start_time, "isoformat")
+                        else row.start_time
+                    ),
+                    "end_time": (
+                        row.end_time.isoformat()
+                        if row.end_time and hasattr(row.end_time, "isoformat")
+                        else row.end_time
+                    ),
                     "duration_ms": row.duration_ms,
                     "status": row.status,
                     "tags": row.tags,
