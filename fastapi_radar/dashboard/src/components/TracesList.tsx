@@ -151,7 +151,7 @@ export function TracesList({ className }: TracesListProps) {
               }
             >
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder={t("traceslist.allStatuses")} />
+                <SelectValue placeholder={t("traceslist.all")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("traceslist.all")}</SelectItem>
@@ -201,7 +201,7 @@ export function TracesList({ className }: TracesListProps) {
           ) : traces.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No traces found matching your criteria.</p>
+              <p>{t("traceslist.noTraces")}</p>
             </div>
           ) : (
             <div className="divide-y">

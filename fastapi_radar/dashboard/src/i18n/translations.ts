@@ -430,6 +430,7 @@ export interface Translations {
     failToLoadTraces: string;
     anError: string;
     tryAgain: string;
+    noTraces: string;
   };
 
   layout: {
@@ -858,6 +859,7 @@ const en: Translations = {
     failToLoadTraces: "Failed to load traces",
     anError: "There was an error loading the trace data.",
     tryAgain: "Try again",
+    noTraces: "No traces found matching your criteria.",
   },
 
   layout: {
@@ -1282,6 +1284,7 @@ const zh: Translations = {
     failToLoadTraces: "加载追踪记录失败",
     anError: "加载追踪数据时出错",
     tryAgain: "重试",
+    noTraces: "未找到匹配条件的追踪记录",
   },
 
   layout: {
