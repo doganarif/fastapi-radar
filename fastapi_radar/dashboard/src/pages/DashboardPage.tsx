@@ -107,12 +107,12 @@ export function DashboardPage() {
 
   const statusDistribution = [
     {
-      category: "Success",
+      category: t("metrics.success"),
       count: metrics.successfulRequests,
       percentage: metrics.successRate,
     },
     {
-      category: "Errors",
+      category: t("metrics.error"),
       count: metrics.failedRequests,
       percentage: metrics.errorRate,
     },
@@ -246,7 +246,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <CompactMetric
-              label="P50 (Median)"
+              label={t("metrics.p50")}
               value={formatDuration(metrics.responseTimePercentiles.p50)}
             />
             <CompactMetric

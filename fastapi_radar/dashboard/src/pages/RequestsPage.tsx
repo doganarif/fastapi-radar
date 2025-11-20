@@ -189,42 +189,42 @@ export function RequestsPage() {
                   </Button>
                   <Button onClick={applyFilters}>
                     <Filter className="mr-2 h-4 w-4" />
-                    Apply Filters
+                    {t('requests.filters.apply')}
                   </Button>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Time Range</Label>
+              <Label>{t('requests.filters.timeRange')}</Label>
               <div className="flex gap-2">
                 <Button
                   variant={timeRange === null ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimeRange(null)}
                 >
-                  All Time
+                  {t('requests.timeRangeFilters.all')}
                 </Button>
                 <Button
                   variant={timeRange === 1 ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimeRange(1)}
                 >
-                  Last Hour
+                  {t('requests.timeRangeFilters.lastHour')}
                 </Button>
                 <Button
                   variant={timeRange === 24 ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimeRange(24)}
                 >
-                  Last 24h
+                  {t('requests.timeRangeFilters.last24Hours')}
                 </Button>
                 <Button
                   variant={timeRange === 168 ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimeRange(168)}
                 >
-                  Last 7d
+                  {t('requests.timeRangeFilters.last7Days')}
                 </Button>
               </div>
             </div>

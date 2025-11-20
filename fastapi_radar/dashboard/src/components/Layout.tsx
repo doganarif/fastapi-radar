@@ -8,11 +8,13 @@ import { Menu, Moon, Sun, ChevronLeft, RefreshCw, Trash2 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { useT } from "@/i18n";
 
 export function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const t = useT();
 
   const { refetch: refetchAll } = useQuery({
     queryKey: ["stats"],
@@ -74,7 +76,7 @@ export function Layout() {
                 className="hidden sm:flex items-center gap-1"
               >
                 <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                Connected
+                {t("layout.connected")}
               </Badge>
 
               {/* Refresh Button */}

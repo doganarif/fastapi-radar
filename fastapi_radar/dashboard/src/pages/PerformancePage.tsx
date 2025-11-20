@@ -493,7 +493,7 @@ export function PerformancePage() {
                   value={formatDuration(metrics.avgQueryTime)}
                 />
                 <ProgressMeter
-                  label="Query Performance Score"
+                  label={t("performance.queryPerformanceScore")}
                   value={
                     metrics.avgQueryTime
                       ? 100 - Math.min((metrics.avgQueryTime / 200) * 100, 100)
@@ -543,7 +543,7 @@ export function PerformancePage() {
                     queries.filter((q) => q.duration_ms && q.duration_ms > 100)
                       .length === 0) && (
                     <p className="text-center text-muted-foreground py-4">
-                      No slow queries detected
+                      {t("performance.noSlowQueries")}
                     </p>
                   )}
                 </div>
