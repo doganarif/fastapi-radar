@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Clock, CheckCircle2, XCircle, Loader2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useT } from "@/i18n";
 
 export function BackgroundTasksPage() {
   const navigate = useNavigate();
+  const t = useT();
 
   const { data: tasks, isLoading, isError, error } = useQuery({
     queryKey: ["background-tasks"],
@@ -53,7 +55,7 @@ export function BackgroundTasksPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{t("common.loading")}</div>
       </div>
     );
   }
@@ -63,9 +65,9 @@ export function BackgroundTasksPage() {
       <div className="flex items-center justify-center h-screen">
         <Card className="border-destructive">
           <CardContent className="py-8 text-center">
-            <p className="text-destructive font-medium">Failed to load background tasks</p>
+            <p className="text-destructive font-medium">{t("backgroundTasks.failedToLoad")}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              {error instanceof Error ? error.message : "Unknown error"}
+              {error instanceof Error ? error.message : t("detailDrawer.common.unknown")}
             </p>
           </CardContent>
         </Card>
@@ -76,9 +78,9 @@ export function BackgroundTasksPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Background Tasks</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("pages.backgroundTasks.title")}</h1>
         <p className="text-muted-foreground">
-          Monitor and track background tasks executed in your application
+          {t("pages.backgroundTasks.description")}
         </p>
       </div>
 
@@ -86,7 +88,7 @@ export function BackgroundTasksPage() {
         {tasks && tasks.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No background tasks found
+              {t("backgroundTasks.noTasks")}
             </CardContent>
           </Card>
         )}
@@ -105,14 +107,20 @@ export function BackgroundTasksPage() {
                   </p>
                 </div>
                 <Badge variant={getStatusColor(task.status)}>
-                  {task.status}
+                  {task.status === "completed"
+                    ? t("backgroundTasks.status.completed")
+                    : task.status === "failed"
+                    ? t("backgroundTasks.status.failed")
+                    : task.status === "running"
+                    ? t("backgroundTasks.status.running")
+                    : task.status}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Started</p>
+                  <p className="text-muted-foreground">{t("backgroundTasks.started")}</p>
                   <p className="font-medium">
                     {task.start_time
                       ? format(new Date(task.start_time), "HH:mm:ss")
@@ -120,11 +128,11 @@ export function BackgroundTasksPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Duration</p>
+                  <p className="text-muted-foreground">{t("backgroundTasks.duration")}</p>
                   <p className="font-medium">{formatDuration(task.duration_ms)}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Request ID</p>
+                  <p className="text-muted-foreground">{t("backgroundTasks.requestId")}</p>
                   {task.request_id ? (
                     <Button
                       variant="link"
@@ -140,7 +148,7 @@ export function BackgroundTasksPage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Created</p>
+                  <p className="text-muted-foreground">{t("backgroundTasks.created")}</p>
                   <p className="font-medium">
                     {format(new Date(task.created_at), "HH:mm:ss")}
                   </p>
@@ -148,7 +156,7 @@ export function BackgroundTasksPage() {
               </div>
               {task.error && (
                 <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded">
-                  <p className="text-sm text-destructive font-medium">Error:</p>
+                  <p className="text-sm text-destructive font-medium">{t("common.error")}:</p>
                   <p className="text-sm text-destructive mt-1">{task.error}</p>
                 </div>
               )}

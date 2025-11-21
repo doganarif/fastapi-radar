@@ -22,6 +22,8 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
+import { useT } from "@/i18n";
+
 
 interface TracesListProps {
   className?: string;
@@ -64,6 +66,7 @@ function getStatusVariant(
 
 export function TracesList({ className }: TracesListProps) {
   const { openDetail } = useDetailDrawer();
+  const t = useT();
 
   const [filters, setFilters] = useState({
     search: "",
@@ -106,14 +109,14 @@ export function TracesList({ className }: TracesListProps) {
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Failed to load traces
+              {t("traceslist.failToLoadTraces")}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              There was an error loading the trace data.
+              {t("traceslist.anError")}
             </p>
             <Button onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Try again
+              {t("traceslist.tryAgain")}
             </Button>
           </div>
         </CardContent>
@@ -131,7 +134,7 @@ export function TracesList({ className }: TracesListProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by operation name..."
+                  placeholder={t('traceslist.search')}
                   value={filters.search}
                   onChange={(e) =>
                     setFilters({ ...filters, search: e.target.value })
@@ -148,12 +151,12 @@ export function TracesList({ className }: TracesListProps) {
               }
             >
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("traceslist.all")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="ok">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="all">{t("traceslist.all")}</SelectItem>
+                <SelectItem value="ok">{t("traceslist.success")}</SelectItem>
+                <SelectItem value="error">{t("traceslist.error")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -167,16 +170,16 @@ export function TracesList({ className }: TracesListProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Last hour</SelectItem>
-                <SelectItem value="6">Last 6 hours</SelectItem>
-                <SelectItem value="24">Last 24 hours</SelectItem>
-                <SelectItem value="168">Last week</SelectItem>
+                <SelectItem value="1">{t("traceslist.lastHour")}</SelectItem>
+                <SelectItem value="6">{t("traceslist.last6Hours")}</SelectItem>
+                <SelectItem value="24">{t("traceslist.last24Hours")}</SelectItem>
+                <SelectItem value="168">{t("traceslist.lastWeek")}</SelectItem>
               </SelectContent>
             </Select>
 
             <Button onClick={() => refetch()} size="sm" variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              {t("traceslist.refresh")}
             </Button>
           </div>
         </CardContent>
@@ -198,7 +201,7 @@ export function TracesList({ className }: TracesListProps) {
           ) : traces.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No traces found matching your criteria.</p>
+              <p>{t("traceslist.noTraces")}</p>
             </div>
           ) : (
             <div className="divide-y">

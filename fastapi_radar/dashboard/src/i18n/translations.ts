@@ -55,9 +55,29 @@ export interface Translations {
       title: string;
       description: string;
     };
+    backgroundTasks: {
+      title: string;
+      description: string;
+    };
     settings: {
       title: string;
       description: string;
+    };
+  };
+
+  // Background Tasks page
+  backgroundTasks: {
+    noTasks: string;
+    failedToLoad: string;
+    started: string;
+    duration: string;
+    requestId: string;
+    created: string;
+    status: {
+      completed: string;
+      failed: string;
+      running: string;
+      pending: string;
     };
   };
 
@@ -116,6 +136,9 @@ export interface Translations {
     endpoint: string;
     duration: string;
     timestamp: string;
+    success: string;
+    error: string;
+    p50: string;
   };
 
   // Settings page
@@ -193,6 +216,8 @@ export interface Translations {
       method: string;
       searchPlaceholder: string;
       description: string;
+      timeRange: string;
+      apply: string;
     };
     tabs: {
       all: string;
@@ -217,6 +242,12 @@ export interface Translations {
       put: string;
       delete: string;
       patch: string;
+    };
+    timeRangeFilters: {
+      all: string;
+      lastHour: string;
+      last24Hours: string;
+      last7Days: string;
     };
     descriptions: {
       all: string;
@@ -280,7 +311,9 @@ export interface Translations {
     slowQueries: string;
     avgQueryTime: string;
     queryStatistics: string;
+    queryPerformanceScore: string;
     slowQueriesTitle: string;
+    noSlowQueries: string;
     errorAnalysisTitle: string;
     detailedMetrics: string;
     noEndpointData: string;
@@ -383,7 +416,28 @@ export interface Translations {
       };
     };
   };
-}
+
+  traceslist: {
+    search: string;
+    all: string;
+    success: string;
+    error: string;
+    lastHour: string;
+    last6Hours: string;
+    last24Hours: string;
+    lastWeek: string;
+    refresh: string;
+    failToLoadTraces: string;
+    anError: string;
+    tryAgain: string;
+    noTraces: string;
+  };
+
+  layout: {
+    connected: string;
+  },
+};
+
 
 // English translations
 const en: Translations = {
@@ -437,9 +491,28 @@ const en: Translations = {
       title: "Performance",
       description: "Application performance metrics and analysis",
     },
+    backgroundTasks: {
+      title: "Background Tasks",
+      description: "Monitor and track background tasks executed in your application",
+    },
     settings: {
       title: "Settings",
       description: "Manage your dashboard preferences and data",
+    },
+  },
+
+  backgroundTasks: {
+    noTasks: "No background tasks found",
+    failedToLoad: "Failed to load background tasks",
+    started: "Started",
+    duration: "Duration",
+    requestId: "Request ID",
+    created: "Created",
+    status: {
+      completed: "Completed",
+      failed: "Failed",
+      running: "Running",
+      pending: "Pending",
     },
   },
 
@@ -495,6 +568,9 @@ const en: Translations = {
     endpoint: "Endpoint",
     duration: "Duration",
     timestamp: "Timestamp",
+    success: "Success",
+    error: "Error",
+    p50: "P50 (Median)",
   },
 
   settings: {
@@ -572,6 +648,8 @@ const en: Translations = {
       method: "Method",
       searchPlaceholder: "Search by path...",
       description: "Filter and search through request logs",
+      timeRange: "Time Range",
+      apply: "Apply Filters",
     },
     tabs: {
       all: "All Requests",
@@ -596,6 +674,12 @@ const en: Translations = {
       put: "PUT",
       delete: "DELETE",
       patch: "PATCH",
+    },
+    timeRangeFilters: {
+      all: "All Time",
+      lastHour: "Last Hour",
+      last24Hours: "Last 24 Hours",
+      last7Days: "Last 7 Days",
     },
     descriptions: {
       all: "Complete list of all HTTP requests",
@@ -656,8 +740,10 @@ const en: Translations = {
     queriesPerRequest: "Queries/Request",
     slowQueries: "Slow Queries",
     avgQueryTime: "Avg Query Time",
+    queryPerformanceScore: "Query Performance Score",
     queryStatistics: "Query Statistics",
     slowQueriesTitle: "Slow Queries",
+    noSlowQueries: "No slow queries detected",
     errorAnalysisTitle: "Error Analysis",
     detailedMetrics: "Detailed Metrics",
     noEndpointData: "No endpoint data available",
@@ -759,6 +845,26 @@ const en: Translations = {
       },
     },
   },
+
+  traceslist: {
+    search: "Search by operation name...",
+    all: "All statuses",
+    success: "Success",
+    error: "Error",
+    lastHour: "Last Hour",
+    last6Hours: "Last 6 Hours",
+    last24Hours: "Last 24 Hours",
+    lastWeek: "Last Week",
+    refresh: "Refresh",
+    failToLoadTraces: "Failed to load traces",
+    anError: "There was an error loading the trace data.",
+    tryAgain: "Try again",
+    noTraces: "No traces found matching your criteria.",
+  },
+
+  layout: {
+    connected: "Connected",
+  },
 };
 
 // Chinese translations
@@ -811,9 +917,28 @@ const zh: Translations = {
       title: "性能分析",
       description: "应用程序性能指标和分析",
     },
+    backgroundTasks: {
+      title: "后台任务",
+      description: "监控和跟踪应用程序中执行的后台任务",
+    },
     settings: {
       title: "设置",
       description: "管理仪表板偏好设置和数据",
+    },
+  },
+
+  backgroundTasks: {
+    noTasks: "未找到后台任务",
+    failedToLoad: "加载后台任务失败",
+    started: "开始时间",
+    duration: "持续时间",
+    requestId: "请求 ID",
+    created: "创建时间",
+    status: {
+      completed: "已完成",
+      failed: "失败",
+      running: "运行中",
+      pending: "等待中",
     },
   },
 
@@ -869,6 +994,9 @@ const zh: Translations = {
     endpoint: "端点",
     duration: "持续时间",
     timestamp: "时间戳",
+    success: "成功",
+    error: "失败",
+    p50: "P50 (中位数)",
   },
 
   settings: {
@@ -945,6 +1073,8 @@ const zh: Translations = {
       method: "请求方法",
       searchPlaceholder: "按路径搜索...",
       description: "筛选和搜索请求日志",
+      timeRange: "时间范围",
+      apply: "应用筛选器",
     },
     tabs: {
       all: "所有请求",
@@ -969,6 +1099,12 @@ const zh: Translations = {
       put: "PUT",
       delete: "DELETE",
       patch: "PATCH",
+    },
+    timeRangeFilters: {
+      all: "所有时间",
+      lastHour: "最近1小时",
+      last24Hours: "最近24小时",
+      last7Days: "最近7天",
     },
     descriptions: {
       all: "所有 HTTP 请求的完整列表",
@@ -1029,8 +1165,10 @@ const zh: Translations = {
     queriesPerRequest: "每个请求的查询数",
     slowQueries: "慢查询",
     avgQueryTime: "平均查询时间",
+    queryPerformanceScore: "查询性能评分",
     queryStatistics: "查询统计",
     slowQueriesTitle: "慢查询",
+    noSlowQueries: "未检测到慢查询",
     errorAnalysisTitle: "错误分析",
     detailedMetrics: "详细指标",
     noEndpointData: "无端点数据",
@@ -1131,6 +1269,26 @@ const zh: Translations = {
         tags: "标签:",
       },
     },
+  },
+
+  traceslist: {
+    search: "按操作名称搜索...",
+    all: "所有状态",
+    success: "成功",
+    error: "失败",
+    lastHour: "最近1小时",
+    last6Hours: "最近6小时",
+    last24Hours: "最近24小时",
+    lastWeek: "最近7天",
+    refresh: "刷新",
+    failToLoadTraces: "加载追踪记录失败",
+    anError: "加载追踪数据时出错",
+    tryAgain: "重试",
+    noTraces: "未找到匹配条件的追踪记录",
+  },
+
+  layout: {
+    connected: "已连接",
   },
 };
 
