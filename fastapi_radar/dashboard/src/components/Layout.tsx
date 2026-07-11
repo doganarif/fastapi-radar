@@ -1,20 +1,31 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Sidebar } from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Menu, Moon, Sun, ChevronLeft, RefreshCw, Trash2 } from "lucide-react";
-import { useTheme } from "@/hooks/useTheme";
-import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { Sidebar } from "@/components/Sidebar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/useTheme";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, Menu, Moon, RefreshCw, Sun, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 
 export function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
   const t = useT();
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      const ok = await apiClient.checkHealth();
+      setIsConnected(ok);
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const { refetch: refetchAll } = useQuery({
     queryKey: ["stats"],
@@ -73,10 +84,20 @@ export function Layout() {
               {/* Status Badge */}
               <Badge
                 variant="outline"
-                className="hidden sm:flex items-center gap-1"
+                className={cn(
+                  "hidden sm:flex items-center gap-1",
+                  !isConnected && "border-red-400 text-red-500"
+                )}
               >
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                {t("layout.connected")}
+                <div
+                  className={cn(
+                    "h-2 w-2 rounded-full",
+                    isConnected
+                      ? "bg-green-500 animate-pulse"
+                      : "bg-red-500"
+                  )}
+                />
+                {isConnected ? t("layout.connected") : t("layout.disconnected")}
               </Badge>
 
               {/* Refresh Button */}

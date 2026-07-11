@@ -2,16 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import (
-    JSON,
-    Column,
-    DateTime,
-    Float,
-    Integer,
-    Sequence,
-    String,
-    Text,
-)
+from sqlalchemy import JSON, Column, DateTime, Float, Integer, Sequence, String, Text
 
 try:
     from sqlalchemy.orm import declarative_base
@@ -174,6 +165,24 @@ class BackgroundTask(Base):
     end_time = Column(DateTime(timezone=True))
     duration_ms = Column(Float)
     error = Column(Text)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
+    )
+
+
+class CapturedLog(Base):
+    __tablename__ = "radar_logs"
+
+    id = Column(Integer, Sequence("radar_logs_id_seq"), primary_key=True, index=True)
+    logger_name = Column(String(200), index=True)
+    level = Column(String(20), index=True)
+    message = Column(Text, nullable=False)
+    pathname = Column(String(500))
+    lineno = Column(Integer)
+    func_name = Column(String(200))
+    thread_name = Column(String(100))
+    exc_info = Column(Text)
+    request_id = Column(String(36), index=True, nullable=True)
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )

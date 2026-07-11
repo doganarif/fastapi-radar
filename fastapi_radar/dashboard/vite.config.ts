@@ -1,9 +1,9 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { defineConfig } from "vite";
 
-export default defineConfig({
-  base: "/__radar/",
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "./" : "/__radar/",
   plugins: [react()],
   resolve: {
     alias: {
@@ -25,10 +25,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": {
+      "/__radar/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
       },
     },
   },
-});
+}));

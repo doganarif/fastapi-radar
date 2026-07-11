@@ -1,18 +1,22 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { apiClient, QueryDetail } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { SearchInput } from "@/components/ui/search-input";
-import { useDebounce } from "@/hooks/useDebounce";
-import { Clock, Database, AlertCircle } from "lucide-react";
-import { format } from "@/lib/date";
+import { Switch } from "@/components/ui/switch";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useT } from "@/i18n";
+import { format } from "@/lib/date";
+import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, Clock, Database } from "lucide-react";
+import { useState } from "react";
 
-export function QueriesList() {
+interface QueriesListProps {
+  refreshInterval?: number;
+}
+
+export function QueriesList({ refreshInterval }: QueriesListProps) {
   const [showSlowOnly, setShowSlowOnly] = useState(false);
   const [slowThreshold, setSlowThreshold] = useState(100);
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +34,7 @@ export function QueriesList() {
         slow_threshold: slowThreshold,
         search: debouncedSearchTerm || undefined,
       }),
-    refetchInterval: 5000,
+    refetchInterval: refreshInterval !== undefined ? (refreshInterval || false) : 5000,
   });
 
   if (isLoading) {

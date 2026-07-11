@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RefreshIntervalSelect } from "@/components/ui/refresh-interval-select";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
 import { useMetrics, formatDuration, formatNumber } from "@/hooks/useMetrics";
 import { useT } from "@/i18n";
@@ -174,22 +175,7 @@ export function PerformancePage() {
               <SelectItem value="7d">{t("timeRange.last7Days")}</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={refreshInterval.toString()}
-            onValueChange={(v) => setRefreshInterval(parseInt(v))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5000">{t("common.refresh")}: 5s</SelectItem>
-              <SelectItem value="10000">{t("common.refresh")}: 10s</SelectItem>
-              <SelectItem value="30000">{t("common.refresh")}: 30s</SelectItem>
-              <SelectItem value="0">
-                {t("common.refresh")}: {t("common.no")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
         </div>
       </div>
 

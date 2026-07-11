@@ -8,6 +8,7 @@ import { TracingPage } from "@/pages/TracingPage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { BackgroundTasksPage } from "@/pages/BackgroundTasksPage";
+import { LogsPage } from "@/pages/LogsPage";
 
 import { DetailDrawerProvider } from "@/context/DetailDrawerContext";
 import { DetailDrawer } from "@/components/DetailDrawer";
@@ -23,8 +24,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Base path for the dashboard (must match the Vite config base)
-const BASE_PATH = "/__radar/";
+// Base path is injected at runtime by the server into window.__RADAR_BASE_PATH__.
+// Falls back to the default path for local dev.
+const BASE_PATH: string = (window as { __RADAR_BASE_PATH__?: string }).__RADAR_BASE_PATH__ ?? "/__radar/";
 
 function App() {
   return (
@@ -42,6 +44,7 @@ function App() {
                 <Route path="database" element={<DatabasePageWrapped />} />
                 <Route path="exceptions" element={<ExceptionsPageWrapped />} />
                 <Route path="background-tasks" element={<BackgroundTasksPage />} />
+                <Route path="logs" element={<LogsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Fallback to dashboard for unmatched routes */}
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -69,6 +72,7 @@ function DetailDrawerWrapper() {
 }
 
 // Database Page
+import { useState } from "react";
 import { QueriesList } from "@/components/QueriesList";
 import {
   Card,
@@ -77,19 +81,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RefreshIntervalSelect } from "@/components/ui/refresh-interval-select";
 
 function DatabasePageWrapped() {
   const t = useT();
+  const [refreshInterval, setRefreshInterval] = useState(5000);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("pages.database.title")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("pages.database.description")}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("pages.database.title")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("pages.database.description")}
+          </p>
+        </div>
+        <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
       </div>
 
       <Card>
@@ -100,7 +109,7 @@ function DatabasePageWrapped() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <QueriesList />
+          <QueriesList refreshInterval={refreshInterval} />
         </CardContent>
       </Card>
     </div>
@@ -112,16 +121,20 @@ import { ExceptionsList } from "@/components/ExceptionsList";
 
 function ExceptionsPageWrapped() {
   const t = useT();
+  const [refreshInterval, setRefreshInterval] = useState(5000);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("pages.exceptions.title")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("pages.exceptions.description")}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("pages.exceptions.title")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("pages.exceptions.description")}
+          </p>
+        </div>
+        <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
       </div>
 
       <Card>
@@ -130,7 +143,7 @@ function ExceptionsPageWrapped() {
           <CardDescription>{t("pages.exceptions.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ExceptionsList />
+          <ExceptionsList refreshInterval={refreshInterval} />
         </CardContent>
       </Card>
     </div>

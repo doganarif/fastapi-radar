@@ -48,6 +48,7 @@ export function RequestItem({ request, onClick, className }: RequestItemProps) {
           <div className="flex items-center space-x-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>{format(request.created_at)}</span>
+            <span className="text-muted-foreground/60">{new Date(request.created_at).toLocaleTimeString()}</span>
             {request.query_count > 0 && (
               <>
                 <Database className="h-3 w-3 ml-2" />

@@ -13,18 +13,8 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 
 from .models import CapturedException, CapturedRequest
-from .tracing import (
-    TraceContext,
-    TracingManager,
-    create_trace_context,
-    set_trace_context,
-)
-from .utils import (
-    get_client_ip,
-    redact_sensitive_data,
-    serialize_headers,
-    truncate_body,
-)
+from .tracing import TraceContext, TracingManager, create_trace_context, set_trace_context
+from .utils import get_client_ip, redact_sensitive_data, serialize_headers, truncate_body
 
 request_context: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
 
@@ -97,8 +87,8 @@ class RadarMiddleware(BaseHTTPMiddleware):
         captured_request = CapturedRequest(
             request_id=request_id,
             method=request.method,
-            url=str(request.url),
-            path=request.url.path,
+            url=str(request.url)[:500],
+            path=request.url.path[:500],
             query_params=dict(request.query_params) if request.query_params else None,
             headers=serialize_headers(request.headers),
             body=(
@@ -187,7 +177,7 @@ class RadarMiddleware(BaseHTTPMiddleware):
 
                 # Persist trace data
                 if trace_ctx and self.tracing_manager:
-                    self.tracing_manager.save_trace_context(trace_ctx)
+                    self.tracing_manager.save_trace_context(trace_ctx, session=session)
 
                 session.commit()
 

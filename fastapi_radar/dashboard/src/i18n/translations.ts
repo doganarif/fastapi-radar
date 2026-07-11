@@ -13,6 +13,7 @@ export interface Translations {
     exceptions: string;
     performance: string;
     backgroundTasks: string;
+    logs: string;
     settings: string;
   };
 
@@ -56,6 +57,10 @@ export interface Translations {
       description: string;
     };
     backgroundTasks: {
+      title: string;
+      description: string;
+    };
+    logs: {
       title: string;
       description: string;
     };
@@ -110,6 +115,12 @@ export interface Translations {
     viewAll: string;
     copy: string;
     copied: string;
+    pagination: {
+      previous: string;
+      next: string;
+      pageSize: string;
+      page: string;
+    };
   };
 
   // Time ranges
@@ -160,6 +171,13 @@ export interface Translations {
       disconnected: string;
       queries: string;
       avgQueryTime: string;
+      loading: string;
+      totalRequests: string;
+      totalQueries: string;
+      totalExceptions: string;
+      slowQueries: string;
+      avgResponseTime: string;
+      requestsPerMinute: string;
     };
     performance: {
       title: string;
@@ -218,6 +236,9 @@ export interface Translations {
       description: string;
       timeRange: string;
       apply: string;
+      startTime: string;
+      endTime: string;
+      clearRange: string;
     };
     tabs: {
       all: string;
@@ -248,6 +269,7 @@ export interface Translations {
       lastHour: string;
       last24Hours: string;
       last7Days: string;
+      customRange: string;
     };
     descriptions: {
       all: string;
@@ -260,6 +282,12 @@ export interface Translations {
       successful: string;
       failed: string;
       slow: string;
+    };
+    chart: {
+      title: string;
+      description: string;
+      successful: string;
+      errors: string;
     };
   };
 
@@ -435,7 +463,22 @@ export interface Translations {
 
   layout: {
     connected: string;
+    disconnected: string;
   },
+
+  // Logs page
+  logs: {
+    noLogs: string;
+    records: string;
+    level: string;
+    logger: string;
+    searchPlaceholder: string;
+    startTime: string;
+    endTime: string;
+    levelFilters: {
+      all: string;
+    };
+  };
 };
 
 
@@ -449,6 +492,7 @@ const en: Translations = {
     exceptions: "Exceptions",
     performance: "Performance",
     backgroundTasks: "Background Tasks",
+    logs: "Logs",
     settings: "Settings",
   },
 
@@ -494,6 +538,10 @@ const en: Translations = {
     backgroundTasks: {
       title: "Background Tasks",
       description: "Monitor and track background tasks executed in your application",
+    },
+    logs: {
+      title: "Logs",
+      description: "Browse Python log records captured from your application",
     },
     settings: {
       title: "Settings",
@@ -544,6 +592,12 @@ const en: Translations = {
     viewAll: "View all",
     copy: "Copy",
     copied: "Copied!",
+    pagination: {
+      previous: "Previous",
+      next: "Next",
+      pageSize: "Rows per page",
+      page: "Page",
+    },
   },
 
   timeRange: {
@@ -591,6 +645,13 @@ const en: Translations = {
       disconnected: "Disconnected",
       queries: "Queries",
       avgQueryTime: "Avg Query Time",
+      loading: "Loading statistics...",
+      totalRequests: "Total Requests",
+      totalQueries: "Total Queries",
+      totalExceptions: "Total Exceptions",
+      slowQueries: "Slow Queries",
+      avgResponseTime: "Avg Response Time",
+      requestsPerMinute: "Requests/Minute",
     },
     performance: {
       title: "Performance Overview",
@@ -650,6 +711,9 @@ const en: Translations = {
       description: "Filter and search through request logs",
       timeRange: "Time Range",
       apply: "Apply Filters",
+      startTime: "Start",
+      endTime: "End",
+      clearRange: "Clear Range",
     },
     tabs: {
       all: "All Requests",
@@ -680,6 +744,7 @@ const en: Translations = {
       lastHour: "Last Hour",
       last24Hours: "Last 24 Hours",
       last7Days: "Last 7 Days",
+      customRange: "Custom Range",
     },
     descriptions: {
       all: "Complete list of all HTTP requests",
@@ -692,6 +757,12 @@ const en: Translations = {
       successful: "No successful requests",
       failed: "No failed requests",
       slow: "No slow requests",
+    },
+    chart: {
+      title: "Number of Requests",
+      description: "Requests and errors",
+      successful: "Successful",
+      errors: "Errors",
     },
   },
 
@@ -864,6 +935,20 @@ const en: Translations = {
 
   layout: {
     connected: "Connected",
+    disconnected: "Disconnected",
+  },
+
+  logs: {
+    noLogs: "No log records captured yet",
+    records: "Log Records",
+    level: "Level",
+    logger: "Logger",
+    searchPlaceholder: "Search log messages...",
+    startTime: "From",
+    endTime: "To",
+    levelFilters: {
+      all: "All levels",
+    },
   },
 };
 
@@ -877,6 +962,7 @@ const zh: Translations = {
     exceptions: "异常监控",
     performance: "性能分析",
     backgroundTasks: "后台任务",
+    logs: "日志",
     settings: "设置",
   },
 
@@ -920,6 +1006,10 @@ const zh: Translations = {
     backgroundTasks: {
       title: "后台任务",
       description: "监控和跟踪应用程序中执行的后台任务",
+    },
+    logs: {
+      title: "日志",
+      description: "浏览应用程序捕获的 Python 日志记录",
     },
     settings: {
       title: "设置",
@@ -970,6 +1060,12 @@ const zh: Translations = {
     viewAll: "查看全部",
     copy: "复制",
     copied: "已复制!",
+    pagination: {
+      previous: "上一页",
+      next: "下一页",
+      pageSize: "每页行数",
+      page: "页",
+    },
   },
 
   timeRange: {
@@ -1017,6 +1113,13 @@ const zh: Translations = {
       disconnected: "未连接",
       queries: "查询数",
       avgQueryTime: "平均查询时间",
+      loading: "加载统计数据中...",
+      totalRequests: "总请求数",
+      totalQueries: "总查询数",
+      totalExceptions: "总异常数",
+      slowQueries: "慢查询",
+      avgResponseTime: "平均响应时间",
+      requestsPerMinute: "每分钟请求数",
     },
     performance: {
       title: "性能概览",
@@ -1075,6 +1178,9 @@ const zh: Translations = {
       description: "筛选和搜索请求日志",
       timeRange: "时间范围",
       apply: "应用筛选器",
+      startTime: "开始",
+      endTime: "结束",
+      clearRange: "清除范围",
     },
     tabs: {
       all: "所有请求",
@@ -1105,6 +1211,7 @@ const zh: Translations = {
       lastHour: "最近1小时",
       last24Hours: "最近24小时",
       last7Days: "最近7天",
+      customRange: "自定义范围",
     },
     descriptions: {
       all: "所有 HTTP 请求的完整列表",
@@ -1117,6 +1224,12 @@ const zh: Translations = {
       successful: "没有成功的请求",
       failed: "没有失败的请求",
       slow: "没有慢请求",
+    },
+    chart: {
+      title: "请求数量",
+      description: "请求与错误",
+      successful: "成功",
+      errors: "错误",
     },
   },
 
@@ -1289,6 +1402,20 @@ const zh: Translations = {
 
   layout: {
     connected: "已连接",
+    disconnected: "未连接",
+  },
+
+  logs: {
+    noLogs: "尚未捕获任何日志记录",
+    records: "日志记录",
+    level: "级别",
+    logger: "日志器",
+    searchPlaceholder: "搜索日志消息...",
+    startTime: "开始时间",
+    endTime: "结束时间",
+    levelFilters: {
+      all: "所有级别",
+    },
   },
 };
 

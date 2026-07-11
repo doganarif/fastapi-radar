@@ -236,3 +236,28 @@ class TestRadarFullIntegration:
 
         response = client.get("/__radar/api/exceptions")
         assert response.status_code == 200
+
+        response = client.get("/__radar/api/requests/counts")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/logs")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/logs/counts")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/health")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/requests/timeseries?hours=1")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/requests/timeseries?hours=24")
+        assert response.status_code == 200
+
+        response = client.get("/__radar/api/requests/timeseries?hours=168")
+        assert response.status_code == 200
+
+        response = client.get(
+            "/__radar/api/requests/timeseries?hours=168&start_time=2024-01-01T00:00:00Z&end_time=2024-01-07T00:00:00Z")  # noqa: E501
+        assert response.status_code == 200

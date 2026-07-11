@@ -10,6 +10,7 @@ import {
   Home,
   GitBranch,
   Zap,
+  ScrollText,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +65,12 @@ const mainNavItemsConfig = [
     titleKey: "nav.backgroundTasks",
     icon: Zap,
     href: "/background-tasks",
+    badge: null,
+  },
+  {
+    titleKey: "nav.logs",
+    icon: ScrollText,
+    href: "/logs",
     badge: null,
   },
 ];

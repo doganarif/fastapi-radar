@@ -13,11 +13,13 @@ from sqlalchemy.orm import Session
 from .models import (
     BackgroundTask,
     CapturedException,
+    CapturedLog,
     CapturedQuery,
     CapturedRequest,
     Span,
     Trace,
 )
+from .timeseries import build_timeseries
 from .tracing import TracingManager
 
 
@@ -79,6 +81,20 @@ class ExceptionDetail(BaseModel):
     created_at: datetime
 
 
+class RequestCounts(BaseModel):
+    total: int
+    successful: int
+    failed: int
+    slow: int
+
+
+class RequestTimeseriesPoint(BaseModel):
+    time: str
+    iso_time: str
+    requests: int
+    errors: int
+
+
 class DashboardStats(BaseModel):
     total_requests: int
     avg_response_time: Optional[float]
@@ -114,6 +130,20 @@ class BackgroundTaskSummary(BaseModel):
     created_at: datetime
 
 
+class LogRecord(BaseModel):
+    id: int
+    logger_name: Optional[str]
+    level: str
+    message: str
+    pathname: Optional[str]
+    lineno: Optional[int]
+    func_name: Optional[str]
+    thread_name: Optional[str]
+    exc_info: Optional[str]
+    request_id: Optional[str]
+    created_at: datetime
+
+
 class WaterfallSpan(BaseModel):
     span_id: str
     parent_span_id: Optional[str]
@@ -142,13 +172,17 @@ class TraceDetail(BaseModel):
     spans: List[WaterfallSpan]
 
 
-def create_api_router(get_session_context, auth_dependency: Optional[Callable] = None) -> APIRouter:
+def create_api_router(
+    get_session_context,
+    auth_dependency: Optional[Callable] = None,
+    prefix: str = "/__radar/api",
+) -> APIRouter:
     # Build dependencies list for the router
     dependencies = []
     if auth_dependency:
         dependencies.append(Depends(auth_dependency))
 
-    router = APIRouter(prefix="/__radar/api", tags=["radar"], dependencies=dependencies)
+    router = APIRouter(prefix=prefix, tags=["radar"], dependencies=dependencies)
 
     def get_db():
         """Dependency function for FastAPI to get database session."""
@@ -156,14 +190,17 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             yield session
 
     @router.get("/requests", response_model=List[RequestSummary])
-    async def get_requests(
+    def get_requests(
         limit: int = Query(100, ge=1, le=1000),
         offset: int = Query(0, ge=0),
         status_code: Optional[int] = None,
+        min_status_code: Optional[int] = None,
         method: Optional[str] = None,
         search: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
+        slow_only: bool = Query(False),
+        slow_threshold: int = Query(500),
         session: Session = Depends(get_db),
     ):
         query = session.query(CapturedRequest)
@@ -184,6 +221,10 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             else:
                 # Exact status code match
                 query = query.filter(CapturedRequest.status_code == status_code)
+        if min_status_code:
+            query = query.filter(CapturedRequest.status_code >= min_status_code)
+        if slow_only:
+            query = query.filter(CapturedRequest.duration_ms > slow_threshold)
         if method:
             query = query.filter(CapturedRequest.method == method)
         if search:
@@ -208,8 +249,65 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             for req in requests
         ]
 
+    @router.get("/requests/counts", response_model=RequestCounts)
+    def get_request_counts(
+        status_code: Optional[int] = None,
+        method: Optional[str] = None,
+        search: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        slow_threshold: int = Query(500),
+        session: Session = Depends(get_db),
+    ):
+        query = session.query(
+            func.count().label("total"),
+            func.sum(case((CapturedRequest.status_code.between(200, 299), 1), else_=0)).label(
+                "successful"
+            ),
+            func.sum(case((CapturedRequest.status_code >= 400, 1), else_=0)).label("failed"),
+            func.sum(case((CapturedRequest.duration_ms > slow_threshold, 1), else_=0)).label(
+                "slow"
+            ),
+        )
+
+        if start_time:
+            query = query.filter(CapturedRequest.created_at >= start_time)
+        if end_time:
+            query = query.filter(CapturedRequest.created_at <= end_time)
+        if status_code:
+            if status_code in [200, 300, 400, 500]:
+                lower_bound = status_code
+                upper_bound = status_code + 100
+                query = query.filter(
+                    CapturedRequest.status_code >= lower_bound,
+                    CapturedRequest.status_code < upper_bound,
+                )
+            else:
+                query = query.filter(CapturedRequest.status_code == status_code)
+        if method:
+            query = query.filter(CapturedRequest.method == method)
+        if search:
+            query = query.filter(CapturedRequest.path.ilike(f"%{search}%"))
+
+        result = query.one()
+        return RequestCounts(
+            total=result.total or 0,
+            successful=result.successful or 0,
+            failed=result.failed or 0,
+            slow=result.slow or 0,
+        )
+
+    @router.get("/requests/timeseries", response_model=List[RequestTimeseriesPoint])
+    def get_requests_timeseries(
+        hours: int = Query(24, ge=1, le=87600),
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        session: Session = Depends(get_db),
+    ):
+        return build_timeseries(session, hours=hours, start_time=start_time, end_time=end_time)
+
     @router.get("/requests/{request_id}", response_model=RequestDetail)
-    async def get_request_detail(request_id: str, session: Session = Depends(get_db)):
+    def get_request_detail(request_id: str, session: Session = Depends(get_db)):
         request = (
             session.query(CapturedRequest).filter(CapturedRequest.request_id == request_id).first()
         )
@@ -257,7 +355,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         )
 
     @router.get("/requests/{request_id}/curl")
-    async def get_request_as_curl(request_id: str, session: Session = Depends(get_db)):
+    def get_request_as_curl(request_id: str, session: Session = Depends(get_db)):
         request = (
             session.query(CapturedRequest).filter(CapturedRequest.request_id == request_id).first()
         )
@@ -339,8 +437,8 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
                 replayed_request = CapturedRequest(
                     request_id=str(uuid.uuid4()),
                     method=request.method,
-                    url=request.url,
-                    path=request.path,
+                    url=request.url[:500],
+                    path=request.path[:500],
                     query_params=request.query_params,
                     headers=dict(response.request.headers),
                     body=request_body if isinstance(request_body, str) else None,
@@ -367,7 +465,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             raise HTTPException(status_code=500, detail=f"Replay failed: {str(e)}")
 
     @router.get("/queries", response_model=List[QueryDetail])
-    async def get_queries(
+    def get_queries(
         limit: int = Query(100, ge=1, le=1000),
         offset: int = Query(0, ge=0),
         slow_only: bool = Query(False),
@@ -398,8 +496,19 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             for q in queries
         ]
 
+    @router.get("/exceptions/count")
+    def get_exceptions_count(
+        exception_type: Optional[str] = None,
+        session: Session = Depends(get_db),
+    ):
+        query = session.query(func.count()).select_from(CapturedException)
+        if exception_type:
+            query = query.filter(CapturedException.exception_type == exception_type)
+
+        return {"count": query.scalar()}
+
     @router.get("/exceptions", response_model=List[ExceptionDetail])
-    async def get_exceptions(
+    def get_exceptions(
         limit: int = Query(100, ge=1, le=1000),
         offset: int = Query(0, ge=0),
         exception_type: Optional[str] = None,
@@ -427,7 +536,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         ]
 
     @router.get("/stats", response_model=DashboardStats)
-    async def get_stats(
+    def get_stats(
         hours: int = Query(1, ge=1, le=720),  # Allow up to 30 days
         slow_threshold: int = Query(100),
         session: Session = Depends(get_db),
@@ -482,15 +591,27 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
             requests_per_minute=round_float(requests_per_minute),
         )
 
+    @router.get("/health")
+    def health_check():
+        return {"status": "ok"}
+
     @router.delete("/clear")
-    async def clear_data(
+    def clear_data(
         older_than_hours: Optional[int] = None, session: Session = Depends(get_db)
     ):
         if older_than_hours:
             cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
             session.query(CapturedRequest).filter(CapturedRequest.created_at < cutoff).delete()
+            session.query(CapturedException).filter(CapturedException.created_at < cutoff).delete()
+            session.query(CapturedQuery).filter(CapturedQuery.created_at < cutoff).delete()
+            session.query(CapturedLog).filter(CapturedLog.created_at < cutoff).delete()
+            session.query(Trace).filter(Trace.created_at < cutoff).delete()
         else:
             session.query(CapturedRequest).delete()
+            session.query(CapturedException).delete()
+            session.query(CapturedQuery).delete()
+            session.query(CapturedLog).delete()
+            session.query(Trace).delete()
 
         session.commit()
         return {"message": "Data cleared successfully"}
@@ -498,7 +619,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
     # Tracing-related API endpoints
 
     @router.get("/traces", response_model=List[TraceSummary])
-    async def get_traces(
+    def get_traces(
         limit: int = Query(100, ge=1, le=1000),
         offset: int = Query(0, ge=0),
         status: Optional[str] = Query(None),
@@ -536,7 +657,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         ]
 
     @router.get("/traces/{trace_id}", response_model=TraceDetail)
-    async def get_trace_detail(
+    def get_trace_detail(
         trace_id: str,
         session: Session = Depends(get_db),
     ):
@@ -564,7 +685,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         )
 
     @router.get("/traces/{trace_id}/waterfall")
-    async def get_trace_waterfall(
+    def get_trace_waterfall(
         trace_id: str,
         session: Session = Depends(get_db),
     ):
@@ -590,7 +711,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         }
 
     @router.get("/spans/{span_id}")
-    async def get_span_detail(
+    def get_span_detail(
         span_id: str,
         session: Session = Depends(get_db),
     ):
@@ -616,7 +737,7 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
         }
 
     @router.get("/background-tasks", response_model=List[BackgroundTaskSummary])
-    async def get_background_tasks(
+    def get_background_tasks(
         limit: int = Query(100, ge=1, le=1000),
         offset: int = Query(0, ge=0),
         status: Optional[str] = None,
@@ -647,6 +768,75 @@ def create_api_router(get_session_context, auth_dependency: Optional[Callable] =
                 created_at=task.created_at,
             )
             for task in tasks
+        ]
+
+    @router.get("/logs/count")
+    def get_logs_count(
+        level: Optional[str] = None,
+        logger_name: Optional[str] = None,
+        search: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        session: Session = Depends(get_db),
+    ):
+        """Get total count of captured log records matching filters."""
+        query = session.query(func.count()).select_from(CapturedLog)
+
+        if level:
+            query = query.filter(CapturedLog.level == level.upper())
+        if logger_name:
+            query = query.filter(CapturedLog.logger_name == logger_name)
+        if search:
+            query = query.filter(CapturedLog.message.ilike(f"%{search}%"))
+        if start_time:
+            query = query.filter(CapturedLog.created_at >= start_time)
+        if end_time:
+            query = query.filter(CapturedLog.created_at <= end_time)
+
+        return {"count": query.scalar()}
+
+    @router.get("/logs", response_model=List[LogRecord])
+    def get_logs(
+        limit: int = Query(100, ge=1, le=1000),
+        offset: int = Query(0, ge=0),
+        level: Optional[str] = None,
+        logger_name: Optional[str] = None,
+        search: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        session: Session = Depends(get_db),
+    ):
+        """Get captured log records."""
+        query = session.query(CapturedLog)
+
+        if level:
+            query = query.filter(CapturedLog.level == level.upper())
+        if logger_name:
+            query = query.filter(CapturedLog.logger_name == logger_name)
+        if search:
+            query = query.filter(CapturedLog.message.ilike(f"%{search}%"))
+        if start_time:
+            query = query.filter(CapturedLog.created_at >= start_time)
+        if end_time:
+            query = query.filter(CapturedLog.created_at <= end_time)
+
+        logs = query.order_by(desc(CapturedLog.created_at)).offset(offset).limit(limit).all()
+
+        return [
+            LogRecord(
+                id=log.id,
+                logger_name=log.logger_name,
+                level=log.level,
+                message=log.message,
+                pathname=log.pathname,
+                lineno=log.lineno,
+                func_name=log.func_name,
+                thread_name=log.thread_name,
+                exc_info=log.exc_info,
+                request_id=log.request_id,
+                created_at=log.created_at,
+            )
+            for log in logs
         ]
 
     return router

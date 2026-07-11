@@ -3,19 +3,22 @@ import { apiClient } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RefreshIntervalSelect } from "@/components/ui/refresh-interval-select";
 import { format } from "date-fns";
 import { Clock, CheckCircle2, XCircle, Loader2, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useT } from "@/i18n";
 
 export function BackgroundTasksPage() {
   const navigate = useNavigate();
   const t = useT();
+  const [refreshInterval, setRefreshInterval] = useState(5000);
 
   const { data: tasks, isLoading, isError, error } = useQuery({
     queryKey: ["background-tasks"],
     queryFn: () => apiClient.getBackgroundTasks({ limit: 100 }),
-    refetchInterval: 3000,
+    refetchInterval: refreshInterval || false,
   });
 
   const getStatusColor = (
@@ -77,11 +80,14 @@ export function BackgroundTasksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("pages.backgroundTasks.title")}</h1>
-        <p className="text-muted-foreground">
-          {t("pages.backgroundTasks.description")}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("pages.backgroundTasks.title")}</h1>
+          <p className="text-muted-foreground">
+            {t("pages.backgroundTasks.description")}
+          </p>
+        </div>
+        <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
       </div>
 
       <div className="grid gap-4">

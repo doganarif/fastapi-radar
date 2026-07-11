@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceArea,
 } from "recharts";
 import {
   BaseChart,
@@ -16,6 +17,7 @@ import {
   getChartColors,
 } from "./BaseChart";
 import { useTheme } from "@/hooks/useTheme";
+import { useState } from "react";
 
 interface BarChartProps {
   title?: string;
@@ -36,6 +38,7 @@ interface BarChartProps {
   className?: string;
   stacked?: boolean;
   horizontal?: boolean;
+  onRangeSelect?: (startIndex: number, endIndex: number) => void;
 }
 
 export function BarChart({
@@ -52,25 +55,76 @@ export function BarChart({
   className,
   stacked = false,
   horizontal = false,
+  onRangeSelect,
 }: BarChartProps) {
   const { theme } = useTheme();
   const colors = theme === "dark" ? chartTheme.dark : chartTheme.light;
   const monoColors = getChartColors(theme === "dark");
   const formatValue = formatters[formatter];
 
+  const [refAreaLeft, setRefAreaLeft] = useState<string | null>(null);
+  const [refAreaRight, setRefAreaRight] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+
+  const getIndex = (label: string) =>
+    data.findIndex((d) => String(d[xDataKey]) === label);
+
+  const handleMouseDown = (e: any) => {
+    if (!onRangeSelect || !e?.activeLabel) return;
+    setRefAreaLeft(e.activeLabel);
+    setRefAreaRight(null);
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: any) => {
+    if (!isDragging || !e?.activeLabel) return;
+    setRefAreaRight(e.activeLabel);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const effectiveRight = refAreaRight ?? refAreaLeft;
+    if (refAreaLeft !== null && effectiveRight !== null && onRangeSelect) {
+      let startIdx = getIndex(refAreaLeft);
+      let endIdx = getIndex(effectiveRight);
+      if (startIdx > endIdx) [startIdx, endIdx] = [endIdx, startIdx];
+      if (startIdx !== -1 && endIdx !== -1) {
+        onRangeSelect(startIdx, endIdx);
+      }
+    }
+    setRefAreaLeft(null);
+    setRefAreaRight(null);
+  };
+
+  const handleMouseLeave = () => {
+    handleMouseUp();
+    setIsHovering(false);
+  };
+
   const content = (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBarChart
         data={data}
-        layout={horizontal ? "horizontal" : "vertical"}
+        layout={horizontal ? "vertical" : "horizontal"}
         margin={{ top: 5, right: 5, left: horizontal ? 50 : 0, bottom: 5 }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          cursor: onRangeSelect ? (isDragging ? "col-resize" : "crosshair") : undefined,
+          userSelect: "none",
+        }}
       >
         {showGrid && (
           <CartesianGrid
             strokeDasharray="3 3"
             stroke={colors.grid}
-            vertical={!horizontal}
-            horizontal={horizontal}
+            vertical={horizontal}
+            horizontal={!horizontal}
             strokeOpacity={0.5}
           />
         )}
@@ -112,7 +166,7 @@ export function BarChart({
             />
           </>
         )}
-        <Tooltip content={<CustomTooltip />} />
+        {isHovering && !isDragging && <Tooltip content={<CustomTooltip />} />}
         {showLegend && (
           <Legend iconType="rect" wrapperStyle={{ fontSize: 11 }} />
         )}
@@ -127,6 +181,16 @@ export function BarChart({
             maxBarSize={40}
           />
         ))}
+        {isDragging && refAreaLeft && refAreaRight && (
+          <ReferenceArea
+            x1={refAreaLeft}
+            x2={refAreaRight}
+            stroke={colors.text}
+            strokeOpacity={0.4}
+            fill={colors.text}
+            fillOpacity={0.12}
+          />
+        )}
       </RechartsBarChart>
     </ResponsiveContainer>
   );

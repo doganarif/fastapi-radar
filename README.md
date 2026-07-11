@@ -94,6 +94,7 @@ Access your dashboard at: **http://localhost:8000/\_\_radar/**
 radar = Radar(
     app,
     db_engine=engine,            # Optional: SQLAlchemy engine for SQL query monitoring
+    storage_engine=None,         # Optional: custom SQLAlchemy engine for Radar's own storage
     dashboard_path="/__radar",   # Custom dashboard path (default: "/__radar")
     max_requests=1000,           # Max requests to store (default: 1000)
     retention_hours=24,          # Data retention period (default: 24)
@@ -201,6 +202,47 @@ radar = Radar(app, db_path="./data")
 
 If the specified path cannot be created, FastAPI Radar will fallback to using the current directory with a warning.
 
+### Custom Storage Engine
+
+For full control over where Radar's monitoring data is stored, pass any SQLAlchemy-compatible engine via the `storage_engine` parameter. This lets you store Radar data in PostgreSQL, MySQL, SQLite, or any other supported database instead of the default DuckDB file.
+
+```python
+from fastapi import FastAPI
+from fastapi_radar import Radar
+from sqlalchemy import create_engine
+
+app = FastAPI()
+
+# Store Radar data in PostgreSQL
+radar_storage = create_engine("postgresql+psycopg2://user:password@localhost/radar_db")
+radar = Radar(app, storage_engine=radar_storage)
+radar.create_tables()
+```
+
+```python
+# Store Radar data in MySQL
+radar_storage = create_engine("mysql+pymysql://user:password@localhost/radar_db")
+radar = Radar(app, storage_engine=radar_storage)
+radar.create_tables()
+```
+
+```python
+# Async engine (e.g. asyncpg) is supported too
+from sqlalchemy.ext.asyncio import create_async_engine
+
+radar_storage = create_async_engine("postgresql+asyncpg://user:password@localhost/radar_db")
+radar = Radar(app, storage_engine=radar_storage)
+radar.create_tables()
+```
+
+You can also set the `RADAR_STORAGE_URL` environment variable to any SQLAlchemy URL and Radar will use it automatically without any code changes:
+
+```bash
+export RADAR_STORAGE_URL="postgresql+psycopg2://user:password@localhost/radar_db"
+```
+
+The `storage_engine` parameter takes precedence over `RADAR_STORAGE_URL`, which in turn takes precedence over `db_path`.
+
 ### Development Mode with Auto-Reload
 
 When running your FastAPI application with `fastapi dev` (which uses auto-reload), FastAPI Radar automatically switches to an in-memory database to avoid file locking issues. This means:
@@ -218,6 +260,43 @@ radar.create_tables()  # Safe to call - handles multiple processes gracefully
 
 This behavior only applies when using the development server with auto-reload (`fastapi dev`). In production or when using `fastapi run`, the standard file-based DuckDB storage is used.
 
+## Capturing Logs
+
+FastAPI Radar can capture Python log records and display them in the dashboard. Call `attach_logger()` after creating the `Radar` instance to register a logging handler.
+
+### Attach to the root logger (captures everything)
+
+```python
+import logging
+from fastapi import FastAPI
+from fastapi_radar import Radar
+
+app = FastAPI()
+radar = Radar(app)
+radar.create_tables()
+
+# Capture all log records at DEBUG level and above
+radar.attach_logger()
+```
+
+### Attach to a specific logger
+
+```python
+import logging
+from fastapi import FastAPI
+from fastapi_radar import Radar
+
+app = FastAPI()
+radar = Radar(app)
+radar.create_tables()
+
+# Only capture records from your application's logger
+app_logger = logging.getLogger("myapp")
+radar.attach_logger(logger=app_logger, level=logging.WARNING)
+```
+
+`attach_logger()` returns the `logging.Handler` instance in case you need to remove it later. The `level` parameter filters which records are stored (default: `logging.DEBUG`).
+
 ## What Gets Captured?
 
 - ✅ HTTP requests and responses
@@ -227,6 +306,7 @@ This behavior only applies when using the development server with auto-reload (`
 - ✅ Slow query detection
 - ✅ Exceptions with stack traces
 - ✅ Request/response bodies and headers
+- ✅ Python log records (via `attach_logger()`)
 
 ## Contributing
 

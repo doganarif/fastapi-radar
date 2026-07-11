@@ -1,9 +1,7 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { apiClient, TraceSummary } from "@/api/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,20 +11,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDetailDrawer } from "@/context/DetailDrawerContext";
+import { useT } from "@/i18n";
+import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Search,
-  RefreshCw,
-  Clock,
   Activity,
   AlertTriangle,
   CheckCircle,
+  Clock,
+  RefreshCw,
+  Search,
 } from "lucide-react";
-import { useT } from "@/i18n";
+import { useState } from "react";
 
 
 interface TracesListProps {
   className?: string;
+  refreshInterval?: number;
 }
 
 function formatDuration(ms: number | null): string {
@@ -64,7 +65,7 @@ function getStatusVariant(
   }
 }
 
-export function TracesList({ className }: TracesListProps) {
+export function TracesList({ className, refreshInterval }: TracesListProps) {
   const { openDetail } = useDetailDrawer();
   const t = useT();
 
@@ -95,7 +96,7 @@ export function TracesList({ className }: TracesListProps) {
         min_duration_ms: filters.minDuration || undefined,
         hours: filters.hours,
       }),
-    refetchInterval: 30000,
+    refetchInterval: refreshInterval !== undefined ? (refreshInterval || false) : 30000,
   });
 
   const handleTraceClick = (trace: TraceSummary) => {

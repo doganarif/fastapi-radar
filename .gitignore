@@ -74,3 +74,5 @@ dmypy.json
 .pyre/
 
 !fastapi_radar/dashboard/dist/
+radar.duckdb.wal
+radar.duckdb

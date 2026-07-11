@@ -1,19 +1,22 @@
 """Main Radar class for FastAPI Radar."""
 
 import asyncio
+import logging
 import multiprocessing
 import os
 import sys
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 from .api import create_api_router
 from .capture import QueryCapture
@@ -81,6 +84,7 @@ class Radar:
         self.query_capture = None
 
         if dashboard_path not in self.exclude_paths:
+            self.exclude_paths.append(f"{self.app.root_path}{dashboard_path}")
             self.exclude_paths.append(dashboard_path)
         self.exclude_paths.append("/favicon.ico")
 
@@ -147,12 +151,17 @@ class Radar:
                             "read_only": False,
                             "config": {"memory_limit": "500mb"},
                         },
-                        poolclass=StaticPool,
+                        poolclass=NullPool,
                     )
 
         # Check if storage_engine is async or sync
         # If async, we'll use it for DDL operations but keep sessions sync
         # by accessing the sync engine from the async engine
+        self._use_session_lock = isinstance(
+            getattr(self.storage_engine, "pool", None), StaticPool
+        )
+        self._session_lock = threading.Lock() if self._use_session_lock else None
+
         if isinstance(self.storage_engine, AsyncEngine):
             # For async engines, get the underlying sync engine for session operations
             # The middleware and other components use sessions synchronously
@@ -176,11 +185,34 @@ class Radar:
     @contextmanager
     def get_session(self) -> Session:
         """Get a database session for radar storage."""
+        if self._session_lock is not None:
+            self._session_lock.acquire()
         session = self.SessionLocal()
         try:
             yield session
+        except Exception:
+            session.rollback()
+            raise
         finally:
             session.close()
+            if self._session_lock is not None:
+                self._session_lock.release()
+
+    def attach_logger(
+        self,
+        logger: Optional[logging.Logger] = None,
+        level: int = logging.DEBUG,
+    ) -> "logging.Handler":
+        """Attach a handler to capture Python log records into the Radar database."""
+        from .log_handler import RadarLoggingHandler
+
+        handler = RadarLoggingHandler(get_session=self.get_session, level=level)
+        target = logger if logger is not None else logging.getLogger()
+        if target.level == logging.NOTSET or target.level > level:
+            target.setLevel(level)
+
+        target.addHandler(handler)
+        return handler
 
     def _setup_middleware(self) -> None:
         """Add request capture middleware."""
@@ -209,7 +241,11 @@ class Radar:
 
     def _setup_api(self, include_in_schema: bool) -> None:
         """Mount API endpoints."""
-        api_router = create_api_router(self.get_session, self.auth_dependency)
+        api_router = create_api_router(
+            self.get_session,
+            self.auth_dependency,
+            prefix=f"{self.dashboard_path}/api",
+        )
         self.app.include_router(api_router, include_in_schema=include_in_schema)
 
     def _setup_dashboard(self, include_in_schema: bool) -> None:
@@ -262,7 +298,14 @@ class Radar:
 
             index_path = dashboard_dir / "index.html"
             if index_path.exists():
-                return FileResponse(index_path)
+                content = index_path.read_text(encoding="utf-8")
+                root_path = request.scope.get("root_path", "").rstrip("/")
+                base_path = root_path + self.dashboard_path.rstrip("/") + "/"
+                injection = (
+                    f'<script>window.__RADAR_BASE_PATH__ = "{base_path}";</script>'
+                )
+                content = content.replace("</head>", f"{injection}\n</head>", 1)
+                return HTMLResponse(content=content)
             else:
                 return {"error": "Dashboard not found. Please build the dashboard."}
 
@@ -357,7 +400,8 @@ class Radar:
     <script>
         async function loadStats() {{
             try {{
-                const response = await fetch('/__radar/api/stats?hours=1');
+                const basePath = window.__RADAR_BASE_PATH__ || '/__radar/';
+                const response = await fetch(basePath + 'api/stats?hours=1');
                 const data = await response.json();
 
                 document.querySelectorAll('.stat-value')[0].textContent =

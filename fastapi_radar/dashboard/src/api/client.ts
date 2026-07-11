@@ -142,29 +142,97 @@ export interface BackgroundTaskSummary {
   created_at: string;
 }
 
+export interface LogRecord {
+  id: number;
+  logger_name: string | null;
+  level: string;
+  message: string;
+  pathname: string | null;
+  lineno: number | null;
+  func_name: string | null;
+  thread_name: string | null;
+  exc_info: string | null;
+  request_id: string | null;
+  created_at: string;
+}
+
+export interface RequestCounts {
+  total: number;
+  successful: number;
+  failed: number;
+  slow: number;
+}
+
+export interface RequestTimeseriesPoint {
+  time: string;
+  iso_time: string;
+  requests: number;
+  errors: number;
+}
+
 class APIClient {
-  private baseUrl = "/__radar/api";
+  private baseUrl = (
+    (window as { __RADAR_BASE_PATH__?: string }).__RADAR_BASE_PATH__ ?? "/__radar/"
+  ).replace(/\/$/, "") + "/api";
 
   async getRequests(params?: {
     limit?: number;
     offset?: number;
     status_code?: number;
+    min_status_code?: number;
     method?: string;
     search?: string;
     start_time?: string;
     end_time?: string;
+    slow_only?: boolean;
+    slow_threshold?: number;
   }): Promise<RequestSummary[]> {
     const queryParams = new URLSearchParams();
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.offset) queryParams.append("offset", params.offset.toString());
     if (params?.status_code)
       queryParams.append("status_code", params.status_code.toString());
+    if (params?.min_status_code)
+      queryParams.append("min_status_code", params.min_status_code.toString());
     if (params?.method) queryParams.append("method", params.method);
     if (params?.search) queryParams.append("search", params.search);
     if (params?.start_time) queryParams.append("start_time", params.start_time);
     if (params?.end_time) queryParams.append("end_time", params.end_time);
+    if (params?.slow_only) queryParams.append("slow_only", "true");
+    if (params?.slow_threshold)
+      queryParams.append("slow_threshold", params.slow_threshold.toString());
 
     const response = await fetch(`${this.baseUrl}/requests?${queryParams}`);
+    return response.json();
+  }
+
+  async getRequestCounts(params?: {
+    status_code?: number;
+    method?: string;
+    search?: string;
+    start_time?: string;
+    end_time?: string;
+    slow_threshold?: number;
+  }): Promise<RequestCounts> {
+    const queryParams = new URLSearchParams();
+    if (params?.status_code)
+      queryParams.append("status_code", params.status_code.toString());
+    if (params?.method) queryParams.append("method", params.method);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.start_time) queryParams.append("start_time", params.start_time);
+    if (params?.end_time) queryParams.append("end_time", params.end_time);
+    if (params?.slow_threshold)
+      queryParams.append("slow_threshold", params.slow_threshold.toString());
+
+    const response = await fetch(`${this.baseUrl}/requests/counts?${queryParams}`);
+    return response.json();
+  }
+
+  async getRequestTimeseries(hours: number = 24, startTime?: string, endTime?: string): Promise<RequestTimeseriesPoint[]> {
+    const params = new URLSearchParams({ hours: String(startTime ? 24 : hours) });
+    if (startTime) params.set("start_time", startTime);
+    if (endTime) params.set("end_time", endTime);
+    const response = await fetch(`${this.baseUrl}/requests/timeseries?${params}`);
     return response.json();
   }
 
@@ -225,6 +293,16 @@ class APIClient {
     return response.json();
   }
 
+  async getExceptionsCount(params?: {
+    exception_type?: string;
+  }): Promise<{ count: number }> {
+    const queryParams = new URLSearchParams();
+    if (params?.exception_type)
+      queryParams.append("exception_type", params.exception_type);
+    const response = await fetch(`${this.baseUrl}/exceptions/count?${queryParams}`);
+    return response.json();
+  }
+
   async getExceptions(params?: {
     limit?: number;
     offset?: number;
@@ -243,6 +321,15 @@ class APIClient {
   async getStats(hours: number = 1): Promise<DashboardStats> {
     const response = await fetch(`${this.baseUrl}/stats?hours=${hours}`);
     return response.json();
+  }
+
+  async checkHealth(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/health`, { signal: AbortSignal.timeout(5000) });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 
   async clearData(olderThanHours?: number): Promise<{ message: string }> {
@@ -302,6 +389,52 @@ class APIClient {
     const response = await fetch(`${this.baseUrl}/background-tasks?${queryParams}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch background tasks: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getLogsCount(params?: {
+    level?: string;
+    logger_name?: string;
+    search?: string;
+    start_time?: string;
+    end_time?: string;
+  }): Promise<{ count: number }> {
+    const queryParams = new URLSearchParams();
+    if (params?.level) queryParams.append("level", params.level);
+    if (params?.logger_name) queryParams.append("logger_name", params.logger_name);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.start_time) queryParams.append("start_time", params.start_time);
+    if (params?.end_time) queryParams.append("end_time", params.end_time);
+
+    const response = await fetch(`${this.baseUrl}/logs/count?${queryParams}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch logs count: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getLogs(params?: {
+    limit?: number;
+    offset?: number;
+    level?: string;
+    logger_name?: string;
+    search?: string;
+    start_time?: string;
+    end_time?: string;
+  }): Promise<LogRecord[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.offset) queryParams.append("offset", params.offset.toString());
+    if (params?.level) queryParams.append("level", params.level);
+    if (params?.logger_name) queryParams.append("logger_name", params.logger_name);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.start_time) queryParams.append("start_time", params.start_time);
+    if (params?.end_time) queryParams.append("end_time", params.end_time);
+
+    const response = await fetch(`${this.baseUrl}/logs?${queryParams}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch logs: ${response.statusText}`);
     }
     return response.json();
   }

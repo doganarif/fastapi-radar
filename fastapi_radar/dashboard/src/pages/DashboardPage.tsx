@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RefreshIntervalSelect } from "@/components/ui/refresh-interval-select";
 import {
   Activity,
   Database,
@@ -48,33 +49,33 @@ import { Badge } from "@/components/ui/badge";
 
 export function DashboardPage() {
   const [timeRange, setTimeRange] = useState<number>(1); // hours
-  const [autoRefresh] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(5000);
   const { openDetail } = useDetailDrawer();
   const t = useT();
 
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ["stats", timeRange],
     queryFn: () => apiClient.getStats(timeRange),
-    refetchInterval: autoRefresh ? 5000 : false,
+    refetchInterval: refreshInterval || false,
   });
 
   const { data: recentRequests, refetch: refetchRequests } = useQuery({
     queryKey: ["recent-requests"],
     queryFn: () => apiClient.getRequests({ limit: 100 }),
-    refetchInterval: autoRefresh ? 5000 : false,
+    refetchInterval: refreshInterval || false,
   });
 
   const { data: slowQueries, refetch: refetchQueries } = useQuery({
     queryKey: ["slow-queries"],
     queryFn: () =>
       apiClient.getQueries({ slow_only: true, limit: 10, slow_threshold: 100 }),
-    refetchInterval: autoRefresh ? 10000 : false,
+    refetchInterval: refreshInterval || false,
   });
 
   const { data: recentExceptions, refetch: refetchExceptions } = useQuery({
     queryKey: ["recent-exceptions"],
     queryFn: () => apiClient.getExceptions({ limit: 5 }),
-    refetchInterval: autoRefresh ? 10000 : false,
+    refetchInterval: refreshInterval || false,
   });
 
   // Use centralized metrics calculations
@@ -149,6 +150,7 @@ export function DashboardPage() {
               <SelectItem value="168">{t("timeRange.last7Days")}</SelectItem>
             </SelectContent>
           </Select>
+          <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
           <Button variant="outline" size="icon" onClick={handleRefreshAll}>
             <RefreshCw className="h-4 w-4" />
           </Button>

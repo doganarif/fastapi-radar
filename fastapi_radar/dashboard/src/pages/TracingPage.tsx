@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -5,20 +6,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RefreshIntervalSelect } from "@/components/ui/refresh-interval-select";
 import { TracesList } from "@/components/TracesList";
 import { useT } from "@/i18n";
 
 export function TracingPage() {
   const t = useT();
+  const [refreshInterval, setRefreshInterval] = useState(30000);
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("pages.tracing.title")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("pages.tracing.description")}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("pages.tracing.title")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("pages.tracing.description")}
+          </p>
+        </div>
+        <RefreshIntervalSelect value={refreshInterval} onChange={setRefreshInterval} />
       </div>
 
       <Card>
@@ -29,7 +35,7 @@ export function TracingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TracesList />
+          <TracesList refreshInterval={refreshInterval} />
         </CardContent>
       </Card>
     </div>
