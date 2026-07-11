@@ -77,7 +77,7 @@ async def get_data():
     return {"data": []}
 ```
 
-Access your dashboard at: **http://localhost:8000/\_\_radar/**
+Access your dashboard at: **http://localhost:8000/__radar/**
 
 ## Features
 
